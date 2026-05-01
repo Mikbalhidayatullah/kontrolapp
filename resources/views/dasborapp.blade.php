@@ -12,12 +12,6 @@
     @endphp
 
     <div class="space-y-6">
-        @if (session('status'))
-            <div class="rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-800 shadow-sm">
-                {{ session('status') }}
-            </div>
-        @endif
-
         <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
@@ -45,7 +39,7 @@
 
         <section class="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
             <div class="overflow-hidden rounded-[28px] bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 p-6 text-white shadow-xl shadow-slate-900/15 sm:p-8">
-                <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+                <div class="space-y-6">
                     <div class="max-w-2xl">
                         <span class="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium tracking-[0.22em] text-sky-100 uppercase">
                             Rekap Bulanan
@@ -53,10 +47,7 @@
                         <h2 class="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
                             Dashboard rekap {{ $periodLabel }} untuk tabel kontrol dan saving.
                         </h2>
-                        <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
-                            Semua blok di halaman ini menyesuaikan periode aktif, jadi kamu bisa pindah antar bulan dan tahun untuk melihat Tabel 1, Tabel 2, Tabel 2.1, Tabel 2.2, dan Tabel 3.
-                        </p>
-                        <div class="mt-6 flex flex-wrap gap-3">
+                        <div class="mt-6 flex flex-wrap items-center gap-3">
                             <a href="{{ route('lembar-kontrol', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year']]) }}" class="inline-flex items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-100">
                                 Lihat Lembar Kontrol
                             </a>
@@ -117,8 +108,8 @@
                                 <p class="mt-1 text-lg font-semibold">{{ $stats['savingSourcesActive'] }}</p>
                             </div>
                             <div>
-                                <p class="text-xs uppercase tracking-[0.16em] text-slate-400">Hutang Aktif</p>
-                                <p class="mt-1 text-lg font-semibold">{{ $stats['outstandingSources'] }}</p>
+                                <p class="text-xs uppercase tracking-[0.16em] text-slate-400">Pengurangan Saving</p>
+                                <p class="mt-1 text-lg font-semibold">{{ $stats['reductionCount'] }}</p>
                             </div>
                             <div>
                                 <p class="text-xs uppercase tracking-[0.16em] text-slate-400">Tabel 3</p>
@@ -142,13 +133,13 @@
             </div>
         </section>
 
-        <section class="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
+        <section class="space-y-6">
             <article class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <p class="text-sm font-medium text-sky-600">Tabel 1</p>
-                        <h3 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Keuangan sesuai sumber dana dan status pembayaran</h3>
-                        <p class="mt-2 text-sm text-slate-500">Nominal pada tabel ini dihitung dari beban operasional, lalu dibagi ke status lunas, bayar sebagian, dan sisa hutang talangan.</p>
+                        <h3 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Rekap operasional sesuai sumber dana</h3>
+                        <p class="mt-2 text-sm text-slate-500">Nominal pada tabel ini dihitung langsung dari data lembar kontrol pada periode aktif.</p>
                     </div>
                     <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600 ring-1 ring-slate-200">
                         <p class="font-medium text-slate-900">{{ $periodLabel }}</p>
@@ -164,7 +155,6 @@
                                     <th class="px-5 py-4 font-medium">Keterangan</th>
                                     <th class="px-5 py-4 font-medium">Hutang</th>
                                     <th class="px-5 py-4 font-medium">Lunas</th>
-                                    <th class="px-5 py-4 font-medium">Bayar Sebagian</th>
                                     <th class="px-5 py-4 font-medium">Total</th>
                                 </tr>
                             </thead>
@@ -174,7 +164,6 @@
                                         <td class="px-5 py-4 font-semibold text-slate-900">{{ $row['source'] }}</td>
                                         <td class="px-5 py-4 text-rose-600">Rp {{ number_format($row['hutang'], 0, ',', '.') }}</td>
                                         <td class="px-5 py-4 text-emerald-600">Rp {{ number_format($row['lunas'], 0, ',', '.') }}</td>
-                                        <td class="px-5 py-4 text-sky-600">Rp {{ number_format($row['partial'], 0, ',', '.') }}</td>
                                         <td class="px-5 py-4 font-semibold text-slate-900">Rp {{ number_format($row['total'], 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
@@ -184,7 +173,6 @@
                                     <td class="px-5 py-4 font-semibold">TOTAL</td>
                                     <td class="px-5 py-4 font-semibold text-rose-600">Rp {{ number_format($tableOneTotals['hutang'], 0, ',', '.') }}</td>
                                     <td class="px-5 py-4 font-semibold text-emerald-600">Rp {{ number_format($tableOneTotals['lunas'], 0, ',', '.') }}</td>
-                                    <td class="px-5 py-4 font-semibold text-sky-600">Rp {{ number_format($tableOneTotals['partial'], 0, ',', '.') }}</td>
                                     <td class="px-5 py-4 font-semibold">Rp {{ number_format($tableOneTotals['total'], 0, ',', '.') }}</td>
                                 </tr>
                             </tfoot>
@@ -193,7 +181,7 @@
                 </div>
             </article>
 
-            <div class="space-y-6">
+            <div class="grid gap-6 xl:grid-cols-2">
                 <article class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-emerald-600">Tabel 2</p>
                     <h3 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Status dana saving terhadap pemakaian keseluruhan</h3>
@@ -213,14 +201,6 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 space-y-2">
-                        @foreach ($tableTwo['notes'] as $note)
-                            <div class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600">
-                                <span>{{ $note['label'] }}</span>
-                                <span class="font-semibold text-slate-900">Rp {{ number_format($note['amount'], 0, ',', '.') }}</span>
-                            </div>
-                        @endforeach
-                    </div>
                 </article>
 
                 <article class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
@@ -264,7 +244,10 @@
                             <div class="flex items-center justify-between gap-4">
                                 <div>
                                     <p class="font-semibold text-slate-900">{{ $row['source'] }}</p>
-                                    <p class="mt-1 text-sm text-slate-500">{{ $row['entries_count'] }} kali penambahan saving pada {{ $periodLabel }}</p>
+                                    <p class="mt-1 text-sm text-slate-500">{{ $row['entries_count'] }} kali penambahan manual pada {{ $periodLabel }}</p>
+                                    @if ($row['carry_over_amount'] !== 0 && $row['carry_over_label'])
+                                        <p class="mt-1 text-xs font-medium {{ $row['carry_over_amount'] >= 0 ? 'text-sky-700' : 'text-rose-700' }}">{{ $row['carry_over_label'] }} Rp {{ number_format($row['carry_over_amount'], 0, ',', '.') }}</p>
+                                    @endif
                                 </div>
                                 <p class="text-lg font-semibold text-slate-900">Rp {{ number_format($row['amount'], 0, ',', '.') }}</p>
                             </div>
@@ -282,7 +265,7 @@
                     <div>
                         <p class="text-sm font-medium text-rose-600">Tabel 2.2</p>
                         <h3 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Dana saving terpakai</h3>
-                        <p class="mt-2 text-sm text-slate-500">Blok ini memperlihatkan alokasi saving, pemakaian langsung, pelunasan talangan, lalu sisa atau kurangnya per sumber dana.</p>
+                        <p class="mt-2 text-sm text-slate-500">Blok ini memperlihatkan alokasi saving, pemakaian langsung dari lembar kontrol, lalu sisa atau kurangnya per sumber dana.</p>
                     </div>
                     <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600 ring-1 ring-slate-200">
                         <p class="font-medium text-slate-900">Total Terpakai</p>
@@ -297,6 +280,9 @@
                                 <div>
                                     <p class="font-semibold text-slate-900">{{ $row['source'] }}</p>
                                     <p class="mt-1 text-sm text-slate-500">Alokasi Rp {{ number_format($row['allocation'], 0, ',', '.') }}</p>
+                                    @if ($row['carry_over_amount'] !== 0 && $row['carry_over_label'])
+                                        <p class="mt-1 text-xs font-medium {{ $row['carry_over_amount'] >= 0 ? 'text-sky-700' : 'text-rose-700' }}">{{ $row['carry_over_label'] }} Rp {{ number_format($row['carry_over_amount'], 0, ',', '.') }}</p>
+                                    @endif
                                 </div>
                                 <div class="grid gap-3 sm:grid-cols-3">
                                     <div class="rounded-2xl bg-slate-50 px-4 py-3">
@@ -307,7 +293,6 @@
                                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Terpakai</p>
                                         <p class="mt-1 font-semibold text-slate-900">Rp {{ number_format($row['used'], 0, ',', '.') }}</p>
                                         <p class="mt-1 text-xs text-slate-500">Langsung Rp {{ number_format($row['direct_used'], 0, ',', '.') }}</p>
-                                        <p class="mt-1 text-xs text-slate-500">Pelunasan Rp {{ number_format($row['settled_used'], 0, ',', '.') }}</p>
                                     </div>
                                     <div class="rounded-2xl {{ $row['balance'] >= 0 ? 'bg-emerald-50' : 'bg-rose-50' }} px-4 py-3">
                                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Sisa / Kurang</p>

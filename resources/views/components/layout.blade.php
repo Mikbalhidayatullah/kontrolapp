@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" class="h-full bg-slate-100">
+<html lang="id" class="h-full scroll-smooth bg-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
     <title>{{ trim($title ?? 'Kontrol App') }}</title>
 </head>
-<body class="h-full text-slate-900">
+<body id="page-top" class="h-full text-slate-900">
     <div class="min-h-full">
         <x-navbar />
 
@@ -35,6 +35,25 @@
                 {{ $slot }}
             </div>
         </main>
+
+        <footer class="border-t border-slate-200 bg-white/70">
+            <div class="mx-auto max-w-7xl px-4 py-4 text-center text-xs text-slate-500 sm:px-6 lg:px-8">
+                @Copyright M.I.H 2026
+            </div>
+        </footer>
     </div>
+
+    <a
+        href="#page-top"
+        class="inline-flex items-center justify-center text-white"
+        aria-label="Kembali ke atas"
+        title="Kembali ke atas"
+        style="position: fixed; right: 20px; bottom: 20px; z-index: 9999; width: 48px; height: 48px; border-radius: 9999px; background: #0f172a; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);"
+    >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 22px; height: 22px;">
+            <path d="M12 19V5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="m5 12 7-7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+    </a>
 </body>
 </html>

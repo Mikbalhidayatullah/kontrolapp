@@ -86,14 +86,14 @@
                                 <label for="budget_amount" class="block text-sm font-medium text-slate-700">Budget Pengajuan</label>
                                 <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100">
                                     <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
-                                    <input id="budget_amount" name="budget_amount" type="number" min="0" value="{{ old('budget_amount') }}" placeholder="0" class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
+                                    <input id="budget_amount" name="budget_amount" type="text" value="{{ old('budget_amount') }}" placeholder="0" data-nominal-input class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
                                 </div>
                             </div>
                             <div>
                                 <label for="verified_amount" class="block text-sm font-medium text-slate-700">Nominal Terverifikasi</label>
                                 <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100">
                                     <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
-                                    <input id="verified_amount" name="verified_amount" type="number" min="0" value="{{ old('verified_amount') }}" placeholder="0" class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
+                                    <input id="verified_amount" name="verified_amount" type="text" value="{{ old('verified_amount') }}" placeholder="0" data-nominal-input class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
                                 </div>
                             </div>
                             <div>
@@ -140,6 +140,7 @@
                         <label for="proof_file" class="flex cursor-pointer flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-sky-300 hover:bg-sky-50/40">
                             <span class="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">Pilih File Bukti Perjadin</span>
                             <span class="mt-4 text-sm text-slate-500">PDF, JPG, atau PNG. Maksimal 5 MB per file.</span>
+                            <span id="proof_file_name" class="mt-3 text-sm font-medium text-sky-700"></span>
                             <input id="proof_file" name="proof_file" type="file" class="sr-only" />
                         </label>
                     </section>
@@ -192,4 +193,20 @@
             </div>
         </section>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const proofFileInput = document.getElementById('proof_file');
+            const proofFileName = document.getElementById('proof_file_name');
+
+            if (! proofFileInput || ! proofFileName) {
+                return;
+            }
+
+            proofFileInput.addEventListener('change', () => {
+                const selectedFile = proofFileInput.files?.[0];
+                proofFileName.textContent = selectedFile ? `File dipilih: ${selectedFile.name}` : '';
+            });
+        });
+    </script>
+    <x-nominal-input-script />
 </x-layout>

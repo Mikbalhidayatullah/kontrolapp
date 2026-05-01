@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ControlEntry;
 use App\Models\SavingAllocation;
+use App\Models\SavingReduction;
+use App\Services\SavingCarryOverService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -11,6 +13,11 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly SavingCarryOverService $carryOverService,
+    ) {
+    }
+
     private const PERIOD_MONTHS = [
         1 => 'Januari',
         2 => 'Februari',
@@ -26,14 +33,6 @@ class DashboardController extends Controller
         12 => 'Desember',
     ];
 
-    private const NON_SAVING_SOURCE_ORDER = [
-        'YULIA',
-        'VIVI',
-        'TERAS ATIQAH',
-        'TALANGAN BENDAHARA',
-        'TALANGAN KARYAWAN',
-    ];
-
     public function index(Request $request): View|RedirectResponse
     {
         if (auth()->user()->role === 'verifikator') {
@@ -44,18 +43,14 @@ class DashboardController extends Controller
 
         $entries = ControlEntry::query()
             ->with(['debtSettlements', 'savingSettlements', 'savingAllocationSettlements.savingAllocation'])
+            ->where('transaction_type', 'operasional_langsung')
             ->whereYear('entry_date', $period['year'])
             ->whereMonth('entry_date', $period['month'])
             ->latest('entry_date')
             ->latest()
             ->get();
 
-        $operationalEntries = $entries->whereIn('transaction_type', [
-            'operasional_langsung',
-            'operasional_talangan',
-        ]);
-
-        $talanganEntries = $entries->where('transaction_type', 'operasional_talangan');
+        $operationalEntries = $entries;
 
         $savingAllocations = SavingAllocation::query()
             ->where('period_month', $period['month'])
@@ -66,20 +61,13 @@ class DashboardController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        $groupedSavingAllocations = $savingAllocations
-            ->groupBy('source_name')
-            ->map(function (Collection $items, string $source) {
-                return [
-                    'source' => $source,
-                    'amount' => (int) $items->sum('amount'),
-                    'sort_order' => (int) $items->min('sort_order'),
-                    'entries_count' => $items->count(),
-                ];
-            })
-            ->sortBy([
-                ['sort_order', 'asc'],
-                ['source', 'asc'],
-            ])
+        $savingReductions = SavingReduction::query()
+            ->where('period_month', $period['month'])
+            ->where('period_year', $period['year'])
+            ->get();
+
+        $groupedSavingAllocations = $this->carryOverService
+            ->effectiveAllocations($period['month'], $period['year'])
             ->values();
 
         $tableOne = $this->buildTableOne($operationalEntries, $groupedSavingAllocations->pluck('source'));
@@ -93,44 +81,20 @@ class DashboardController extends Controller
         $tableTwoOne = $groupedSavingAllocations;
 
         $directSavingUsage = $operationalEntries
-            ->where('transaction_type', 'operasional_langsung')
             ->groupBy('fund_source')
             ->map(fn (Collection $items) => (int) $items->sum('obligation_amount'));
 
-        $settlementSavingUsage = $groupedSavingAllocations
-            ->mapWithKeys(function (array $saving) use ($talanganEntries) {
-                $settled = $talanganEntries
-                    ->sum(function (ControlEntry $entry) use ($saving) {
-                        return $entry->savingAllocationSettlements
-                            ->filter(fn ($settlement) => $settlement->savingAllocation?->source_name === $saving['source'])
-                            ->sum('amount');
-                    });
-
-                return [$saving['source'] => (int) $settled];
-            });
-
-        $tableTwoTwo = $tableTwoOne
-            ->map(function (array $saving) use ($directSavingUsage, $settlementSavingUsage) {
-                $directUsed = (int) ($directSavingUsage[$saving['source']] ?? 0);
-                $settledUsed = (int) ($settlementSavingUsage[$saving['source']] ?? 0);
-                $used = $directUsed + $settledUsed;
-
-                return [
-                    'source' => $saving['source'],
-                    'allocation' => $saving['amount'],
-                    'used' => $used,
-                    'direct_used' => $directUsed,
-                    'settled_used' => $settledUsed,
-                    'balance' => $saving['amount'] - $used,
-                    'usage_percent' => $saving['amount'] > 0 ? (int) round(($used / $saving['amount']) * 100) : 0,
-                ];
-            })
+        $tableTwoTwo = $this->carryOverService
+            ->balanceRows($period['month'], $period['year'])
             ->values();
+        $forwardTransfers = $this->carryOverService->forwardTransfersForPeriod($period['month'], $period['year']);
 
         $totalSaving = (int) $tableTwoOne->sum('amount');
         $overallUsage = (int) $operationalEntries->sum('obligation_amount');
         $savingUsage = (int) $tableTwoTwo->sum('used');
-        $activeDebtTotal = (int) $talanganEntries->sum(fn (ControlEntry $entry) => $entry->remainingDebt());
+        $reductionTotal = (int) $savingReductions->sum('amount');
+        $transferredForwardTotal = (int) $forwardTransfers->sum('amount');
+        $remainingReimbursement = max($totalSaving - $reductionTotal - $transferredForwardTotal, 0);
 
         $tableTwo = [
             'total_saving' => $totalSaving,
@@ -155,27 +119,26 @@ class DashboardController extends Controller
             [
                 'label' => 'Total Dana Saving',
                 'amount' => $totalSaving,
-                'caption' => $tableTwoOne->count().' sumber saving aktif pada periode ini',
+                'caption' => $tableTwoOne->count().' sumber saving efektif pada periode ini',
                 'accent' => 'emerald',
             ],
             [
-                'label' => 'Hutang Talangan Aktif',
-                'amount' => $activeDebtTotal,
-                'caption' => 'Sisa hutang bendahara atau karyawan yang belum lunas',
+                'label' => 'Pengurangan Saving',
+                'amount' => $reductionTotal,
+                'caption' => $savingReductions->count().' histori pengurangan saving pada periode ini',
                 'accent' => 'amber',
             ],
             [
-                'label' => 'Saldo Saving',
-                'amount' => $tableThree['ending_balance'],
-                'caption' => $tableThree['ending_balance'] >= 0 ? 'Masih ada sisa dana saving' : 'Pemakaian saving melewati alokasi',
-                'accent' => $tableThree['ending_balance'] >= 0 ? 'teal' : 'rose',
+                'label' => 'Sisa Bayar Balik Saving',
+                'amount' => $remainingReimbursement,
+                'caption' => 'Nominal saving pribadi yang masih perlu dibayarkan kembali setelah perpindahan ke bulan berikutnya',
+                'accent' => 'teal',
             ],
         ];
 
         $savingEntries = collect()
             ->merge(
                 $operationalEntries
-                    ->where('transaction_type', 'operasional_langsung')
                     ->filter(fn (ControlEntry $entry) => $tableTwoOne->contains(fn (array $saving) => $saving['source'] === $entry->fund_source))
                     ->map(fn (ControlEntry $entry) => [
                         'sort_date' => optional($entry->entry_date)->format('Y-m-d') ?? '',
@@ -185,27 +148,6 @@ class DashboardController extends Controller
                         'amount' => (int) $entry->obligation_amount,
                         'status' => 'Pemakaian Langsung',
                     ])
-            )
-            ->merge(
-                $tableTwoOne
-                    ->map(function (array $saving) use ($talanganEntries) {
-                        $amount = $talanganEntries
-                            ->sum(function (ControlEntry $entry) use ($saving) {
-                                return $entry->savingAllocationSettlements
-                                    ->filter(fn ($settlement) => $settlement->savingAllocation?->source_name === $saving['source'])
-                                    ->sum('amount');
-                            });
-
-                        return [
-                            'sort_date' => now()->format('Y-m-d'),
-                            'date' => 'Periode aktif',
-                            'purpose' => 'Auto pelunasan hutang talangan',
-                            'source' => $saving['source'],
-                            'amount' => (int) $amount,
-                            'status' => 'Pelunasan Otomatis',
-                        ];
-                    })
-                    ->filter(fn (array $entry) => $entry['amount'] > 0)
             )
             ->sortByDesc('sort_date')
             ->values()
@@ -223,7 +165,7 @@ class DashboardController extends Controller
                 'date' => optional($entry->entry_date)->format('d M Y'),
                 'purpose' => $entry->purpose,
                 'source' => $entry->fund_source,
-                'amount' => (int) ($entry->transaction_type === 'saving_masuk' ? $entry->amount_in : $entry->obligation_amount),
+                'amount' => (int) $entry->obligation_amount,
                 'status' => $entry->status,
             ])
             ->values();
@@ -250,7 +192,7 @@ class DashboardController extends Controller
                 'transactionCount' => $entries->count(),
                 'activeFundSources' => $tableOne->filter(fn (array $row) => $row['total'] > 0)->count(),
                 'savingSourcesActive' => $tableTwoTwo->filter(fn (array $row) => $row['used'] > 0)->count(),
-                'outstandingSources' => $tableOne->filter(fn (array $row) => $row['hutang'] > 0)->count(),
+                'reductionCount' => $savingReductions->count(),
                 'topSource' => $topSource['source'] ?? '-',
                 'topSourceAmount' => (int) ($topSource['total'] ?? 0),
             ],
@@ -259,31 +201,14 @@ class DashboardController extends Controller
 
     private function buildTableOne(Collection $entries, Collection $savingSources): Collection
     {
-        return collect(self::NON_SAVING_SOURCE_ORDER)
-            ->merge($savingSources)
-            ->merge($entries->pluck('fund_source'))
+        return collect($entries->pluck('fund_source'))
             ->unique()
-            ->map(function (string $source) use ($entries) {
+            ->filter(fn ($source) => filled($source))
+            ->map(function (string $source) use ($entries, $savingSources) {
                 $sourceEntries = $entries->where('fund_source', $source);
-
-                $hutang = (int) $sourceEntries
-                    ->where('transaction_type', 'operasional_talangan')
-                    ->sum(fn (ControlEntry $entry) => $entry->remainingDebt());
-
-                $partial = (int) $sourceEntries
-                    ->where('transaction_type', 'operasional_talangan')
-                    ->filter(fn (ControlEntry $entry) => $entry->remainingDebt() > 0 && $entry->settledAmount() > 0)
-                    ->sum(fn (ControlEntry $entry) => $entry->settledAmount());
-
-                $lunas = (int) $sourceEntries
-                    ->filter(function (ControlEntry $entry) {
-                        if ($entry->transaction_type === 'operasional_langsung') {
-                            return true;
-                        }
-
-                        return $entry->transaction_type === 'operasional_talangan' && $entry->remainingDebt() === 0;
-                    })
-                    ->sum('obligation_amount');
+                $hutang = (int) $sourceEntries->where('status', 'HUTANG')->sum('obligation_amount');
+                $partial = (int) $sourceEntries->where('status', 'BAYAR SEBAGIAN')->sum('obligation_amount');
+                $lunas = (int) $sourceEntries->where('status', 'LUNAS')->sum('obligation_amount');
 
                 return [
                     'source' => $source,
@@ -291,7 +216,18 @@ class DashboardController extends Controller
                     'lunas' => $lunas,
                     'partial' => $partial,
                     'total' => (int) $sourceEntries->sum('obligation_amount'),
+                    'is_saving' => $savingSources->contains($source),
                 ];
+            })
+            ->sortBy([
+                ['is_saving', 'asc'],
+                ['source', 'asc'],
+            ])
+            ->values()
+            ->map(function (array $row) {
+                unset($row['is_saving']);
+
+                return $row;
             })
             ->values();
     }

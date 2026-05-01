@@ -43,14 +43,8 @@ class ControlEntryController extends Controller
         'DANSAV GU',
     ];
 
-    private const TALANGAN_SOURCES = [
-        'TALANGAN BENDAHARA',
-        'TALANGAN KARYAWAN',
-    ];
-
     private const TRANSACTION_TYPES = [
         'operasional_langsung' => 'Operasional Dibayar Langsung',
-        'operasional_talangan' => 'Operasional Ditalangi',
     ];
 
     private const STATUSES = [
@@ -58,6 +52,11 @@ class ControlEntryController extends Controller
         'HUTANG',
         'BAYAR SEBAGIAN',
         'MASUK',
+    ];
+
+    private const MANUAL_STATUS_SOURCES = [
+        'YULIA',
+        'VIVI',
     ];
 
     private const HANDOVER_MOMENTS = [
@@ -72,21 +71,35 @@ class ControlEntryController extends Controller
     {
         $period = $this->selectedPeriod($request);
 
-        $entries = ControlEntry::query()
+        $baseQuery = ControlEntry::query()
             ->with(['debtSettlements', 'savingSettlements', 'savingAllocationSettlements'])
             ->whereIn('transaction_type', array_keys(self::TRANSACTION_TYPES))
             ->whereYear('entry_date', $period['year'])
-            ->whereMonth('entry_date', $period['month'])
+            ->whereMonth('entry_date', $period['month']);
+
+        $fundSourceOptions = (clone $baseQuery)
+            ->select('fund_source')
+            ->whereNotNull('fund_source')
+            ->distinct()
+            ->orderBy('fund_source')
+            ->pluck('fund_source')
+            ->values()
+            ->all();
+
+        $selectedFundSource = $request->string('fund_source')->toString();
+
+        if ($selectedFundSource !== '' && in_array($selectedFundSource, $fundSourceOptions, true)) {
+            $baseQuery->where('fund_source', $selectedFundSource);
+        } else {
+            $selectedFundSource = '';
+        }
+
+        $entries = $baseQuery
             ->latest('entry_date')
             ->latest()
             ->get();
 
-        $operationalEntries = $entries->whereIn('transaction_type', [
-            'operasional_langsung',
-            'operasional_talangan',
-        ]);
-
-        $talanganEntries = $entries->where('transaction_type', 'operasional_talangan');
+        $operationalEntries = $entries->where('transaction_type', 'operasional_langsung');
         return view('lembar-kontrol', [
             'title' => 'Lembar Kontrol',
             'entries' => $entries,
@@ -94,13 +107,15 @@ class ControlEntryController extends Controller
             'currentPeriod' => $period,
             'monthOptions' => $this->monthOptions(),
             'yearOptions' => $this->yearOptions(),
+            'fundSourceOptions' => $fundSourceOptions,
+            'selectedFundSource' => $selectedFundSource,
             'summary' => [
                 'totalCount' => $entries->count(),
                 'operationalTotal' => (int) $operationalEntries->sum('obligation_amount'),
                 'savingInflowTotal' => 0,
-                'activeDebtTotal' => (int) $talanganEntries->sum(fn (ControlEntry $entry) => $entry->remainingDebt()),
-                'pendingCount' => $talanganEntries->filter(fn (ControlEntry $entry) => $entry->remainingDebt() > 0)->count(),
-                'settledDebtTotal' => (int) $talanganEntries->sum(fn (ControlEntry $entry) => $entry->settledAmount()),
+                'activeDebtTotal' => 0,
+                'pendingCount' => 0,
+                'settledDebtTotal' => 0,
             ],
         ]);
     }
@@ -137,6 +152,20 @@ class ControlEntryController extends Controller
         return $this->formView(
             'Edit Data Kontrol',
             $controlEntry->load(['debtSettlements', 'savingSettlements'])
+        );
+    }
+
+    public function showProof(ControlEntry $controlEntry)
+    {
+        if (! $controlEntry->proof_path || ! Storage::disk('public')->exists($controlEntry->proof_path)) {
+            abort(404);
+        }
+
+        return response()->file(
+            Storage::disk('public')->path($controlEntry->proof_path),
+            [
+                'Content-Type' => Storage::disk('public')->mimeType($controlEntry->proof_path) ?: 'application/octet-stream',
+            ]
         );
     }
 
@@ -188,6 +217,35 @@ class ControlEntryController extends Controller
             'month' => $month,
             'year' => $year,
         ])->with('status', 'Data kontrol berhasil dihapus.');
+    }
+
+    public function duplicate(Request $request, ControlEntry $controlEntry): RedirectResponse
+    {
+        $duplicate = null;
+
+        DB::transaction(function () use ($controlEntry, $request, &$duplicate) {
+            $duplicate = $controlEntry->replicate([
+                'proof_path',
+                'proof_original_name',
+                'created_at',
+                'updated_at',
+            ]);
+
+            $duplicate->fill([
+                'proof_path' => $this->duplicateProofFile($controlEntry->proof_path),
+                'proof_original_name' => $controlEntry->proof_original_name,
+                'created_by' => $request->user()->id,
+            ]);
+
+            $duplicate->save();
+
+            $this->rebuildAutoSettlements();
+            $this->refreshTransactionStatuses();
+        });
+
+        return redirect()
+            ->route('lembar-kontrol.edit', $duplicate)
+            ->with('status', 'Data kontrol berhasil diduplikat. Silakan lanjut edit data hasil duplikat.');
     }
 
     public function destroyPeriod(Request $request): RedirectResponse
@@ -258,12 +316,8 @@ class ControlEntryController extends Controller
             'defaultEntryDate' => sprintf('%04d-%02d-01', $period['year'], $period['month']),
             'sources' => $this->availableFundSources(),
             'directSources' => $this->directFundSources(),
-            'talanganSources' => self::TALANGAN_SOURCES,
-            'transactionTypes' => self::TRANSACTION_TYPES,
-            'statuses' => self::STATUSES,
+            'manualStatusSources' => self::MANUAL_STATUS_SOURCES,
             'handoverMoments' => self::HANDOVER_MOMENTS,
-            'outstandingDebtTotal' => $this->openDebtEntries()
-                ->sum(fn (ControlEntry $debtEntry) => $debtEntry->remainingDebt()),
         ]);
     }
 
@@ -272,7 +326,6 @@ class ControlEntryController extends Controller
         $validated = $request->validate([
             'entry_date' => ['required', 'date'],
             'handover_time' => ['required', 'string', Rule::in(self::HANDOVER_MOMENTS)],
-            'transaction_type' => ['required', 'string', Rule::in(array_keys(self::TRANSACTION_TYPES))],
             'amount_out' => ['nullable', 'integer', 'min:0'],
             'third_party' => ['nullable', 'string', 'max:255'],
             'receiving_officer' => ['required', 'string', 'max:255'],
@@ -280,23 +333,17 @@ class ControlEntryController extends Controller
             'location' => ['required', 'string', 'max:255'],
             'purpose' => ['required', 'string'],
             'fund_source' => ['required', 'string'],
-            'financier_name' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string'],
             'proof_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ]);
 
-        $transactionType = $validated['transaction_type'];
+        $transactionType = 'operasional_langsung';
         $amountOut = (int) ($validated['amount_out'] ?? 0);
         $fundSource = $validated['fund_source'];
 
-        if (in_array($transactionType, ['operasional_langsung', 'operasional_talangan'], true) && $amountOut <= 0) {
+        if ($transactionType === 'operasional_langsung' && $amountOut <= 0) {
             throw ValidationException::withMessages([
                 'amount_out' => 'Nominal operasional wajib diisi untuk transaksi operasional.',
-            ]);
-        }
-
-        if ($transactionType === 'operasional_talangan' && blank($validated['financier_name'] ?? null)) {
-            throw ValidationException::withMessages([
-                'financier_name' => 'Nama pihak yang menalangi wajib diisi untuk transaksi talangan.',
             ]);
         }
 
@@ -308,8 +355,19 @@ class ControlEntryController extends Controller
             ]);
         }
 
+        if (in_array($fundSource, self::MANUAL_STATUS_SOURCES, true)) {
+            if (! in_array($validated['status'] ?? null, ['LUNAS', 'HUTANG'], true)) {
+                throw ValidationException::withMessages([
+                    'status' => 'Status untuk sumber dana YULIA atau VIVI wajib dipilih antara LUNAS atau HUTANG.',
+                ]);
+            }
+        } else {
+            $validated['status'] = 'LUNAS';
+        }
+
         $validated['amount_out'] = $amountOut;
         $validated['auto_settle_open_debts'] = false;
+        $validated['transaction_type'] = $transactionType;
 
         return $validated;
     }
@@ -327,6 +385,20 @@ class ControlEntryController extends Controller
             'path' => $request->file('proof_file')->store('proofs/control', 'public'),
             'name' => $request->file('proof_file')->getClientOriginalName(),
         ];
+    }
+
+    private function duplicateProofFile(?string $proofPath): ?string
+    {
+        if (! $proofPath || ! Storage::disk('public')->exists($proofPath)) {
+            return null;
+        }
+
+        $extension = pathinfo($proofPath, PATHINFO_EXTENSION);
+        $duplicatePath = 'proofs/control/'.uniqid('copy_', true).($extension ? '.'.$extension : '');
+
+        Storage::disk('public')->copy($proofPath, $duplicatePath);
+
+        return $duplicatePath;
     }
 
     private function payload(array $data, array $extra = []): array
@@ -353,14 +425,7 @@ class ControlEntryController extends Controller
         if ($data['transaction_type'] === 'operasional_langsung') {
             $payload['amount_out'] = $data['amount_out'];
             $payload['obligation_amount'] = $data['amount_out'];
-            $payload['status'] = 'LUNAS';
-        }
-
-        if ($data['transaction_type'] === 'operasional_talangan') {
-            $payload['amount_out'] = $data['amount_out'];
-            $payload['obligation_amount'] = $data['amount_out'];
-            $payload['financier_name'] = $data['financier_name'];
-            $payload['status'] = 'HUTANG';
+            $payload['status'] = $data['status'] ?? 'LUNAS';
         }
 
         return array_merge($payload, $extra);
@@ -436,7 +501,11 @@ class ControlEntryController extends Controller
                 }
 
                 if ($entry->transaction_type === 'operasional_langsung') {
-                    $entry->forceFill(['status' => 'LUNAS'])->saveQuietly();
+                    $entry->forceFill([
+                        'status' => in_array($entry->fund_source, self::MANUAL_STATUS_SOURCES, true)
+                            ? ($entry->status === 'HUTANG' ? 'HUTANG' : 'LUNAS')
+                            : 'LUNAS',
+                    ])->saveQuietly();
 
                     return;
                 }
@@ -470,12 +539,7 @@ class ControlEntryController extends Controller
 
     private function availableFundSources(): array
     {
-        return collect()
-            ->merge($this->directFundSources())
-            ->merge(self::TALANGAN_SOURCES)
-            ->unique()
-            ->values()
-            ->all();
+        return $this->directFundSources();
     }
 
     private function directFundSources(): array
@@ -506,7 +570,6 @@ class ControlEntryController extends Controller
     {
         return match ($transactionType) {
             'operasional_langsung' => $this->directFundSources(),
-            'operasional_talangan' => self::TALANGAN_SOURCES,
             default => [],
         };
     }
