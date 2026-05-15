@@ -9,7 +9,7 @@
                     <h2 class="mt-1 text-xl font-semibold text-slate-900">Dana saving per bulan</h2>
                     <p class="mt-1 text-sm text-slate-500">Rekap dan histori penambahan saving akan mengikuti bulan dan tahun yang dipilih.</p>
                 </div>
-                <form method="GET" action="{{ route('dana-saving.index') }}" data-auto-submit-filter class="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,180px)_auto]">
+                <form method="GET" action="{{ route('dana-saving.index') }}" data-auto-submit-filter class="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,180px)]">
                     <select name="month" data-auto-submit-control class="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
                         @foreach ($monthOptions as $option)
                             <option value="{{ $option['value'] }}" @selected($currentPeriod['month'] === $option['value'])>{{ $option['label'] }}</option>
@@ -20,9 +20,6 @@
                             <option value="{{ $yearOption }}" @selected($currentPeriod['year'] === $yearOption)>{{ $yearOption }}</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">
-                        Tampilkan
-                    </button>
                 </form>
             </div>
         </section>

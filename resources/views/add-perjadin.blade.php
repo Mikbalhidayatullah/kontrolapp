@@ -378,9 +378,15 @@
                             <input id="activity_file" name="activity_file" type="file" accept="application/pdf" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white" />
                             <p class="mt-2 text-xs text-slate-500">Upload file PDF dengan ukuran kecil.</p>
                             @if ($isEdit && $entry->activity_file_path)
-                                <a href="{{ route('perjadin.attachments.show', [$entry, 'activity']) }}" target="_blank" class="mt-2 inline-block text-sm font-medium text-sky-700 hover:text-sky-900 hover:underline">
-                                    {{ $entry->activity_file_original_name ?: 'Lihat PDF kegiatan saat ini' }}
-                                </a>
+                                <div id="activity-current-wrapper" class="mt-2 space-y-2">
+                                    <a href="{{ route('perjadin.attachments.show', [$entry, 'activity']) }}" target="_blank" class="inline-block text-sm font-medium text-sky-700 hover:text-sky-900 hover:underline">
+                                        {{ $entry->activity_file_original_name ?: 'Lihat PDF kegiatan saat ini' }}
+                                    </a>
+                                    <label class="flex items-center gap-2 text-xs text-rose-600">
+                                        <input id="remove_activity_file" name="remove_activity_file" type="checkbox" value="1" @checked(old('remove_activity_file')) class="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+                                        Hapus file kegiatan saat ini
+                                    </label>
+                                </div>
                             @endif
                         </div>
                         <div>
@@ -388,9 +394,15 @@
                             <input id="receipt_file" name="receipt_file" type="file" accept="application/pdf" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm file:mr-4 file:rounded-full file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white" />
                             <p class="mt-2 text-xs text-slate-500">Upload file PDF dengan ukuran kecil.</p>
                             @if ($isEdit && $entry->receipt_file_path)
-                                <a href="{{ route('perjadin.attachments.show', [$entry, 'receipt']) }}" target="_blank" class="mt-2 inline-block text-sm font-medium text-sky-700 hover:text-sky-900 hover:underline">
-                                    {{ $entry->receipt_file_original_name ?: 'Lihat PDF nota / tiket saat ini' }}
-                                </a>
+                                <div id="receipt-current-wrapper" class="mt-2 space-y-2">
+                                    <a href="{{ route('perjadin.attachments.show', [$entry, 'receipt']) }}" target="_blank" class="inline-block text-sm font-medium text-sky-700 hover:text-sky-900 hover:underline">
+                                        {{ $entry->receipt_file_original_name ?: 'Lihat PDF nota / tiket saat ini' }}
+                                    </a>
+                                    <label class="flex items-center gap-2 text-xs text-rose-600">
+                                        <input id="remove_receipt_file" name="remove_receipt_file" type="checkbox" value="1" @checked(old('remove_receipt_file')) class="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+                                        Hapus file nota / tiket saat ini
+                                    </label>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -428,6 +440,12 @@
             const operatorLabels = document.querySelectorAll('[data-operator-label]');
             const operatorInputs = document.querySelectorAll('[data-operator-input]');
             const groupToggles = document.querySelectorAll('[data-group-toggle]');
+            const activityFileInput = document.getElementById('activity_file');
+            const receiptFileInput = document.getElementById('receipt_file');
+            const removeActivityInput = document.getElementById('remove_activity_file');
+            const removeReceiptInput = document.getElementById('remove_receipt_file');
+            const activityCurrentWrapper = document.getElementById('activity-current-wrapper');
+            const receiptCurrentWrapper = document.getElementById('receipt-current-wrapper');
 
             const output = (key) => document.querySelector(`[data-total-output="${key}"]`);
 
@@ -520,9 +538,37 @@
                 });
             });
 
+            const syncCurrentFileState = () => {
+                if (activityCurrentWrapper && removeActivityInput && activityFileInput) {
+                    activityCurrentWrapper.classList.toggle('hidden', removeActivityInput.checked || Boolean(activityFileInput.files?.length));
+                }
+
+                if (receiptCurrentWrapper && removeReceiptInput && receiptFileInput) {
+                    receiptCurrentWrapper.classList.toggle('hidden', removeReceiptInput.checked || Boolean(receiptFileInput.files?.length));
+                }
+            };
+
+            activityFileInput?.addEventListener('change', () => {
+                if (removeActivityInput && activityFileInput.files?.length) {
+                    removeActivityInput.checked = false;
+                }
+                syncCurrentFileState();
+            });
+
+            receiptFileInput?.addEventListener('change', () => {
+                if (removeReceiptInput && receiptFileInput.files?.length) {
+                    removeReceiptInput.checked = false;
+                }
+                syncCurrentFileState();
+            });
+
+            removeActivityInput?.addEventListener('change', syncCurrentFileState);
+            removeReceiptInput?.addEventListener('change', syncCurrentFileState);
+
             updateGroupPanels();
             updateOperatorLabels();
             calculateTotals();
+            syncCurrentFileState();
         });
     </script>
     <x-nominal-input-script />

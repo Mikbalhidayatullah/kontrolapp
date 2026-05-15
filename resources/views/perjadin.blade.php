@@ -52,9 +52,6 @@
                             @endforeach
                         </select>
                         <input type="text" name="keyword" value="{{ $selectedKeyword }}" placeholder="Cari nama, surat tugas, tujuan..." data-auto-submit-control data-auto-submit-delay="450" class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 sm:w-72" />
-                        <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700">
-                            Filter
-                        </button>
                         @if ($selectedCategory !== '' || $selectedKeyword !== '')
                             <a href="{{ route('perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year']]) }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700">
                                 Reset
@@ -63,7 +60,7 @@
                     </form>
 
                     <div class="flex justify-end">
-                        <a href="{{ route('add-perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">
+                        <a href="{{ route('add-perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
                             Tambah Perjadin
                         </a>
                     </div>
@@ -105,9 +102,11 @@
                             Belum ada data pada kategori ini.
                         </div>
                     @else
-                        <div class="mt-5 overflow-x-auto">
+                        <div class="mt-5 overflow-hidden rounded-3xl border border-slate-200">
+                            <div class="{{ $group['count'] > 6 ? 'max-h-[470px] overflow-y-auto' : '' }}">
+                            <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-slate-200 text-sm">
-                                <thead class="bg-slate-950 text-left text-slate-200">
+                                <thead class="sticky top-0 z-10 bg-slate-950 text-left text-slate-200">
                                     <tr>
                                         <th class="px-4 py-3 font-medium">Pelaksana</th>
                                         <th class="px-4 py-3 font-medium">Surat Tugas</th>
@@ -153,6 +152,12 @@
                                                         <span class="text-slate-400">Belum ada rincian biaya aktif</span>
                                                     @endforelse
                                                 </div>
+                                                <div class="mt-3 space-y-1 text-xs text-slate-400">
+                                                    <p>Ditambahkan oleh {{ $entry->creator?->name ?? 'Akun tidak diketahui' }}</p>
+                                                    @if ($entry->updated_by && $entry->updater)
+                                                        <p>Terakhir diedit oleh {{ $entry->updater->name }}</p>
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td class="px-4 py-4 align-top font-semibold text-slate-900">
                                                 Rp {{ number_format($entry->grand_total, 0, ',', '.') }}
@@ -191,22 +196,34 @@
                                                             </svg>
                                                         </button>
                                                     </form>
-                                                    <a href="{{ route('perjadin.edit', ['perjadinEntry' => $entry, 'month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">
-                                                        Edit
+                                                    <a href="{{ route('perjadin.edit', ['perjadinEntry' => $entry, 'month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-sky-700 transition hover:bg-sky-100" title="Edit data" aria-label="Edit data">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+                                                            <path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="m13.5 6.5 3 3" stroke-linecap="round" stroke-linejoin="round" />
+                                                        </svg>
                                                     </a>
-                                                    <form action="{{ route('perjadin.destroy', $entry) }}?month={{ $currentPeriod['month'] }}&year={{ $currentPeriod['year'] }}&category={{ urlencode($selectedCategory) }}&keyword={{ urlencode($selectedKeyword) }}" method="POST" onsubmit="return confirm('Hapus data perjadin ini?');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
-                                                            Hapus
-                                                        </button>
-                                                    </form>
+                                                    @if (auth()->user()->hasAnyRole(['admin', 'bendahara']))
+                                                        <form action="{{ route('perjadin.destroy', $entry) }}?month={{ $currentPeriod['month'] }}&year={{ $currentPeriod['year'] }}&category={{ urlencode($selectedCategory) }}&keyword={{ urlencode($selectedKeyword) }}" method="POST" onsubmit="return confirm('Hapus data perjadin ini?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" title="Hapus data" aria-label="Hapus data">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+                                                                    <path d="M3 6h18" stroke-linecap="round" stroke-linejoin="round" />
+                                                                    <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" stroke-linecap="round" stroke-linejoin="round" />
+                                                                    <path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6" stroke-linecap="round" stroke-linejoin="round" />
+                                                                    <path d="M10 11v6M14 11v6" stroke-linecap="round" stroke-linejoin="round" />
+                                                                </svg>
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
                             </table>
+                            </div>
+                            </div>
                         </div>
                     @endif
                 </section>

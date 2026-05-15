@@ -14,7 +14,7 @@
         <x-header>{{ $title }}</x-header>
 
         <main>
-            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <div data-page-content class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                 @if (session('status'))
                     <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                         {{ session('status') }}
@@ -58,42 +58,137 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('[data-auto-submit-filter]').forEach((form) => {
-                let submitTimer = null;
-                let isSubmitting = false;
+            const submitTimers = new WeakMap();
+            const loadingForms = new WeakSet();
 
-                const submitForm = () => {
-                    if (isSubmitting) {
-                        return;
-                    }
+            const replacePageContent = (html, url, pushHistory = true) => {
+                const parser = new DOMParser();
+                const nextDocument = parser.parseFromString(html, 'text/html');
+                const nextContent = nextDocument.querySelector('[data-page-content]');
+                const currentContent = document.querySelector('[data-page-content]');
 
-                    isSubmitting = true;
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                        return;
-                    }
+                if (!nextContent || !currentContent) {
+                    window.location.assign(url);
+                    return;
+                }
 
-                    form.submit();
-                };
+                const currentScrollY = window.scrollY;
+                currentContent.innerHTML = nextContent.innerHTML;
+                document.title = nextDocument.title || document.title;
 
-                form.querySelectorAll('[data-auto-submit-control]').forEach((control) => {
-                    const delay = Number(control.dataset.autoSubmitDelay || 0);
+                if (pushHistory) {
+                    window.history.pushState({ url }, '', url);
+                }
 
-                    if (control.tagName === 'SELECT') {
-                        control.addEventListener('change', submitForm);
-                        return;
-                    }
-
-                    control.addEventListener('input', () => {
-                        window.clearTimeout(submitTimer);
-                        submitTimer = window.setTimeout(submitForm, delay || 350);
-                    });
-
-                    control.addEventListener('change', () => {
-                        window.clearTimeout(submitTimer);
-                        submitTimer = window.setTimeout(submitForm, delay || 0);
-                    });
+                window.requestAnimationFrame(() => {
+                    window.scrollTo({ top: currentScrollY, behavior: 'auto' });
                 });
+            };
+
+            const submitFilterForm = async (form) => {
+                if (!form || loadingForms.has(form)) {
+                    return;
+                }
+
+                loadingForms.add(form);
+
+                const formData = new FormData(form);
+                const searchParams = new URLSearchParams();
+
+                for (const [key, value] of formData.entries()) {
+                    searchParams.append(key, value.toString());
+                }
+
+                const action = form.getAttribute('action') || window.location.pathname;
+                const url = `${action}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const html = await response.text();
+                    replacePageContent(html, url, true);
+                } catch (error) {
+                    window.location.assign(url);
+                } finally {
+                    loadingForms.delete(form);
+                }
+            };
+
+            document.addEventListener('change', (event) => {
+                const control = event.target.closest('[data-auto-submit-control]');
+                if (!control) {
+                    return;
+                }
+
+                const form = control.closest('[data-auto-submit-filter]');
+                if (!form) {
+                    return;
+                }
+
+                if (control.tagName === 'SELECT') {
+                    submitFilterForm(form);
+                    return;
+                }
+
+                const delay = Number(control.dataset.autoSubmitDelay || 0);
+                window.clearTimeout(submitTimers.get(form));
+                const timer = window.setTimeout(() => submitFilterForm(form), delay || 0);
+                submitTimers.set(form, timer);
+            });
+
+            document.addEventListener('input', (event) => {
+                const control = event.target.closest('[data-auto-submit-control]');
+                if (!control || control.tagName === 'SELECT') {
+                    return;
+                }
+
+                const form = control.closest('[data-auto-submit-filter]');
+                if (!form) {
+                    return;
+                }
+
+                const delay = Number(control.dataset.autoSubmitDelay || 0);
+                window.clearTimeout(submitTimers.get(form));
+                const timer = window.setTimeout(() => submitFilterForm(form), delay || 350);
+                submitTimers.set(form, timer);
+            });
+
+            document.addEventListener('submit', (event) => {
+                const form = event.target.closest('[data-auto-submit-filter]');
+                if (!form) {
+                    return;
+                }
+
+                event.preventDefault();
+                window.clearTimeout(submitTimers.get(form));
+                submitFilterForm(form);
+            });
+
+            window.addEventListener('popstate', async () => {
+                try {
+                    const response = await fetch(window.location.href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const html = await response.text();
+                    replacePageContent(html, window.location.href, false);
+                } catch (error) {
+                    window.location.reload();
+                }
             });
         });
     </script>

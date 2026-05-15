@@ -181,10 +181,16 @@
 
                         @if ($isEdit && $entry->proof_original_name)
                             <div id="current-proof-wrapper" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                                Bukti saat ini:
-                                <a href="{{ route('lembar-kontrol.proof', $entry) }}" target="_blank" rel="noopener noreferrer" class="font-medium text-sky-700 transition hover:text-sky-800 hover:underline">
-                                    {{ $entry->proof_original_name }}
-                                </a>
+                                <p>
+                                    Bukti saat ini:
+                                    <a href="{{ route('lembar-kontrol.proof', $entry) }}" target="_blank" rel="noopener noreferrer" class="font-medium text-sky-700 transition hover:text-sky-800 hover:underline">
+                                        {{ $entry->proof_original_name }}
+                                    </a>
+                                </p>
+                                <label class="mt-2 flex items-center gap-2 text-xs text-rose-600">
+                                    <input id="remove_proof_file" name="remove_proof_file" type="checkbox" value="1" @checked(old('remove_proof_file')) class="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+                                    Hapus file bukti saat ini
+                                </label>
                             </div>
                         @endif
 
@@ -220,6 +226,7 @@
             const proofFileInput = document.getElementById('proof_file');
             const proofFileName = document.getElementById('proof_file_name');
             const currentProofWrapper = document.getElementById('current-proof-wrapper');
+            const removeProofInput = document.getElementById('remove_proof_file');
 
             function syncStatusMode() {
                 const selectedSource = fundSource.value;
@@ -242,10 +249,24 @@
 
                     proofFileName.textContent = selectedFile ? `File dipilih: ${selectedFile.name}` : '';
 
+                    if (removeProofInput && selectedFile) {
+                        removeProofInput.checked = false;
+                    }
+
                     if (currentProofWrapper) {
-                        currentProofWrapper.classList.toggle('hidden', !!selectedFile);
+                        currentProofWrapper.classList.toggle('hidden', !!selectedFile || !!removeProofInput?.checked);
                     }
                 });
+            }
+
+            removeProofInput?.addEventListener('change', () => {
+                if (currentProofWrapper) {
+                    currentProofWrapper.classList.toggle('hidden', !!removeProofInput.checked || !!proofFileInput?.files?.length);
+                }
+            });
+
+            if (currentProofWrapper && removeProofInput) {
+                currentProofWrapper.classList.toggle('hidden', !!removeProofInput.checked || !!proofFileInput?.files?.length);
             }
         });
     </script>

@@ -173,12 +173,15 @@ class ControlEntryController extends Controller
     {
         $data = $this->validatedData($request);
         $proof = $this->storeProofFile($request);
+        $removeProofFile = $request->boolean('remove_proof_file');
         $oldProofPath = $controlEntry->proof_path;
+        $nextProofPath = $proof['path'] ?? ($removeProofFile ? null : $controlEntry->proof_path);
+        $nextProofName = $proof['name'] ?? ($removeProofFile ? null : $controlEntry->proof_original_name);
 
-        DB::transaction(function () use ($data, $proof, $request, $controlEntry) {
+        DB::transaction(function () use ($data, $request, $controlEntry, $nextProofPath, $nextProofName) {
             $controlEntry->update($this->payload($data, [
-                'proof_path' => $proof['path'] ?? $controlEntry->proof_path,
-                'proof_original_name' => $proof['name'] ?? $controlEntry->proof_original_name,
+                'proof_path' => $nextProofPath,
+                'proof_original_name' => $nextProofName,
                 'created_by' => $controlEntry->created_by ?? $request->user()->id,
             ]));
 
@@ -186,7 +189,7 @@ class ControlEntryController extends Controller
             $this->refreshTransactionStatuses();
         });
 
-        if ($proof['path'] && $oldProofPath) {
+        if (($proof['path'] || $removeProofFile) && $oldProofPath) {
             Storage::disk('public')->delete($oldProofPath);
         }
 
@@ -335,6 +338,7 @@ class ControlEntryController extends Controller
             'fund_source' => ['required', 'string'],
             'status' => ['nullable', 'string'],
             'proof_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'remove_proof_file' => ['nullable', 'boolean'],
         ]);
 
         $transactionType = 'operasional_langsung';

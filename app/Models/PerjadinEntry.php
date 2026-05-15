@@ -63,6 +63,7 @@ class PerjadinEntry extends Model
         'receipt_file_path',
         'receipt_file_original_name',
         'created_by',
+        'updated_by',
     ];
 
     protected function casts(): array
@@ -102,5 +103,10 @@ class PerjadinEntry extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

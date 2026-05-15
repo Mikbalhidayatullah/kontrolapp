@@ -50,6 +50,12 @@
                     <p class="text-sm font-medium text-amber-600">{{ $entry->category }}</p>
                     <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{{ $entry->executor_name }}</h2>
                     <p class="mt-2 text-sm text-slate-500">{{ $periodLabel }}</p>
+                    <div class="mt-3 space-y-1 text-xs text-slate-400">
+                        <p>Ditambahkan oleh {{ $entry->creator?->name ?? 'Akun tidak diketahui' }}</p>
+                        @if ($entry->updated_by && $entry->updater)
+                            <p>Terakhir diedit oleh {{ $entry->updater->name }} pada {{ optional($entry->updated_at)->translatedFormat('d M Y H:i') }}</p>
+                        @endif
+                    </div>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <a href="{{ route('perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $activeCategory, 'keyword' => $activeKeyword]) }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700">
@@ -225,8 +231,8 @@
     </div>
 
     <dialog data-receipt-dialog class="w-full max-w-6xl rounded-[28px] border border-slate-200 p-0 shadow-2xl backdrop:bg-slate-950/45">
-        <div class="grid max-h-[88vh] overflow-hidden lg:grid-cols-[0.95fr_1.05fr]">
-            <div class="border-r border-slate-200 bg-white p-6">
+        <div class="grid max-h-[88vh] overflow-y-auto lg:overflow-hidden lg:grid-cols-[0.95fr_1.05fr]">
+            <div class="bg-white p-6 lg:max-h-[88vh] lg:overflow-y-auto lg:border-r lg:border-slate-200">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-sm font-medium text-emerald-600">Kwitansi Otomatis</p>
@@ -286,7 +292,7 @@
                 </form>
             </div>
 
-            <div class="overflow-y-auto bg-slate-100 p-6">
+            <div class="bg-slate-100 p-6 lg:max-h-[88vh] lg:overflow-y-auto">
                 <div id="receipt-preview" class="mx-auto max-w-[780px] rounded-[24px] border border-slate-300 bg-white px-10 py-9 shadow-sm">
                     <div class="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-slate-700">Dokumen Kwitansi Perjalanan Dinas</div>
                     <div class="mt-1 text-center text-[15px] font-bold uppercase tracking-[0.04em] text-slate-900">{{ strtoupper($entry->skpd_name) }}</div>

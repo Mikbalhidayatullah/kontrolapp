@@ -59,6 +59,7 @@ class PerjadinController extends Controller
         }
 
         $entriesQuery = PerjadinEntry::query()
+            ->with(['creator:id,name', 'updater:id,name'])
             ->whereYear('start_date', $period['year'])
             ->whereMonth('start_date', $period['month'])
             ->when($selectedCategory !== '', fn ($query) => $query->where('category', $selectedCategory))
@@ -132,6 +133,8 @@ class PerjadinController extends Controller
 
     public function show(Request $request, PerjadinEntry $perjadinEntry): View
     {
+        $perjadinEntry->loadMissing(['creator:id,name', 'updater:id,name']);
+
         $period = [
             'month' => optional($perjadinEntry->start_date)->month ?? now()->month,
             'year' => optional($perjadinEntry->start_date)->year ?? now()->year,
@@ -160,6 +163,8 @@ class PerjadinController extends Controller
 
     public function downloadReceiptPdf(Request $request, PerjadinEntry $perjadinEntry)
     {
+        $perjadinEntry->loadMissing(['creator:id,name', 'updater:id,name']);
+
         $data = $request->validate([
             'receipt_number' => ['required', 'string', 'max:255'],
             'received_from' => ['required', 'string', 'max:255'],
@@ -191,6 +196,8 @@ class PerjadinController extends Controller
 
     public function downloadDetailPdf(Request $request, PerjadinEntry $perjadinEntry)
     {
+        $perjadinEntry->loadMissing(['creator:id,name', 'updater:id,name']);
+
         $pdf = Pdf::loadView('pdf.perjadin-detail', [
             'entry' => $perjadinEntry,
             'costGroups' => $this->costGroups($perjadinEntry),
@@ -233,6 +240,8 @@ class PerjadinController extends Controller
 
     public function edit(Request $request, PerjadinEntry $perjadinEntry): View
     {
+        $perjadinEntry->loadMissing(['creator:id,name', 'updater:id,name']);
+
         $period = [
             'month' => optional($perjadinEntry->start_date)->month ?? now()->month,
             'year' => optional($perjadinEntry->start_date)->year ?? now()->year,
@@ -277,23 +286,30 @@ class PerjadinController extends Controller
         $data = $this->validatedData($request);
         $activityFile = $this->storePdf($request, 'activity_file', 'proofs/perjadin/activity');
         $receiptFile = $this->storePdf($request, 'receipt_file', 'proofs/perjadin/receipts');
+        $removeActivityFile = $request->boolean('remove_activity_file');
+        $removeReceiptFile = $request->boolean('remove_receipt_file');
 
         $oldActivityPath = $perjadinEntry->activity_file_path;
         $oldReceiptPath = $perjadinEntry->receipt_file_path;
+        $nextActivityPath = $activityFile['path'] ?? ($removeActivityFile ? null : $perjadinEntry->activity_file_path);
+        $nextActivityName = $activityFile['name'] ?? ($removeActivityFile ? null : $perjadinEntry->activity_file_original_name);
+        $nextReceiptPath = $receiptFile['path'] ?? ($removeReceiptFile ? null : $perjadinEntry->receipt_file_path);
+        $nextReceiptName = $receiptFile['name'] ?? ($removeReceiptFile ? null : $perjadinEntry->receipt_file_original_name);
 
         $perjadinEntry->update([
             ...$data,
-            'activity_file_path' => $activityFile['path'] ?? $perjadinEntry->activity_file_path,
-            'activity_file_original_name' => $activityFile['name'] ?? $perjadinEntry->activity_file_original_name,
-            'receipt_file_path' => $receiptFile['path'] ?? $perjadinEntry->receipt_file_path,
-            'receipt_file_original_name' => $receiptFile['name'] ?? $perjadinEntry->receipt_file_original_name,
+            'activity_file_path' => $nextActivityPath,
+            'activity_file_original_name' => $nextActivityName,
+            'receipt_file_path' => $nextReceiptPath,
+            'receipt_file_original_name' => $nextReceiptName,
+            'updated_by' => $request->user()->id,
         ]);
 
-        if ($activityFile['path'] && $oldActivityPath) {
+        if (($activityFile['path'] || $removeActivityFile) && $oldActivityPath) {
             Storage::disk('public')->delete($oldActivityPath);
         }
 
-        if ($receiptFile['path'] && $oldReceiptPath) {
+        if (($receiptFile['path'] || $removeReceiptFile) && $oldReceiptPath) {
             Storage::disk('public')->delete($oldReceiptPath);
         }
 
@@ -307,6 +323,8 @@ class PerjadinController extends Controller
 
     public function destroy(PerjadinEntry $perjadinEntry): RedirectResponse
     {
+        abort_unless(auth()->user()?->hasAnyRole(['admin', 'bendahara']), 403);
+
         $category = $perjadinEntry->category;
         $activityPath = $perjadinEntry->activity_file_path;
         $receiptPath = $perjadinEntry->receipt_file_path;
@@ -402,6 +420,8 @@ class PerjadinController extends Controller
 
             'activity_file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
             'receipt_file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+            'remove_activity_file' => ['nullable', 'boolean'],
+            'remove_receipt_file' => ['nullable', 'boolean'],
         ]);
 
         $validator->after(function ($validator) use ($request) {
