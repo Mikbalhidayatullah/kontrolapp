@@ -257,7 +257,7 @@
                         <input id="received_from" name="received_from" type="text" value="{{ $receiptDefaults['received_from'] }}" data-receipt-input="received_from" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
                     </div>
                     <div>
-                        <label for="payment_purpose" class="block text-sm font-medium text-slate-700">Untuk pembayaran</label>
+                        <label for="payment_purpose" class="block text-sm font-medium text-slate-700">Untuk pengeluaran</label>
                         <textarea id="payment_purpose" name="payment_purpose" rows="4" data-receipt-input="payment_purpose" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100">{{ $receiptDefaults['payment_purpose'] }}</textarea>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -276,8 +276,34 @@
                             <input id="recipient_name" name="recipient_name" type="text" value="{{ $receiptDefaults['recipient_name'] }}" data-receipt-input="recipient_name" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
                         </div>
                         <div>
-                            <label for="recipient_position" class="block text-sm font-medium text-slate-700">Jabatan Penerima</label>
-                            <input id="recipient_position" name="recipient_position" type="text" value="{{ $receiptDefaults['recipient_position'] }}" data-receipt-input="recipient_position" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
+                            <label for="recipient_nip" class="block text-sm font-medium text-slate-700">NIP Penerima</label>
+                            <input id="recipient_nip" name="recipient_nip" type="text" value="{{ $receiptDefaults['recipient_nip'] }}" data-receipt-input="recipient_nip" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
+                        </div>
+                    </div>
+                    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-sm font-semibold text-slate-800">Setuju Dibayar</p>
+                        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="approver_name" class="block text-sm font-medium text-slate-700">Nama Kepala Badan</label>
+                                <input id="approver_name" name="approver_name" type="text" value="{{ $receiptDefaults['approver_name'] }}" data-receipt-input="approver_name" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
+                            </div>
+                            <div>
+                                <label for="approver_nip" class="block text-sm font-medium text-slate-700">NIP Kepala Badan</label>
+                                <input id="approver_nip" name="approver_nip" type="text" value="{{ $receiptDefaults['approver_nip'] }}" data-receipt-input="approver_nip" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-sm font-semibold text-slate-800">Lunas Dibayar</p>
+                        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="treasurer_name" class="block text-sm font-medium text-slate-700">Nama Bendahara Pengeluaran</label>
+                                <input id="treasurer_name" name="treasurer_name" type="text" value="{{ $receiptDefaults['treasurer_name'] }}" data-receipt-input="treasurer_name" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
+                            </div>
+                            <div>
+                                <label for="treasurer_nip" class="block text-sm font-medium text-slate-700">NIP Bendahara Pengeluaran</label>
+                                <input id="treasurer_nip" name="treasurer_nip" type="text" value="{{ $receiptDefaults['treasurer_nip'] }}" data-receipt-input="treasurer_nip" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
+                            </div>
                         </div>
                     </div>
 
@@ -293,89 +319,101 @@
             </div>
 
             <div class="bg-slate-100 p-6 lg:max-h-[88vh] lg:overflow-y-auto">
-                <div id="receipt-preview" class="mx-auto max-w-[780px] rounded-[24px] border border-slate-300 bg-white px-10 py-9 shadow-sm">
-                    <div class="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-slate-700">Dokumen Kwitansi Perjalanan Dinas</div>
-                    <div class="mt-1 text-center text-[15px] font-bold uppercase tracking-[0.04em] text-slate-900">{{ strtoupper($entry->skpd_name) }}</div>
-                    <div class="mt-1 text-center text-[10px] text-slate-500">Bukti penerimaan uang perjalanan dinas</div>
-
-                    <div class="mt-4 flex items-start justify-between gap-6">
-                        <div class="flex-1 text-center">
-                            <p class="text-[2rem] font-bold tracking-[0.35em] text-slate-900">KWITANSI</p>
-                            <p class="mt-2 text-[11px] uppercase tracking-[0.14em] text-slate-500">Bukti Penerimaan Uang</p>
-                        </div>
-                        <div class="w-[250px] shrink-0 border border-slate-900 px-4 py-3 text-center">
-                            <p class="text-[11px] text-slate-500">No. Kwitansi</p>
-                            <p class="mt-2 text-sm font-bold text-slate-900" data-receipt-preview="receipt_number">{{ $receiptDefaults['receipt_number'] ?: '-' }}</p>
-                        </div>
+                <div id="receipt-preview" class="mx-auto max-w-[780px] rounded-[24px] border border-slate-300 bg-white px-8 py-7 shadow-sm">
+                    <div class="text-center">
+                        <p class="text-[16px] font-bold uppercase tracking-[0.02em] text-slate-900">PEMERINTAH PROVINSI MALUKU UTARA</p>
+                        <p class="mt-1 text-[14px] font-bold uppercase text-slate-900">DINAS PENDIDIKAN DAN KEBUDAYAAN</p>
+                        <p class="mt-1 text-[12px] text-slate-700">Jln. Raya Sultan Nuku, Sofifi</p>
                     </div>
 
-                    <div class="mt-4 border-t-2 border-slate-900"></div>
-                    <div class="mt-1 border-t border-slate-700"></div>
+                    <div class="mt-3 border-t-2 border-slate-900"></div>
 
-                    <div class="mt-6 space-y-3 text-sm leading-7 text-slate-700">
+                    <div class="mt-4 text-center">
+                        <p class="text-[22px] font-bold tracking-[0.08em] text-slate-900">KWITANSI</p>
+                        <p class="mt-1 text-[12px] text-slate-700">Nomor: <span data-receipt-preview="receipt_number">{{ $receiptDefaults['receipt_number'] ?: '-' }}</span></p>
+                    </div>
+
+                    <div class="mt-4 space-y-2 text-sm leading-6 text-slate-700">
                         <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
                             <span>Sudah terima dari</span>
                             <span>:</span>
                             <span data-receipt-preview="received_from">{{ $receiptDefaults['received_from'] }}</span>
                         </div>
                         <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
-                            <span>Untuk pembayaran</span>
+                            <span>Sebesar</span>
+                            <span>:</span>
+                            <span class="font-semibold text-slate-900">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="rounded-2xl border border-slate-300 px-4 py-2 italic text-slate-600">
+                            Terbilang rupiah: <span data-receipt-preview="grand_total_words"></span>
+                        </div>
+                        <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
+                            <span>Untuk pengeluaran</span>
                             <span>:</span>
                             <span data-receipt-preview="payment_purpose">{{ $receiptDefaults['payment_purpose'] }}</span>
                         </div>
-                        <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
-                            <span>Kategori Perjadin</span>
-                            <span>:</span>
-                            <span>{{ $entry->category }}</span>
-                        </div>
-                        <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
-                            <span>Pelaksana</span>
-                            <span>:</span>
-                            <span>{{ $entry->executor_name }}</span>
-                        </div>
-                        <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
-                            <span>Tujuan</span>
-                            <span>:</span>
-                            <span>{{ $entry->destination_city }}</span>
-                        </div>
-                        <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
-                            <span>No Surat Tugas</span>
-                            <span>:</span>
-                            <span>{{ $entry->assignment_number }}</span>
+                    </div>
+
+                    <div class="mt-5">
+                        <p class="text-sm font-semibold text-slate-900">Dengan rincian :</p>
+                        <div class="mt-2 overflow-hidden rounded-2xl border border-slate-300">
+                            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                                <thead class="bg-slate-100 text-left text-slate-700">
+                                    <tr>
+                                        <th class="w-12 px-3 py-2 font-semibold">No</th>
+                                        <th class="px-3 py-2 font-semibold">Uraian</th>
+                                        <th class="w-40 px-3 py-2 text-right font-semibold">Jumlah</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 bg-white">
+                                    @forelse ($receiptBreakdown as $index => $item)
+                                        <tr>
+                                            <td class="px-3 py-2 text-center text-slate-600">{{ $index + 1 }}</td>
+                                            <td class="px-3 py-2 text-slate-700">{{ $item['description'] }}</td>
+                                            <td class="px-3 py-2 text-right font-medium text-slate-900">{{ $item['total_label'] }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td class="px-3 py-2 text-center text-slate-600">1</td>
+                                            <td class="px-3 py-2 text-slate-700">Biaya perjalanan dinas sesuai rincian SPPD</td>
+                                            <td class="px-3 py-2 text-right font-medium text-slate-900">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</td>
+                                        </tr>
+                                    @endforelse
+                                    <tr class="bg-slate-50 font-semibold text-slate-900">
+                                        <td colspan="2" class="px-3 py-2">Total Jumlah</td>
+                                        <td class="px-3 py-2 text-right">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <div class="mt-8 border-y border-slate-900 py-4">
-                        <div class="grid grid-cols-[230px_minmax(0,1fr)] items-start gap-6">
-                            <div>
-                                <p class="text-[11px] uppercase tracking-[0.18em] text-slate-500">Banyaknya Uang</p>
-                                <p class="mt-2 text-[1.75rem] font-bold text-slate-900">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</p>
-                            </div>
-                            <div class="border border-slate-400 px-4 py-3 text-sm italic text-slate-600">
-                                Terbilang: <span data-receipt-preview="grand_total_words"></span>
-                            </div>
-                        </div>
+                    <div class="mt-5 text-right text-sm text-slate-700">
+                        <span data-receipt-preview="receipt_place">{{ $receiptDefaults['receipt_place'] }}</span>, <span data-receipt-preview="receipt_date_label"></span>
                     </div>
 
-                    <p class="mt-8 text-sm leading-7 text-slate-700">
-                        Telah diterima uang sejumlah tersebut di atas untuk kebutuhan perjalanan dinas sesuai rincian SPPD pada data perjadin yang tersimpan di sistem.
-                    </p>
+                    <div class="mt-3 ml-auto w-[260px] text-center text-sm text-slate-700">
+                        <p>Penerima,</p>
+                        <p class="mt-7 text-slate-500">Materai 10rb</p>
+                        <p class="mt-5 font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="recipient_name">{{ $receiptDefaults['recipient_name'] }}</p>
+                        <p class="mt-1" data-receipt-preview="recipient_nip">NIP. {{ $receiptDefaults['recipient_nip'] ?: '-' }}</p>
+                    </div>
 
-                    <div class="mt-24 grid grid-cols-2 gap-8 text-sm text-slate-700">
+                    <div class="mt-8 grid grid-cols-2 gap-8 text-sm text-slate-700">
                         <div class="text-center">
-                            <p class="font-semibold text-slate-900">Mengetahui,</p>
-                            <p class="mt-1 text-xs text-slate-500">{{ $entry->skpd_name }}</p>
-                            <div class="pt-24">
-                                <p class="font-semibold tracking-[0.22em] text-slate-700">........................................</p>
-                                <p class="text-xs text-slate-500">Pejabat yang berwenang</p>
+                            <p class="font-semibold text-slate-900">Setuju Dibayar</p>
+                            <p class="mt-1">Kepala Badan</p>
+                            <div class="pt-14">
+                                <p class="font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="approver_name">{{ $receiptDefaults['approver_name'] ?: '........................................' }}</p>
+                                <p class="mt-1" data-receipt-preview="approver_nip">NIP. {{ $receiptDefaults['approver_nip'] ?: '........................................' }}</p>
                             </div>
                         </div>
                         <div class="text-center">
-                            <p><span data-receipt-preview="receipt_place">{{ $receiptDefaults['receipt_place'] }}</span>, <span data-receipt-preview="receipt_date_label"></span></p>
-                            <p class="mt-1 text-xs text-slate-500">Yang menerima,</p>
-                            <div class="pt-24">
-                                <p class="font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="recipient_name">{{ $receiptDefaults['recipient_name'] }}</p>
-                                <p data-receipt-preview="recipient_position">{{ $receiptDefaults['recipient_position'] }}</p>
+                            <p class="font-semibold text-slate-900">Lunas Dibayar</p>
+                            <p class="mt-1">Bendahara Pengeluaran</p>
+                            <div class="pt-14">
+                                <p class="font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="treasurer_name">{{ $receiptDefaults['treasurer_name'] ?: '........................................' }}</p>
+                                <p class="mt-1" data-receipt-preview="treasurer_nip">NIP. {{ $receiptDefaults['treasurer_nip'] ?: '........................................' }}</p>
                             </div>
                         </div>
                     </div>
@@ -396,23 +434,23 @@
             const grandTotal = {{ (int) $entry->grand_total }};
 
             const previewTargets = {
+                receipt_number: document.querySelector('[data-receipt-preview="receipt_number"]'),
                 received_from: document.querySelector('[data-receipt-preview="received_from"]'),
                 payment_purpose: document.querySelector('[data-receipt-preview="payment_purpose"]'),
                 receipt_place: document.querySelector('[data-receipt-preview="receipt_place"]'),
                 receipt_date_label: document.querySelector('[data-receipt-preview="receipt_date_label"]'),
                 recipient_name: document.querySelector('[data-receipt-preview="recipient_name"]'),
-                recipient_position: document.querySelector('[data-receipt-preview="recipient_position"]'),
+                recipient_nip: document.querySelector('[data-receipt-preview="recipient_nip"]'),
+                approver_name: document.querySelector('[data-receipt-preview="approver_name"]'),
+                approver_nip: document.querySelector('[data-receipt-preview="approver_nip"]'),
+                treasurer_name: document.querySelector('[data-receipt-preview="treasurer_name"]'),
+                treasurer_nip: document.querySelector('[data-receipt-preview="treasurer_nip"]'),
                 grand_total_words: document.querySelector('[data-receipt-preview="grand_total_words"]'),
-                receipt_number: document.querySelector('[data-receipt-preview="receipt_number"]'),
             };
 
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             const staticReceipt = {
-                skpdName: @json($entry->skpd_name),
-                category: @json($entry->category),
-                executorName: @json($entry->executor_name),
-                destinationCity: @json($entry->destination_city),
-                assignmentNumber: @json($entry->assignment_number),
+                breakdown: @json($receiptBreakdown),
             };
 
             const formatLongDate = (value) => {
@@ -466,78 +504,97 @@
                 receiptPlace: document.getElementById('receipt_place')?.value || '-',
                 receiptDate: formatLongDate(document.getElementById('receipt_date')?.value || ''),
                 recipientName: document.getElementById('recipient_name')?.value || '-',
-                recipientPosition: document.getElementById('recipient_position')?.value || '-',
+                recipientNip: document.getElementById('recipient_nip')?.value || '-',
+                approverName: document.getElementById('approver_name')?.value || '........................................',
+                approverNip: document.getElementById('approver_nip')?.value || '........................................',
+                treasurerName: document.getElementById('treasurer_name')?.value || '........................................',
+                treasurerNip: document.getElementById('treasurer_nip')?.value || '........................................',
                 grandTotalLabel: `Rp ${new Intl.NumberFormat('id-ID').format(grandTotal)}`,
                 grandTotalWords: terbilang(grandTotal).replace(/^./, (char) => char.toUpperCase()),
             });
 
+            const buildBreakdownRows = () => {
+                if (!staticReceipt.breakdown.length) {
+                    return `
+                        <tr>
+                            <td>1</td>
+                            <td>Biaya perjalanan dinas sesuai rincian SPPD</td>
+                            <td>${escapeHtml(`Rp ${new Intl.NumberFormat('id-ID').format(grandTotal)}`)}</td>
+                        </tr>
+                    `;
+                }
+
+                return staticReceipt.breakdown.map((item, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${escapeHtml(item.description)}</td>
+                        <td>${escapeHtml(item.total_label)}</td>
+                    </tr>
+                `).join('');
+            };
+
             const buildReceiptPrintableHtml = (state) => `
                 <div class="sheet">
-                    <div class="office-name">Dokumen Kwitansi Perjalanan Dinas</div>
-                    <div class="office-subname">${escapeHtml(staticReceipt.skpdName).toUpperCase()}</div>
-                    <div class="office-caption">Bukti penerimaan uang perjalanan dinas</div>
+                    <div class="kop">
+                        <div class="kop-line-1">PEMERINTAH PROVINSI MALUKU UTARA</div>
+                        <div class="kop-line-2">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
+                        <div class="kop-line-3">Jln. Raya Sultan Nuku, Sofifi</div>
+                    </div>
 
-                    <table class="header-table">
-                        <tr>
-                            <td class="title-cell">
-                                <p class="title-main">KWITANSI</p>
-                                <div class="title-sub">Bukti Penerimaan Uang</div>
-                            </td>
-                            <td style="width: 220px; text-align: right;">
-                                <div class="number-box">
-                                    <div>No. Kwitansi</div>
-                                    <div style="margin-top: 4px; font-weight: bold;">${escapeHtml(state.receiptNumber)}</div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="divider"></div>
 
-                    <div class="rule"></div>
-                    <div class="rule-thin"></div>
+                    <div class="title">KWITANSI</div>
+                    <div class="receipt-number">Nomor: ${escapeHtml(state.receiptNumber)}</div>
 
-                    <table class="meta">
+                    <table class="meta-table">
                         <tr><td>Sudah terima dari</td><td>:</td><td>${escapeHtml(state.receivedFrom)}</td></tr>
-                        <tr><td>Untuk pembayaran</td><td>:</td><td>${escapeHtml(state.paymentPurpose)}</td></tr>
-                        <tr><td>Kategori Perjadin</td><td>:</td><td>${escapeHtml(staticReceipt.category)}</td></tr>
-                        <tr><td>Nama Pelaksana</td><td>:</td><td>${escapeHtml(staticReceipt.executorName)}</td></tr>
-                        <tr><td>Tujuan</td><td>:</td><td>${escapeHtml(staticReceipt.destinationCity)}</td></tr>
-                        <tr><td>No. Surat Tugas</td><td>:</td><td>${escapeHtml(staticReceipt.assignmentNumber)}</td></tr>
+                        <tr><td>Sebesar</td><td>:</td><td>${escapeHtml(state.grandTotalLabel)}</td></tr>
+                        <tr><td colspan="3"><div class="terbilang-box">Terbilang rupiah: ${escapeHtml(state.grandTotalWords)}</div></td></tr>
+                        <tr><td>Untuk pengeluaran</td><td>:</td><td>${escapeHtml(state.paymentPurpose)}</td></tr>
                     </table>
 
-                    <div class="amount-band">
-                        <table class="amount-table">
+                    <div class="label-rincian">Dengan rincian :</div>
+                    <table class="detail-table">
+                        <thead>
                             <tr>
-                                <td style="width: 220px;">
-                                    <div class="amount-label">Banyaknya Uang</div>
-                                    <div class="amount-main">${escapeHtml(state.grandTotalLabel)}</div>
-                                </td>
-                                <td>
-                                    <div class="terbilang-box">Terbilang: ${escapeHtml(state.grandTotalWords)}</div>
-                                </td>
+                                <th>No</th>
+                                <th>Uraian</th>
+                                <th>Jumlah</th>
                             </tr>
-                        </table>
+                        </thead>
+                        <tbody>
+                            ${buildBreakdownRows()}
+                            <tr class="detail-total">
+                                <td colspan="2">Total Jumlah</td>
+                                <td>${escapeHtml(state.grandTotalLabel)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="receipt-date">${escapeHtml(state.receiptPlace)}, ${escapeHtml(state.receiptDate)}</div>
+
+                    <div class="recipient-block">
+                        <div>Penerima,</div>
+                        <div class="stamp">Materai 10rb</div>
+                        <div class="signature-name">${escapeHtml(state.recipientName)}</div>
+                        <div class="signature-nip">NIP. ${escapeHtml(state.recipientNip)}</div>
                     </div>
 
-                    <div class="body-copy">
-                        Telah diterima uang sejumlah tersebut di atas untuk keperluan perjalanan dinas sesuai rincian SPPD
-                        pada data perjadin yang tersimpan dalam sistem.
-                    </div>
-
-                    <table class="signature">
+                    <table class="approval-grid">
                         <tr>
                             <td>
-                                <div class="signature-label">Mengetahui,</div>
-                                <div class="signature-sub">${escapeHtml(staticReceipt.skpdName)}</div>
-                                <div class="signature-space"></div>
-                                <div class="manual-line">........................................</div>
-                                <div class="signature-sub">Pejabat yang berwenang</div>
+                                <div class="approval-title">Setuju Dibayar</div>
+                                <div class="approval-subtitle">Kepala Badan</div>
+                                <div class="approval-space"></div>
+                                <div class="approval-name">${escapeHtml(state.approverName)}</div>
+                                <div>NIP. ${escapeHtml(state.approverNip)}</div>
                             </td>
                             <td>
-                                <div class="signature-label">${escapeHtml(state.receiptPlace)}, ${escapeHtml(state.receiptDate)}</div>
-                                <div class="signature-sub">Yang menerima,</div>
-                                <div class="signature-space"></div>
-                                <div class="signature-name">${escapeHtml(state.recipientName)}</div>
-                                <div class="signature-sub">${escapeHtml(state.recipientPosition)}</div>
+                                <div class="approval-title">Lunas Dibayar</div>
+                                <div class="approval-subtitle">Bendahara Pengeluaran</div>
+                                <div class="approval-space"></div>
+                                <div class="approval-name">${escapeHtml(state.treasurerName)}</div>
+                                <div>NIP. ${escapeHtml(state.treasurerNip)}</div>
                             </td>
                         </tr>
                     </table>
@@ -545,40 +602,40 @@
             `;
 
             const receiptPrintStyles = `
-                @page { size: A4 portrait; margin: 18mm 18mm 18mm 18mm; }
+                @page { size: A4 portrait; margin: 16mm 18mm 18mm; }
                 * { box-sizing: border-box; }
                 html, body { margin: 0; padding: 0; background: #ffffff; }
-                body { font-family: "DejaVu Sans", Arial, sans-serif; color: #0f172a; font-size: 10.5px; line-height: 1.6; }
-                .sheet { min-height: 255mm; width: 100%; max-width: 174mm; margin: 0 auto; overflow: hidden; }
-                .office-name { text-align: center; font-size: 10px; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px; }
-                .office-subname { text-align: center; font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; }
-                .office-caption { text-align: center; font-size: 10px; color: #475569; margin-bottom: 10px; }
-                .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 16px; }
-                .header-table td { vertical-align: top; }
-                .title-cell { width: 100%; text-align: center; }
-                .title-main { font-size: 22px; font-weight: bold; letter-spacing: 4px; margin: 0; }
-                .title-sub { font-size: 10px; margin-top: 6px; letter-spacing: 0.12em; text-transform: uppercase; }
-                .number-box { width: 185px; max-width: 100%; margin-left: auto; border: 1px solid #0f172a; padding: 8px 10px; font-size: 10px; text-align: center; }
-                .rule { border-top: 2px solid #0f172a; margin: 10px 0 16px; }
-                .rule-thin { border-top: 1px solid #334155; margin: -12px 0 18px; }
-                .meta { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 14px; }
-                .meta td { vertical-align: top; padding: 3px 0; overflow-wrap: anywhere; word-break: break-word; }
-                .meta td:first-child { width: 135px; }
-                .meta td:nth-child(2) { width: 16px; }
-                .amount-band { margin: 18px 0 12px; border-top: 1.3px solid #0f172a; border-bottom: 1.3px solid #0f172a; padding: 12px 0; }
-                .amount-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-                .amount-table td { vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
-                .amount-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; }
-                .amount-main { font-size: 20px; font-weight: bold; margin-top: 4px; }
-                .terbilang-box { border: 1px solid #94a3b8; padding: 10px 12px; margin-top: 12px; font-style: italic; overflow-wrap: anywhere; word-break: break-word; }
-                .body-copy { margin-top: 18px; text-align: justify; }
-                .signature { width: 100%; border-collapse: collapse; margin-top: 70px; }
-                .signature td { width: 50%; vertical-align: top; text-align: center; }
-                .signature-label { font-weight: bold; margin-bottom: 2px; }
-                .signature-sub { font-size: 10px; color: #475569; }
-                .signature-space { height: 78px; }
-                .signature-name { font-weight: bold; text-decoration: underline; }
-                .manual-line { margin: 0 auto 6px; width: 180px; text-align: center; letter-spacing: 0.16em; color: #334155; }
+                body { font-family: "DejaVu Sans", Arial, sans-serif; color: #111827; font-size: 11px; line-height: 1.38; }
+                .sheet { min-height: 257mm; width: 100%; max-width: 174mm; margin: 0 auto; }
+                .kop { text-align: center; margin-bottom: 6px; }
+                .kop-line-1 { font-size: 16px; font-weight: 700; letter-spacing: .02em; }
+                .kop-line-2 { font-size: 14px; font-weight: 700; margin-top: 2px; }
+                .kop-line-3 { font-size: 12px; margin-top: 2px; }
+                .divider { border-top: 2px solid #111827; margin: 8px 0 12px; }
+                .title { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: .04em; margin: 0; }
+                .receipt-number { text-align: center; font-size: 12px; margin-top: 4px; margin-bottom: 12px; }
+                .meta-table, .detail-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                .meta-table td { padding: 2px 0; vertical-align: top; word-break: break-word; }
+                .meta-table td:first-child { width: 130px; }
+                .meta-table td:nth-child(2) { width: 14px; }
+                .terbilang-box { border: 1px solid #9ca3af; padding: 7px 10px; margin: 6px 0 10px; font-style: italic; }
+                .label-rincian { margin-bottom: 6px; font-weight: 700; }
+                .detail-table th, .detail-table td { border: 1px solid #d1d5db; padding: 5px 7px; vertical-align: top; word-break: break-word; }
+                .detail-table th { background: #f3f4f6; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; text-align: left; }
+                .detail-table td:last-child, .detail-table th:last-child { text-align: right; white-space: nowrap; }
+                .detail-table td:first-child, .detail-table th:first-child { width: 34px; text-align: center; }
+                .detail-total td { font-weight: 700; background: #f9fafb; }
+                .receipt-date { margin-top: 14px; text-align: right; }
+                .recipient-block { width: 240px; margin-left: auto; margin-top: 6px; text-align: center; }
+                .stamp { margin-top: 26px; font-size: 11px; }
+                .signature-name { margin-top: 18px; font-weight: 700; text-decoration: underline; }
+                .signature-nip { margin-top: 4px; }
+                .approval-grid { width: 100%; border-collapse: collapse; margin-top: 24px; }
+                .approval-grid td { width: 50%; vertical-align: top; text-align: center; }
+                .approval-title { font-weight: 700; }
+                .approval-subtitle { margin-top: 2px; }
+                .approval-space { height: 54px; }
+                .approval-name { font-weight: 700; text-decoration: underline; }
             `;
 
             const syncPreview = () => {
@@ -595,7 +652,12 @@
                         return;
                     }
 
-                    previewTargets[key].textContent = input.value || '-';
+                    if (['recipient_nip', 'approver_nip', 'treasurer_nip'].includes(key)) {
+                        previewTargets[key].textContent = `NIP. ${input.value || '........................................'}`;
+                        return;
+                    }
+
+                    previewTargets[key].textContent = input.value || (['approver_name', 'treasurer_name'].includes(key) ? '........................................' : '-');
                 });
             };
 

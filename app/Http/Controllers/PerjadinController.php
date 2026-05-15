@@ -29,9 +29,8 @@ class PerjadinController extends Controller
     ];
 
     private const CATEGORY_OPTIONS = [
-        'Perjadin Luar Provinsi',
-        'Perjadin Luar Kota Dalam Provinsi',
-        'Perjadin Dalam Kota',
+        'Perjadin Luar Daerah',
+        'Perjadin Dalam Daerah',
     ];
 
     private const GRADE_OPTIONS = [
@@ -149,6 +148,7 @@ class PerjadinController extends Controller
             'activeCategory' => $request->string('category')->toString(),
             'activeKeyword' => trim($request->string('keyword')->toString()),
             'costGroups' => $this->costGroups($perjadinEntry),
+            'receiptBreakdown' => $this->receiptBreakdown($perjadinEntry),
             'receiptDefaults' => [
                 'receipt_number' => old('receipt_number', ''),
                 'received_from' => old('received_from', $perjadinEntry->skpd_name),
@@ -156,7 +156,11 @@ class PerjadinController extends Controller
                 'receipt_place' => old('receipt_place', $perjadinEntry->signature_location ?: $perjadinEntry->destination_city),
                 'receipt_date' => old('receipt_date', optional($perjadinEntry->assignment_date)->format('Y-m-d') ?: now()->format('Y-m-d')),
                 'recipient_name' => old('recipient_name', $perjadinEntry->executor_name),
-                'recipient_position' => old('recipient_position', $perjadinEntry->position_name),
+                'recipient_nip' => old('recipient_nip', ''),
+                'approver_name' => old('approver_name', ''),
+                'approver_nip' => old('approver_nip', ''),
+                'treasurer_name' => old('treasurer_name', ''),
+                'treasurer_nip' => old('treasurer_nip', ''),
             ],
         ]);
     }
@@ -172,7 +176,11 @@ class PerjadinController extends Controller
             'receipt_place' => ['required', 'string', 'max:255'],
             'receipt_date' => ['required', 'date'],
             'recipient_name' => ['required', 'string', 'max:255'],
-            'recipient_position' => ['nullable', 'string', 'max:255'],
+            'recipient_nip' => ['nullable', 'string', 'max:255'],
+            'approver_name' => ['nullable', 'string', 'max:255'],
+            'approver_nip' => ['nullable', 'string', 'max:255'],
+            'treasurer_name' => ['nullable', 'string', 'max:255'],
+            'treasurer_nip' => ['nullable', 'string', 'max:255'],
         ]);
 
         $grandTotal = (int) $perjadinEntry->grand_total;
@@ -185,10 +193,15 @@ class PerjadinController extends Controller
             'receiptPlace' => $data['receipt_place'],
             'receiptDate' => $data['receipt_date'],
             'recipientName' => $data['recipient_name'],
-            'recipientPosition' => $data['recipient_position'] ?: '-',
+            'recipientNip' => $data['recipient_nip'] ?: '-',
+            'approverName' => $data['approver_name'] ?: '........................................',
+            'approverNip' => $data['approver_nip'] ?: '........................................',
+            'treasurerName' => $data['treasurer_name'] ?: '........................................',
+            'treasurerNip' => $data['treasurer_nip'] ?: '........................................',
             'grandTotal' => $grandTotal,
             'grandTotalLabel' => $this->moneyLabel($grandTotal),
             'grandTotalWords' => ucfirst(trim($this->terbilang($grandTotal))).' rupiah',
+            'receiptBreakdown' => $this->receiptBreakdown($perjadinEntry),
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download('kwitansi-perjadin-'.$perjadinEntry->id.'.pdf');
@@ -728,6 +741,61 @@ class PerjadinController extends Controller
                 ],
             ],
         ];
+    }
+
+    private function receiptBreakdown(PerjadinEntry $entry): array
+    {
+        $items = [];
+
+        if ($entry->daily_allowance_enabled && $entry->daily_allowance_total > 0) {
+            $items[] = [
+                'description' => 'Uang Harian '.(int) $entry->daily_allowance_days.' hari x '.$this->moneyLabel($entry->daily_allowance_rate),
+                'total' => (int) $entry->daily_allowance_total,
+                'total_label' => $this->moneyLabel($entry->daily_allowance_total),
+            ];
+        }
+
+        if ($entry->representation_enabled && $entry->representation_total > 0) {
+            $items[] = [
+                'description' => 'Uang Representasi '.(int) $entry->representation_days.' hari x '.$this->moneyLabel($entry->representation_rate),
+                'total' => (int) $entry->representation_total,
+                'total_label' => $this->moneyLabel($entry->representation_total),
+            ];
+        }
+
+        if ($entry->ticket_enabled && $entry->ticket_total > 0) {
+            $items[] = [
+                'description' => 'Biaya Transportasi 1 orang x '.$this->moneyLabel($entry->ticket_total),
+                'total' => (int) $entry->ticket_total,
+                'total_label' => $this->moneyLabel($entry->ticket_total),
+            ];
+        }
+
+        if ($entry->lodging_enabled && $entry->lodging_total > 0) {
+            $items[] = [
+                'description' => 'Biaya Penginapan '.(int) $entry->lodging_nights.' malam x '.$this->moneyLabel($entry->lodging_rate),
+                'total' => (int) $entry->lodging_total,
+                'total_label' => $this->moneyLabel($entry->lodging_total),
+            ];
+        }
+
+        if ($entry->local_transport_enabled && $entry->local_transport_total > 0) {
+            $items[] = [
+                'description' => 'Transportasi Lokal 1 orang x '.$this->moneyLabel($entry->local_transport_total),
+                'total' => (int) $entry->local_transport_total,
+                'total_label' => $this->moneyLabel($entry->local_transport_total),
+            ];
+        }
+
+        if ($entry->other_cost_enabled && $entry->other_cost_amount > 0) {
+            $items[] = [
+                'description' => 'Biaya Lain-lain 1 orang x '.$this->moneyLabel($entry->other_cost_amount),
+                'total' => (int) $entry->other_cost_amount,
+                'total_label' => $this->moneyLabel($entry->other_cost_amount),
+            ];
+        }
+
+        return $items;
     }
 
     private function moneyLabel(?int $value): string

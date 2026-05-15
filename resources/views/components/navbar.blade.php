@@ -12,7 +12,7 @@
         $navItems[] = ['label' => 'Dana Saving', 'href' => route('dana-saving.index'), 'active' => request()->routeIs('dana-saving.*')];
     }
 
-    if (in_array($role, ['admin', 'verifikator'], true)) {
+    if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {
         $navItems[] = ['label' => 'Perjadin', 'href' => route('perjadin'), 'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*')];
     }
 
@@ -108,3 +108,5 @@
         </div>
     </el-disclosure>
 </nav>
+
+

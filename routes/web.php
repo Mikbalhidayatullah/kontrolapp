@@ -48,7 +48,7 @@ Route::middleware(['auth', 'role:admin,bendahara'])->group(function () {
     Route::delete('/dana-saving/{savingAllocation}', [SavingAllocationController::class, 'destroy'])->name('dana-saving.destroy');
 });
 
-Route::middleware(['auth', 'role:admin,verifikator'])->group(function () {
+Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {
     Route::get('/perjadin', [PerjadinController::class, 'index'])->name('perjadin');
     Route::get('/add-perjadin', [PerjadinController::class, 'create'])->name('add-perjadin');
     Route::post('/add-perjadin', [PerjadinController::class, 'store'])->name('add-perjadin.store');
@@ -69,3 +69,4 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('users', UserController::class)->except('show');
 });
+
