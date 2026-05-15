@@ -14,35 +14,37 @@ class ReportController extends Controller
         $isVerifikator = $user->role === 'verifikator';
 
         if ($isVerifikator) {
-            $entries = PerjadinEntry::query()->latest('submission_date')->latest()->get();
+            $entries = PerjadinEntry::query()->latest('assignment_date')->latest('start_date')->latest()->get();
 
             return view('report', [
                 'title' => 'Report',
                 'isVerifikator' => true,
+                'lastColumnLabel' => 'No Surat Tugas',
                 'cards' => [
-                    ['label' => 'Perjadin Diverifikasi', 'value' => $entries->where('status', 'Terverifikasi')->count().' Dokumen', 'note' => 'Dokumen yang sudah lolos verifikasi'],
-                    ['label' => 'Butuh Revisi', 'value' => $entries->where('status', 'Butuh Revisi Bukti')->count().' Dokumen', 'note' => 'Perlu kelengkapan bukti atau catatan'],
-                    ['label' => 'Nominal Perjadin', 'value' => 'Rp '.number_format((int) $entries->sum('budget_amount'), 0, ',', '.'), 'note' => 'Akumulasi semua budget perjadin'],
+                    ['label' => 'Total Perjadin', 'value' => $entries->count().' Dokumen', 'note' => 'Seluruh data perjadin yang tersimpan'],
+                    ['label' => 'Kategori Aktif', 'value' => $entries->pluck('category')->unique()->count().' Kategori', 'note' => 'Kategori yang sudah terisi data'],
+                    ['label' => 'Nominal Perjadin', 'value' => 'Rp '.number_format((int) $entries->sum('grand_total'), 0, ',', '.'), 'note' => 'Akumulasi grand total seluruh perjadin'],
                 ],
                 'rows' => $entries->take(8)->map(fn (PerjadinEntry $entry) => [
-                    'periode' => optional($entry->submission_date)->translatedFormat('d M Y'),
-                    'kategori' => $entry->destination_city.' / '.$entry->transport_type,
-                    'nominal' => 'Rp '.number_format((int) $entry->budget_amount, 0, ',', '.'),
-                    'status' => $entry->status,
+                    'periode' => optional($entry->assignment_date)->translatedFormat('d M Y'),
+                    'kategori' => $entry->category.' / '.$entry->destination_city,
+                    'nominal' => 'Rp '.number_format((int) $entry->grand_total, 0, ',', '.'),
+                    'status' => $entry->assignment_number,
                 ])->all(),
             ]);
         }
 
         $controlEntries = ControlEntry::query()->latest('entry_date')->latest()->get();
-        $perjadinEntries = PerjadinEntry::query()->latest('submission_date')->latest()->get();
+        $perjadinEntries = PerjadinEntry::query()->latest('assignment_date')->latest('start_date')->latest()->get();
 
         return view('report', [
             'title' => 'Report',
             'isVerifikator' => false,
+            'lastColumnLabel' => 'Status',
             'cards' => [
                 ['label' => 'Total Pengeluaran', 'value' => 'Rp '.number_format((int) $controlEntries->sum('amount_out'), 0, ',', '.'), 'note' => 'Akumulasi semua dana keluar'],
                 ['label' => 'Dana Masuk', 'value' => 'Rp '.number_format((int) $controlEntries->sum('amount_in'), 0, ',', '.'), 'note' => 'Akumulasi dana yang diterima'],
-                ['label' => 'Total Perjadin', 'value' => 'Rp '.number_format((int) $perjadinEntries->sum('budget_amount'), 0, ',', '.'), 'note' => 'Total nominal data perjadin'],
+                ['label' => 'Total Perjadin', 'value' => 'Rp '.number_format((int) $perjadinEntries->sum('grand_total'), 0, ',', '.'), 'note' => 'Total nominal data perjadin'],
             ],
             'rows' => $controlEntries->take(8)->map(fn (ControlEntry $entry) => [
                 'periode' => optional($entry->entry_date)->translatedFormat('d M Y'),

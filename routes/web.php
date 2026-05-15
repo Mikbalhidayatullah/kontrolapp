@@ -52,6 +52,14 @@ Route::middleware(['auth', 'role:admin,verifikator'])->group(function () {
     Route::get('/perjadin', [PerjadinController::class, 'index'])->name('perjadin');
     Route::get('/add-perjadin', [PerjadinController::class, 'create'])->name('add-perjadin');
     Route::post('/add-perjadin', [PerjadinController::class, 'store'])->name('add-perjadin.store');
+    Route::get('/perjadin/{perjadinEntry}', [PerjadinController::class, 'show'])->name('perjadin.show');
+    Route::post('/perjadin/{perjadinEntry}/duplicate', [PerjadinController::class, 'duplicate'])->name('perjadin.duplicate');
+    Route::get('/perjadin/{perjadinEntry}/detail/pdf', [PerjadinController::class, 'downloadDetailPdf'])->name('perjadin.detail.pdf');
+    Route::post('/perjadin/{perjadinEntry}/kwitansi/pdf', [PerjadinController::class, 'downloadReceiptPdf'])->name('perjadin.receipt.pdf');
+    Route::get('/perjadin/{perjadinEntry}/edit', [PerjadinController::class, 'edit'])->name('perjadin.edit');
+    Route::put('/perjadin/{perjadinEntry}', [PerjadinController::class, 'update'])->name('perjadin.update');
+    Route::delete('/perjadin/{perjadinEntry}', [PerjadinController::class, 'destroy'])->name('perjadin.destroy');
+    Route::get('/perjadin/{perjadinEntry}/lampiran/{attachment}', [PerjadinController::class, 'showAttachment'])->name('perjadin.attachments.show');
 });
 
 Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {

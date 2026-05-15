@@ -33,7 +33,7 @@
                                 <th class="px-5 py-4 font-medium">Periode</th>
                                 <th class="px-5 py-4 font-medium">Kategori</th>
                                 <th class="px-5 py-4 font-medium">Nominal</th>
-                                <th class="px-5 py-4 font-medium">Status</th>
+                                <th class="px-5 py-4 font-medium">{{ $lastColumnLabel ?? 'Status' }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">

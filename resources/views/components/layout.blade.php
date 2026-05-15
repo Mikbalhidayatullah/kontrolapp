@@ -55,5 +55,47 @@
             <path d="m5 12 7-7 7 7" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
     </a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-auto-submit-filter]').forEach((form) => {
+                let submitTimer = null;
+                let isSubmitting = false;
+
+                const submitForm = () => {
+                    if (isSubmitting) {
+                        return;
+                    }
+
+                    isSubmitting = true;
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                        return;
+                    }
+
+                    form.submit();
+                };
+
+                form.querySelectorAll('[data-auto-submit-control]').forEach((control) => {
+                    const delay = Number(control.dataset.autoSubmitDelay || 0);
+
+                    if (control.tagName === 'SELECT') {
+                        control.addEventListener('change', submitForm);
+                        return;
+                    }
+
+                    control.addEventListener('input', () => {
+                        window.clearTimeout(submitTimer);
+                        submitTimer = window.setTimeout(submitForm, delay || 350);
+                    });
+
+                    control.addEventListener('change', () => {
+                        window.clearTimeout(submitTimer);
+                        submitTimer = window.setTimeout(submitForm, delay || 0);
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 </html>

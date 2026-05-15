@@ -25,13 +25,13 @@
                     <h2 class="mt-1 text-xl font-semibold text-slate-900">Lembar kontrol per bulan</h2>
                     <p class="mt-1 text-sm text-slate-500">Data tabel di bawah ini akan mengikuti bulan dan tahun yang kamu pilih.</p>
                 </div>
-                <form method="GET" action="{{ route('lembar-kontrol') }}" class="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,180px)_auto]">
-                    <select name="month" class="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                <form method="GET" action="{{ route('lembar-kontrol') }}" data-auto-submit-filter class="grid gap-3 sm:grid-cols-[minmax(0,220px)_minmax(0,180px)_auto]">
+                    <select name="month" data-auto-submit-control class="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
                         @foreach ($monthOptions as $option)
                             <option value="{{ $option['value'] }}" @selected($currentPeriod['month'] === $option['value'])>{{ $option['label'] }}</option>
                         @endforeach
                     </select>
-                    <select name="year" class="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                    <select name="year" data-auto-submit-control class="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
                         @foreach ($yearOptions as $yearOption)
                             <option value="{{ $yearOption }}" @selected($currentPeriod['year'] === $yearOption)>{{ $yearOption }}</option>
                         @endforeach
@@ -96,11 +96,11 @@
             </div>
 
             <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <form method="GET" action="{{ route('lembar-kontrol') }}" class="grid gap-2 lg:grid-cols-[minmax(0,220px)_auto_auto] lg:items-center">
+                <form method="GET" action="{{ route('lembar-kontrol') }}" data-auto-submit-filter class="grid gap-2 lg:grid-cols-[minmax(0,220px)_auto_auto] lg:items-center">
                     <input type="hidden" name="month" value="{{ $currentPeriod['month'] }}">
                     <input type="hidden" name="year" value="{{ $currentPeriod['year'] }}">
                     <div>
-                        <select name="fund_source" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                        <select name="fund_source" data-auto-submit-control class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
                             <option value="">Semua sumber dana</option>
                             @foreach ($fundSourceOptions as $fundSourceOption)
                                 <option value="{{ $fundSourceOption }}" @selected($selectedFundSource === $fundSourceOption)>{{ $fundSourceOption }}</option>
