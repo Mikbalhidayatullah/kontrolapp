@@ -136,6 +136,10 @@
                         <p class="mt-2 font-semibold text-slate-900">{{ $entry->position_name }}</p>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Eselon</p>
+                        <p class="mt-2 font-semibold text-slate-900">{{ $entry->echelon_level ?: '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Golongan</p>
                         <p class="mt-2 font-semibold text-slate-900">{{ $entry->grade }}</p>
                     </div>
@@ -161,13 +165,32 @@
                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Tanggal Surat Tugas</p>
                         <p class="mt-2 font-semibold text-slate-900">{{ optional($entry->assignment_date)->translatedFormat('d M Y') }}</p>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                    @if ($entry->category === 'Perjadin Dalam Daerah')
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kabupaten Asal</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->origin_regency ?: '-' }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kecamatan Asal</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->origin_district ?: '-' }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kabupaten Tujuan</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->destination_regency ?: '-' }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kecamatan Tujuan</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->destination_district ?: '-' }}</p>
+                        </div>
+                    @else
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
+                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kota / Kab Tujuan</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->destination_city }}</p>
+                        </div>
+                    @endif
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Lokasi TTD</p>
                         <p class="mt-2 font-semibold text-slate-900">{{ $entry->signature_location ?: '-' }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
-                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kota / Kab Tujuan</p>
-                        <p class="mt-2 font-semibold text-slate-900">{{ $entry->destination_city }}</p>
                     </div>
                 </div>
             </article>
@@ -204,15 +227,15 @@
 
         <section data-print-section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
             <p class="text-sm font-medium text-sky-600">04 Dokumentasi</p>
-            <div class="mt-5 grid gap-4 md:grid-cols-2">
+            <div class="mt-5 grid gap-4 md:grid-cols-3">
                 <article class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
-                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kegiatan</p>
+                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Foto Kegiatan</p>
                     @if ($entry->activity_file_path)
                         <a href="{{ route('perjadin.attachments.show', [$entry, 'activity']) }}" target="_blank" class="mt-3 inline-block font-semibold text-sky-700 hover:text-sky-900 hover:underline">
-                            {{ $entry->activity_file_original_name ?: 'Lihat PDF kegiatan' }}
+                            {{ $entry->activity_file_original_name ?: 'Lihat PDF foto kegiatan' }}
                         </a>
                     @else
-                        <p class="mt-3 text-sm text-slate-400">Belum ada file kegiatan.</p>
+                        <p class="mt-3 text-sm text-slate-400">Belum ada file foto kegiatan.</p>
                     @endif
                 </article>
                 <article class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
@@ -223,6 +246,16 @@
                         </a>
                     @else
                         <p class="mt-3 text-sm text-slate-400">Belum ada file nota / tiket.</p>
+                    @endif
+                </article>
+                <article class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Laporan Perjadin</p>
+                    @if ($entry->report_file_path)
+                        <a href="{{ route('perjadin.attachments.show', [$entry, 'report']) }}" target="_blank" class="mt-3 inline-block font-semibold text-sky-700 hover:text-sky-900 hover:underline">
+                            {{ $entry->report_file_original_name ?: 'Lihat PDF laporan perjadin' }}
+                        </a>
+                    @else
+                        <p class="mt-3 text-sm text-slate-400">Belum ada file laporan perjadin.</p>
                     @endif
                 </article>
             </div>

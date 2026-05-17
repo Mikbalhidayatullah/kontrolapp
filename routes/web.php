@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ControlEntryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LocalTransportSbuController;
 use App\Http\Controllers\PerjadinController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SavingAllocationController;
@@ -60,11 +61,23 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
     Route::put('/perjadin/{perjadinEntry}', [PerjadinController::class, 'update'])->name('perjadin.update');
     Route::delete('/perjadin/{perjadinEntry}', [PerjadinController::class, 'destroy'])->name('perjadin.destroy');
     Route::get('/perjadin/{perjadinEntry}/lampiran/{attachment}', [PerjadinController::class, 'showAttachment'])->name('perjadin.attachments.show');
+    Route::get('/sbu-transport-lokal', [LocalTransportSbuController::class, 'index'])->name('local-transport-sbus.index');
 });
 
 Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {
     Route::get('/report', [ReportController::class, 'index'])->name('report');
 });
+
+Route::middleware(['auth', 'role:admin,bendahara'])->group(function () {
+    Route::get('/sbu-transport-lokal/tambah', [LocalTransportSbuController::class, 'create'])->name('local-transport-sbus.create');
+    Route::post('/sbu-transport-lokal', [LocalTransportSbuController::class, 'store'])->name('local-transport-sbus.store');
+    Route::get('/sbu-transport-lokal/{localTransportSbu}/edit', [LocalTransportSbuController::class, 'edit'])->name('local-transport-sbus.edit');
+    Route::put('/sbu-transport-lokal/{localTransportSbu}', [LocalTransportSbuController::class, 'update'])->name('local-transport-sbus.update');
+    Route::delete('/sbu-transport-lokal/{localTransportSbu}', [LocalTransportSbuController::class, 'destroy'])->name('local-transport-sbus.destroy');
+    Route::get('/sbu-transport-lokal/{type}/{id}/edit', [LocalTransportSbuController::class, 'editEntry'])->name('local-transport-sbus.entries.edit');
+    Route::put('/sbu-transport-lokal/{type}/{id}', [LocalTransportSbuController::class, 'updateEntry'])->name('local-transport-sbus.entries.update');
+    Route::delete('/sbu-transport-lokal/{type}/{id}', [LocalTransportSbuController::class, 'destroyEntry'])->name('local-transport-sbus.entries.destroy');
+  });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('users', UserController::class)->except('show');

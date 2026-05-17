@@ -104,6 +104,7 @@
             <tr><td>Nama SKPD</td><td>{{ $entry->skpd_name }}</td></tr>
             <tr><td>Nama Pelaksana</td><td>{{ $entry->executor_name }}</td></tr>
             <tr><td>Jabatan</td><td>{{ $entry->position_name }}</td></tr>
+            <tr><td>Eselon</td><td>{{ $entry->echelon_level ?: '-' }}</td></tr>
             <tr><td>Golongan</td><td>{{ $entry->grade }}</td></tr>
         </table>
     </div>
@@ -116,8 +117,15 @@
             <tr><td>Sampai</td><td>{{ optional($entry->end_date)->translatedFormat('d M Y') }}</td></tr>
             <tr><td>No Surat Tugas</td><td>{{ $entry->assignment_number }}</td></tr>
             <tr><td>Tanggal Surat Tugas</td><td>{{ optional($entry->assignment_date)->translatedFormat('d M Y') }}</td></tr>
+            @if ($entry->category === 'Perjadin Dalam Daerah')
+                <tr><td>Kabupaten Asal</td><td>{{ $entry->origin_regency ?: '-' }}</td></tr>
+                <tr><td>Kecamatan Asal</td><td>{{ $entry->origin_district ?: '-' }}</td></tr>
+                <tr><td>Kabupaten Tujuan</td><td>{{ $entry->destination_regency ?: '-' }}</td></tr>
+                <tr><td>Kecamatan Tujuan</td><td>{{ $entry->destination_district ?: '-' }}</td></tr>
+            @else
+                <tr><td>Kota / Kab Tujuan</td><td>{{ $entry->destination_city }}</td></tr>
+            @endif
             <tr><td>Lokasi TTD</td><td>{{ $entry->signature_location ?: '-' }}</td></tr>
-            <tr><td>Kota / Kab Tujuan</td><td>{{ $entry->destination_city }}</td></tr>
         </table>
     </div>
 

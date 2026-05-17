@@ -1,0 +1,203 @@
+KOTA TERNATE|1a|Sofifi|Ibu Kota Ternate|800000|One Way / PP
+KOTA TERNATE|1b|Ternate|Kecamatan-kecamatan dalam Pulau Ternate|100000|One Way / PP
+KOTA TERNATE|1c|Ternate|Kecamatan Hiri|150000|One Way / PP
+KOTA TERNATE|1d|Ternate|Kecamatan Moti|200000|One Way / PP
+KOTA TERNATE|1e|Ternate|Kecamatan Batang Dua|350000|One Way / PP
+KOTA TIDORE KEPULAUAN|2a|Sofifi|Ibu Kota Tidore Kepulauan|800000|One Way / PP
+KOTA TIDORE KEPULAUAN|2b|Sofifi|Kecamatan Oba Utara|500000|One Way / PP
+KOTA TIDORE KEPULAUAN|2c|Sofifi|Kecamatan Oba Tengah|500000|One Way / PP
+KOTA TIDORE KEPULAUAN|2d|Sofifi|Kecamatan Oba|500000|One Way / PP
+KOTA TIDORE KEPULAUAN|2e|Sofifi|Kecamatan Oba Selatan|1000000|One Way / PP
+KOTA TIDORE KEPULAUAN|2f|Tidore|Kecamatan Tidore Selatan|250000|One Way / PP
+KOTA TIDORE KEPULAUAN|2g|Tidore|Kecamatan Tidore Utara|250000|One Way / PP
+KOTA TIDORE KEPULAUAN|2h|Tidore|Kecamatan Tidore Timur|250000|One Way / PP
+KOTA TIDORE KEPULAUAN|2i|Tidore|Pulau Maitara|160000|One Way / PP
+KOTA TIDORE KEPULAUAN|2j|Tidore|Pulau Mare|200000|One Way / PP
+KOTA TIDORE KEPULAUAN|2k|Tidore|Ternate|220000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3a|Sofifi|Ibu Kota Halmahera Tengah|1000000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3b|Weda|Kecamatan Weda Selatan|1500000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3c|Weda|Kecamatan Weda Tengah|1750000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3d|Weda|Kecamatan Weda Utara|2000000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3e|Weda|Kecamatan Weda Timur|2500000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3f|Weda|Kecamatan Patani|3200000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3g|Weda|Kecamatan Patani Barat|3000000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3h|Weda|Kecamatan Patani Utara|3500000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3i|Weda|Kecamatan Patani Timur|4000000|One Way / PP
+KABUPATEN HALMAHERA TENGAH|3j|Weda|Gebe|3750000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4a|Sofifi|Ibu Kota Halmahera Barat|850000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4b|Ibu Kota Kabupaten|Kecamatan Jailolo Selatan|700000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4c|Ibu Kota Kabupaten|Kecamatan Jailolo Timur|800000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4d|Ibu Kota Kabupaten|Kecamatan Sahu|600000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4e|Ibu Kota Kabupaten|Kecamatan Sahu Timur|600000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4f|Ibu Kota Kabupaten|Kecamatan Ibu|800000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4g|Ibu Kota Kabupaten|Kecamatan Ibu Selatan|700000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4h|Ibu Kota Kabupaten|Kecamatan Tabaru|900000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4i|Ibu Kota Kabupaten|Kecamatan Loloda|1500000|One Way / PP
+KABUPATEN HALMAHERA BARAT|4j|Ibu Kota Kabupaten|Kecamatan Loloda Tengah|1750000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5a|Sofifi|Ibu Kota Halmahera Timur|1250000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5b|Ibu Kota Kabupaten|Kecamatan Maba|1500000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5c|Ibu Kota Kabupaten|Kecamatan Maba Selatan|1500000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5d|Ibu Kota Kabupaten|Kecamatan Maba Tengah|2500000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5e|Ibu Kota Kabupaten|Kecamatan Maba Utara|4500000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5f|Ibu Kota Kabupaten|Kecamatan Wasile|2300000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5g|Ibu Kota Kabupaten|Kecamatan Wasile Tengah|2500000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5h|Ibu Kota Kabupaten|Kecamatan Wasile Timur|2200000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5i|Ibu Kota Kabupaten|Kecamatan Wasile Utara|4000000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5j|Ibu Kota Kabupaten|Kecamatan Wasile Selatan|3000000|One Way / PP
+KABUPATEN HALMAHERA TIMUR|5k|Ibu Kota Kabupaten|Kecamatan Kota Maba|750000|One Way / PP
+KABUPATEN PULAU MOROTAI|6a|Sofifi|Ibu Kota Kab. Pulau Morotai|2000000|One Way / PP
+KABUPATEN PULAU MOROTAI|6b|Ibu Kota|Morotai Selatan|1350000|One Way / PP
+KABUPATEN PULAU MOROTAI|6c|Ibu Kota|Morotai Timur|1250000|One Way / PP
+KABUPATEN PULAU MOROTAI|6d|Ibu Kota|Morotai Utara|1350000|One Way / PP
+KABUPATEN PULAU MOROTAI|6e|Ibu Kota|Morotai Jaya|1450000|One Way / PP
+KABUPATEN PULAU MOROTAI|6f|Ibu Kota|Morotai Selatan Barat|1350000|One Way / PP
+KABUPATEN PULAU MOROTAI|6g|Ibu Kota|Pulau Rao|3150000|One Way / PP
+KABUPATEN PULAU MOROTAI|6h|Ibu Kota|Galo-Galo, Ngele-Ngele, Koloray|2700000|One Way / PP
+KABUPATEN PULAU MOROTAI|6i|Ibu Kota|Tigogoli|1550000|One Way / PP
+KABUPATEN PULAU MOROTAI|6j|Ibu Kota|Libano, Cempaka, Hapo, Titigoli|3650000|One Way / PP
+KABUPATEN PULAU MOROTAI|6k|Ibu Kota|Cio Maloleo, Cio Gerong|1700000|One Way / PP
+KABUPATEN PULAU MOROTAI|6l|Ibu Kota|Cio Dalam|1700000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7a|Sofifi|Ibu Kota Kab. Halmahera Utara|900000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7b|Tobelo|Loloda Utara|2500000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7c|Tobelo|Loloda Kepulauan|4500000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7d|Tobelo|Galela|350000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7e|Tobelo|Galela Selatan|350000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7f|Tobelo|Galela Barat|350000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7g|Tobelo|Galela Utara|1200000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7h|Tobelo|Tobelo Tengah|150000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7i|Tobelo|Tobelo Selatan|350000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7j|Tobelo|Tobelo Barat|350000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7k|Tobelo|Tobelo Timur|350000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7l|Tobelo|Tobelo Utara|150000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7m|Tobelo|Kao|600000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7n|Tobelo|Kao Utara|600000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7o|Tobelo|Kao Barat|800000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7p|Tobelo|Kao Teluk|1000000|One Way / PP
+KABUPATEN HALMAHERA UTARA|7q|Tobelo|Malifut dan NHM|800000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8-0|Sofifi|Ibu Kota Kabupaten Halmahera Selatan|1800000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8a|Labuha|Kecamatan Kasiruta Barat (Palamea)|2500000|One Way / PP - Reguler
+KABUPATEN HALMAHERA SELATAN|8a-1|Palamea|Doko|700000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8a-2|Palamea|Arumamang|700000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8a-3|Palamea|Sengga Baru|1500000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8a-4|Palamea|Lata-Lata|2000000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8a-5|Palamea|Sidanga|2000000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8a-6|Palamea|Bisori|1500000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8a-7|Palamea|Imbu-Imbu|1500000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8a-8|Palamea|Marikapal|1500000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8a-9|Palamea|Kakupang|2000000|One Way / PP - Sewa Speed
+KABUPATEN HALMAHERA SELATAN|8b|Labuha|Kecamatan Kasiruta Timur (Loleojaya)|400000|One Way / PP - Reguler
+KABUPATEN HALMAHERA SELATAN|8b-1|Loleojaya|Loleomekar|200000|One Way / PP - Sewa Kendaraan
+KABUPATEN HALMAHERA SELATAN|8b-2|Loleojaya|Marituso|1000000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8b-3|Loleojaya|Tawa|1500000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8b-4|Loleojaya|Tutuhu|2000000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8b-5|Loleojaya|Kou|1000000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8b-6|Loleojaya|Jere|2000000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8b-7|Loleojaya|Kasdam|2000000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8c|Labuha/Kupal|Kecamatan Obi Barat|600000|One Way / PP - Kapal Reguler
+KABUPATEN HALMAHERA SELATAN|8c-1|Laiwui|Jikohay|6000000|One Way / PP - Speed Boat
+KABUPATEN HALMAHERA SELATAN|8c-2|Jikohay|Soasangadji|1800000|One Way / PP - Speed Boat
+KABUPATEN HALMAHERA SELATAN|8c-3|Jikohay|Manatahan|1800000|One Way / PP - Speed Boat
+KABUPATEN HALMAHERA SELATAN|8c-4|Jikohay|Alam Pelita|1800000|One Way / PP - Speed Boat
+KABUPATEN HALMAHERA SELATAN|8c-5|Jikohay|Alam Kenanga|3000000|One Way / PP - Speed Boat
+KABUPATEN HALMAHERA SELATAN|8c-6|Jikohay|Tapa|3000000|One Way / PP - Speed Boat
+KABUPATEN HALMAHERA SELATAN|8d|Labuha/Kupal|Obi Selatan (Laiwui)|600000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8d-1|Laiwui|Wayaloar|6000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8d-2|Wayaloar|Mano|2000000|One Way / PP - Speed Boat Reguler
+KABUPATEN HALMAHERA SELATAN|8d-3|Wayaloar|Fluk|2500000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8d-4|Wayaloar|Soligi|3000000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8d-5|Wayaloar|Loleo|2500000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8d-6|Wayaloar|Ocimaleo|2500000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8d-7|Wayaloar|Bobo|3000000|One Way / PP - Sewa Longboat
+KABUPATEN HALMAHERA SELATAN|8e|Labuha/Kupal|Obi Timur Laiwui|600000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8e-1|Laiwui|Sum|3500000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8e-2|Sum|Sum|100000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8e-3|Sum|Wooi|3000000|One Way / PP - Sewa Speedboat
+KABUPATEN HALMAHERA SELATAN|8e-4|Sum|Sosepe|2000000|One Way / PP - Sewa Speedboat
+KABUPATEN HALMAHERA SELATAN|8e-5|Sum|Kelo|2000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8e-6|Sum|Jikotamo|600000|One Way / PP - Reguler
+KABUPATEN HALMAHERA SELATAN|8f|Sofifi|Gane Barat Saketa|3000000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8f-1|Labuha/Babang|Gane Barat Saketa|6000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8f-2|Babang|Saketa|200000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8f-3|Saketa|Cango|550000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8f-4|Saketa|Koititi|550000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8f-5|Saketa|Doro|550000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8f-6|Saketa|Bumi Rahmat|550000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8f-7|Saketa|Balitata|2000000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8f-8|Saketa|Oha|3000000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8f-9|Saketa|Papaceda|4500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8f-10|Saketa|Tabamasa|5500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8f-11|Saketa|Lemo-Lemo|6500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8g|Labuha|Labuha - Gane Dalam|300000|One Way / PP - Speed Boat Reguler
+KABUPATEN HALMAHERA SELATAN|8g-1|Gane Dalam|Sekely|1250000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8g-2|Gane Dalam|Yamli|1000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8g-3|Gane Dalam|Dowora|1500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8g-4|Gane Dalam|Jibubu|1000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8g-5|Gane Dalam|Awis|1250000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8g-6|Gane Dalam|Tawa|1500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8h|Labuha|Labuha - Laromabati|700000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8h-1|Laromabati|Wayasipang|300000|One Way / PP - Sewa Kendaraan
+KABUPATEN HALMAHERA SELATAN|8h-2|Laromabati|Ngokomaloko|250000|One Way / PP - Sewa Kendaraan
+KABUPATEN HALMAHERA SELATAN|8h-3|Laromabati|Modoyamo|250000|One Way / PP - Sewa Kendaraan
+KABUPATEN HALMAHERA SELATAN|8h-4|Laromabati|Ake Jailolo|2000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8h-5|Laromabati|Gayap|1500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8h-6|Laromabati|Keliling Dalam Kecamatan|5000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8i|Labuha/Babang|Kep. Joronga (Kukupang)|7000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8i-1|Kukupang|Kurunga|1300000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8i-2|Kukupang|Yomen|1800000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8i-3|Kukupang|Gonone|2800000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8i-4|Kukupang|Pulau Gala|3500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8i-5|Kukupang|Tawabi|4000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8i-6|Kukupang|Taba Hijrah|2300000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8j|Labuha/Babang|Gane Barat Utara / Dolik|1000000|One Way / PP - Kapal Feri + Mobil PP
+KABUPATEN HALMAHERA SELATAN|8j-1|Dolik|Fulai|550000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8j-2|Dolik|Bosso|550000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8j-3|Dolik|Suka Damai|550000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8j-4|Dolik|Tokaka|1000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8j-5|Dolik|Nurjihat|1300000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8j-6|Dolik|Samo|1500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8j-7|Dolik|Moloku|1800000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8j-8|Dolik|Samat|2300000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8j-9|Dolik|Posi Posi|2500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8j-10|Dolik|Gumira|2800000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8j-11|Dolik|Batulak|3500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8k|Labuha/Kupal|Obi Utara (Madopolo)|600000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8k-1|Madopolo|Jojame|500000|One Way / PP
+KABUPATEN HALMAHERA SELATAN|8k-2|Madopolo|Waringi|1000000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8k-3|Madopolo|Galala|2200000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8k-4|Madopolo|Cap|2500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8k-5|Madopolo|Pasir Putih|3000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8k-6|Madopolo|Laiwui|2000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8l|Labuha/Babang|Gane Timur Selatan|1000000|One Way / PP - Kapal Feri
+KABUPATEN HALMAHERA SELATAN|8l-1|Gane Luar|Ranga Ranga|1000000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8l-2|Gane Luar|Sawat|1500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8l-3|Gane Luar|Gaimu|1500000|One Way / PP - Sewa Speed Boat
+KABUPATEN HALMAHERA SELATAN|8m|Labuha|Dalam Kota Labuha|500000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8m-1|Mandawong|Kubung|1000000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8m-2|Bacan Timur Tengah|Dalam Wilayah|500000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8m-3|Bibinoi|Songa|500000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8m-4|Bibinoi|Tawa|500000|One Way / PP - Sewa Mobil
+KABUPATEN HALMAHERA SELATAN|8m-5|Bibinoi|Tabapoma|2500000|One Way / PP - Sewa Long Boat
+KABUPATEN HALMAHERA SELATAN|8m-6|Bibinoi|Tutupa|2500000|One Way / PP - Sewa Long Boat
+KABUPATEN HALMAHERA SELATAN|8m-7|Bibinoi|Tomara|3500000|One Way / PP - Sewa Long Boat
+KABUPATEN HALMAHERA SELATAN|8m-8|Bibinoi|Wayatim|3500000|One Way / PP - Sewa Long Boat
+KABUPATEN KEPULAUAN SULA|9a|Sofifi/Ternate|Ibu Kota Kabupaten Kepulauan Sula|2750000|One Way / PP - Kapal Laut
+KABUPATEN KEPULAUAN SULA|9b|Sula|Kecamatan Daratan Pulau Sula|500000|One Way / PP - Sewa Mobil
+KABUPATEN KEPULAUAN SULA|9c|Sula|Kecamatan Mangoli Utara Timur|7000000|One Way / PP - Sewa Speed Boat
+KABUPATEN KEPULAUAN SULA|9d|Sula|Kecamatan Mangoli Timur|4500000|One Way / PP - Sewa Speed Boat
+KABUPATEN KEPULAUAN SULA|9e|Sula|Kecamatan Mangoli Tengah|4500000|One Way / PP - Sewa Speed Boat
+KABUPATEN KEPULAUAN SULA|9f|Sula|Kecamatan Mangoli Selatan|10000000|One Way / PP - Sewa Speed Boat
+KABUPATEN KEPULAUAN SULA|9g|Sula|Kecamatan Mangoli Barat|13000000|One Way / PP - Sewa Speed Boat
+KABUPATEN KEPULAUAN SULA|9h|Sula|Kecamatan Mangoli Utara|15000000|One Way / PP - Sewa Speed Boat
+KABUPATEN KEPULAUAN SULA|9i|Sofifi/Ternate|Kecamatan Mangoli Barat|3200000|One Way / PP
+KABUPATEN KEPULAUAN SULA|9j|Sofifi/Ternate|Kecamatan Mangoli Utara|3200000|One Way / PP
+KABUPATEN PULAU TALIABU|10a|Sofifi/Ternate|Ibu Kota Kabupaten Taliabu|10600000|One Way / PP - Ternate-Makassar-Luwuk-Taliabu
+KABUPATEN PULAU TALIABU|10b|Ternate|Luwuk|6500000|One Way / PP - Ternate-Luwuk Pesawat
+KABUPATEN PULAU TALIABU|10c|Luwuk|Taliabu (Bobong)|2000000|One Way / PP - Luwuk-Taliabu Pesawat
+KABUPATEN PULAU TALIABU|10d|Ibu Kota Kabupaten|Kecamatan Taliabu Barat Laut|3000000|One Way / PP - Sewa Long Boat
+KABUPATEN PULAU TALIABU|10e|Ibu Kota Kabupaten|Kecamatan Taliabu Utara|8500000|One Way / PP - Sewa Long Boat
+KABUPATEN PULAU TALIABU|10f|Ibu Kota Kabupaten|Kecamatan Lede|5000000|One Way / PP - Sewa Long Boat
+KABUPATEN PULAU TALIABU|10g|Ibu Kota Kabupaten|Kecamatan Tabona|7500000|One Way / PP - Sewa Long Boat
+KABUPATEN PULAU TALIABU|10h|Ibu Kota Kabupaten|Kecamatan Taliabu Timur|12500000|One Way / PP - Sewa Long Boat
+KABUPATEN PULAU TALIABU|10i|Ibu Kota Kabupaten|Kecamatan Taliabu Timur Selatan|10000000|One Way / PP - Sewa Long Boat
+KABUPATEN PULAU TALIABU|10j|Ibu Kota Kabupaten|Kecamatan Taliabu Selatan|6000000|One Way / PP - Sewa Long Boat
+TRANSPORTASI TAKSI BANDARA|TX-1|Bandara|Perjalanan Dinas Pergi Pulang (PP) Bandara|2000000|Provinsi Maluku Utara - Orang/Kali

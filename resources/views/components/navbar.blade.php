@@ -14,6 +14,7 @@
 
     if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {
         $navItems[] = ['label' => 'Perjadin', 'href' => route('perjadin'), 'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*')];
+        $navItems[] = ['label' => 'SBU', 'href' => route('local-transport-sbus.index'), 'active' => request()->routeIs('local-transport-sbus.*')];
     }
 
     if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {

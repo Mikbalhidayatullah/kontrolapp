@@ -2,7 +2,7 @@
     <x-slot:title>{{ $title }}</x-slot:title>
 
     <div class="space-y-6">
-        <section class="grid gap-4 lg:grid-cols-4">
+        <section class="grid gap-4 lg:grid-cols-3">
             <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm font-medium text-slate-500">Total Dokumen</p>
                 <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $summary['totalCount'] }}</p>
@@ -17,11 +17,6 @@
                 <p class="text-sm font-medium text-emerald-700">Dokumen Lengkap</p>
                 <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $summary['completeDocuments'] }}</p>
                 <p class="mt-2 text-sm text-slate-500">Sudah ada PDF kegiatan dan bukti nota</p>
-            </article>
-            <article class="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
-                <p class="text-sm font-medium text-amber-700">Kategori Aktif</p>
-                <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $summary['activeCategories'] }}</p>
-                <p class="mt-2 text-sm text-slate-500">Kategori yang sudah memiliki data</p>
             </article>
         </section>
 
@@ -161,6 +156,13 @@
                                             </td>
                                             <td class="px-4 py-4 align-top font-semibold text-slate-900">
                                                 Rp {{ number_format($entry->grand_total, 0, ',', '.') }}
+                                                @if ($entry->sbu_comparison_summary)
+                                                    <div class="mt-2">
+                                                        <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium leading-none {{ $entry->sbu_comparison_summary['tone'] }}">
+                                                            {{ $entry->sbu_comparison_summary['label'] }}
+                                                        </span>
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td class="px-4 py-4 align-top">
                                                 <div class="space-y-2">
@@ -231,3 +233,4 @@
         </div>
     </div>
 </x-layout>
+

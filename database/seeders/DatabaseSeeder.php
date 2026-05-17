@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(SavingAllocationSeeder::class);
+        $this->call(TravelDestinationRegionSeeder::class);
         User::updateOrCreate(
             ['email' => 'admin@kontrol-app.test'],
             [
