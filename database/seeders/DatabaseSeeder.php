@@ -18,6 +18,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(SavingAllocationSeeder::class);
         $this->call(TravelDestinationRegionSeeder::class);
+        $this->call(LocalTransportSbuSeeder::class);
+        $this->call(FlightTicketSbuSeeder::class);
+        $this->call(LodgingSbuSeeder::class);
+        $this->call(NationalLodgingSbuSeeder::class);
+        $this->call(RepresentationSbuSeeder::class);
+        $this->call(DailyAllowanceSbuSeeder::class);
         User::updateOrCreate(
             ['email' => 'admin@kontrol-app.test'],
             [
