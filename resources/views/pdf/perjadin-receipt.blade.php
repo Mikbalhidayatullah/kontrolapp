@@ -21,8 +21,31 @@
         }
 
         .kop {
-            text-align: center;
             margin-bottom: 6px;
+        }
+
+        .kop-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .kop-logo-cell {
+            width: 78px;
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        .kop-text-cell {
+            vertical-align: middle;
+            text-align: center;
+            padding-right: 32px;
+        }
+
+        .kop-logo {
+            width: 62px;
+            height: 62px;
+            object-fit: contain;
+            display: block;
         }
 
         .kop-line-1 {
@@ -126,12 +149,14 @@
         }
 
         .receipt-date {
+            width: 50%;
             margin-top: 14px;
-            text-align: right;
+            margin-left: auto;
+            text-align: center;
         }
 
         .recipient-block {
-            width: 240px;
+            width: 50%;
             margin-left: auto;
             margin-top: 6px;
             text-align: center;
@@ -183,11 +208,31 @@
     </style>
 </head>
 <body>
+    @php
+        $receiptLogoPath = public_path('images/logos/maluku_utara.png');
+        $receiptLogoDataUri = null;
+
+        if (file_exists($receiptLogoPath)) {
+            $receiptLogoMime = mime_content_type($receiptLogoPath) ?: 'image/png';
+            $receiptLogoDataUri = 'data:'.$receiptLogoMime.';base64,'.base64_encode(file_get_contents($receiptLogoPath));
+        }
+    @endphp
     <div class="sheet">
         <div class="kop">
-            <div class="kop-line-1">PEMERINTAH PROVINSI MALUKU UTARA</div>
-            <div class="kop-line-2">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
-            <div class="kop-line-3">Jln. Raya Sultan Nuku, Sofifi</div>
+            <table class="kop-table">
+                <tr>
+                    <td class="kop-logo-cell">
+                        @if ($receiptLogoDataUri)
+                            <img src="{{ $receiptLogoDataUri }}" alt="Logo Provinsi Maluku Utara" class="kop-logo">
+                        @endif
+                    </td>
+                    <td class="kop-text-cell">
+                        <div class="kop-line-1">PEMERINTAH PROVINSI MALUKU UTARA</div>
+                        <div class="kop-line-2">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
+                        <div class="kop-line-3">Jln. Raya Sultan Nuku, Sofifi</div>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <div class="divider"></div>

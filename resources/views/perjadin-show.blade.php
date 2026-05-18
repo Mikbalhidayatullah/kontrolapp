@@ -351,13 +351,18 @@
                 </form>
             </div>
 
-            <div class="bg-slate-100 p-6 lg:max-h-[88vh] lg:overflow-y-auto">
-                <div id="receipt-preview" class="mx-auto max-w-[780px] rounded-[24px] border border-slate-300 bg-white px-8 py-7 shadow-sm">
-                    <div class="text-center">
-                        <p class="text-[16px] font-bold uppercase tracking-[0.02em] text-slate-900">PEMERINTAH PROVINSI MALUKU UTARA</p>
-                        <p class="mt-1 text-[14px] font-bold uppercase text-slate-900">DINAS PENDIDIKAN DAN KEBUDAYAAN</p>
-                        <p class="mt-1 text-[12px] text-slate-700">Jln. Raya Sultan Nuku, Sofifi</p>
-                    </div>
+              <div class="bg-slate-100 p-6 lg:max-h-[88vh] lg:overflow-y-auto">
+                  <div id="receipt-preview" class="mx-auto max-w-[780px] rounded-[24px] border border-slate-300 bg-white px-8 py-7 shadow-sm">
+                      <div class="grid grid-cols-[78px_minmax(0,1fr)] items-center gap-3">
+                          <div class="flex items-center justify-start">
+                              <img src="{{ asset('images/logos/maluku_utara.png') }}" alt="Logo Provinsi Maluku Utara" class="h-[62px] w-[62px] object-contain" />
+                          </div>
+                          <div class="pr-8 text-center">
+                              <p class="text-[16px] font-bold uppercase tracking-[0.02em] text-slate-900">PEMERINTAH PROVINSI MALUKU UTARA</p>
+                              <p class="mt-1 text-[14px] font-bold uppercase text-slate-900">DINAS PENDIDIKAN DAN KEBUDAYAAN</p>
+                              <p class="mt-1 text-[12px] text-slate-700">Jln. Raya Sultan Nuku, Sofifi</p>
+                          </div>
+                      </div>
 
                     <div class="mt-3 border-t-2 border-slate-900"></div>
 
@@ -466,7 +471,7 @@
             const inputs = document.querySelectorAll('[data-receipt-input]');
             const grandTotal = {{ (int) $entry->grand_total }};
 
-            const previewTargets = {
+              const previewTargets = {
                 receipt_number: document.querySelector('[data-receipt-preview="receipt_number"]'),
                 received_from: document.querySelector('[data-receipt-preview="received_from"]'),
                 payment_purpose: document.querySelector('[data-receipt-preview="payment_purpose"]'),
@@ -479,7 +484,8 @@
                 treasurer_name: document.querySelector('[data-receipt-preview="treasurer_name"]'),
                 treasurer_nip: document.querySelector('[data-receipt-preview="treasurer_nip"]'),
                 grand_total_words: document.querySelector('[data-receipt-preview="grand_total_words"]'),
-            };
+              };
+              const receiptLogoUrl = @json(asset('images/logos/maluku_utara.png'));
 
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             const staticReceipt = {
@@ -567,12 +573,19 @@
             };
 
             const buildReceiptPrintableHtml = (state) => `
-                <div class="sheet">
-                    <div class="kop">
-                        <div class="kop-line-1">PEMERINTAH PROVINSI MALUKU UTARA</div>
-                        <div class="kop-line-2">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
-                        <div class="kop-line-3">Jln. Raya Sultan Nuku, Sofifi</div>
-                    </div>
+                  <div class="sheet">
+                      <div class="kop">
+                          <table class="kop-table">
+                              <tr>
+                                  <td class="kop-logo-cell">${receiptLogoUrl ? `<img src="${escapeHtml(receiptLogoUrl)}" alt="Logo Provinsi Maluku Utara" class="kop-logo">` : ''}</td>
+                                  <td class="kop-text-cell">
+                                      <div class="kop-line-1">PEMERINTAH PROVINSI MALUKU UTARA</div>
+                                      <div class="kop-line-2">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
+                                      <div class="kop-line-3">Jln. Raya Sultan Nuku, Sofifi</div>
+                                  </td>
+                              </tr>
+                          </table>
+                      </div>
 
                     <div class="divider"></div>
 
@@ -640,8 +653,12 @@
                 html, body { margin: 0; padding: 0; background: #ffffff; }
                 body { font-family: "DejaVu Sans", Arial, sans-serif; color: #111827; font-size: 11px; line-height: 1.38; }
                 .sheet { min-height: 257mm; width: 100%; max-width: 174mm; margin: 0 auto; }
-                .kop { text-align: center; margin-bottom: 6px; }
-                .kop-line-1 { font-size: 16px; font-weight: 700; letter-spacing: .02em; }
+                  .kop { margin-bottom: 6px; }
+                  .kop-table { width: 100%; border-collapse: collapse; }
+                  .kop-logo-cell { width: 78px; vertical-align: middle; text-align: left; }
+                  .kop-text-cell { vertical-align: middle; text-align: center; padding-right: 32px; }
+                  .kop-logo { width: 62px; height: 62px; object-fit: contain; display: block; }
+                  .kop-line-1 { font-size: 16px; font-weight: 700; letter-spacing: .02em; }
                 .kop-line-2 { font-size: 14px; font-weight: 700; margin-top: 2px; }
                 .kop-line-3 { font-size: 12px; margin-top: 2px; }
                 .divider { border-top: 2px solid #111827; margin: 8px 0 12px; }
@@ -658,8 +675,8 @@
                 .detail-table td:last-child, .detail-table th:last-child { text-align: right; white-space: nowrap; }
                 .detail-table td:first-child, .detail-table th:first-child { width: 34px; text-align: center; }
                 .detail-total td { font-weight: 700; background: #f9fafb; }
-                .receipt-date { margin-top: 14px; text-align: right; }
-                .recipient-block { width: 240px; margin-left: auto; margin-top: 6px; text-align: center; }
+                .receipt-date { width: 50%; margin-top: 14px; margin-left: auto; text-align: center; }
+                .recipient-block { width: 50%; margin-left: auto; margin-top: 6px; text-align: center; }
                 .stamp { margin-top: 26px; font-size: 11px; }
                 .signature-name { margin-top: 18px; font-weight: 700; text-decoration: underline; }
                 .signature-nip { margin-top: 4px; }
