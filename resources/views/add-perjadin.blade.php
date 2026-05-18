@@ -13,6 +13,54 @@
         $showRegionalRouteFields = $selectedCategoryValue === 'Perjadin Dalam Daerah';
         $selectedOutsideDestination = old('destination_city', $isEdit ? $entry->destination_city : '');
         $selectedLocalTransportSegmentIds = old('local_transport_segment_ids', $isEdit ? ($entry->local_transport_segment_ids ?? []) : []);
+        $inlineFieldLabels = [
+            'category' => 'kategori perjadin',
+            'origin_regency' => 'kabupaten asal',
+            'origin_district' => 'kecamatan asal',
+            'destination_regency' => 'kabupaten tujuan',
+            'destination_district' => 'kecamatan tujuan',
+            'destination_city' => 'kota / kabupaten tujuan',
+            'regional_trip_scope' => 'jenis perjalanan dalam daerah',
+            'skpd_name' => 'nama SKPD',
+            'executor_name' => 'nama pelaksana',
+            'position_name' => 'jabatan',
+            'echelon_level' => 'eselon',
+            'grade' => 'golongan',
+            'start_date' => 'tanggal mulai',
+            'end_date' => 'tanggal selesai',
+            'assignment_number' => 'nomor surat tugas',
+            'assignment_date' => 'tanggal surat tugas',
+            'signature_location' => 'lokasi tanda tangan',
+            'daily_allowance_days' => 'jumlah hari uang harian',
+            'daily_allowance_rate' => 'nominal uang harian',
+            'representation_days' => 'jumlah hari representasi',
+            'representation_rate' => 'nominal representasi',
+            'ticket_transport_type' => 'jenis transport tiket',
+            'ticket_departure_date' => 'tanggal berangkat tiket',
+            'ticket_return_date' => 'tanggal pulang tiket',
+            'ticket_departure_price' => 'harga tiket berangkat',
+            'ticket_return_price' => 'harga tiket kembali',
+            'lodging_nights' => 'jumlah malam penginapan',
+            'lodging_rate' => 'nominal penginapan',
+        ];
+        $inlineError = function (string ...$names) use ($errors, $inlineFieldLabels) {
+            foreach ($names as $name) {
+                if (! $errors->has($name)) {
+                    continue;
+                }
+
+                $message = $errors->first($name);
+                $label = $inlineFieldLabels[$name] ?? str_replace('_', ' ', $name);
+
+                if (str_contains(strtolower($message), 'required')) {
+                    return 'Kolom '.ucfirst($label).' masih perlu diisi.';
+                }
+
+                return $message;
+            }
+
+            return null;
+        };
     @endphp
 
     <div class="space-y-6">
@@ -27,7 +75,7 @@
                 </a>
             </div>
 
-            <form action="{{ $isEdit ? route('perjadin.update', $entry) : route('add-perjadin.store') }}" method="POST" enctype="multipart/form-data" class="mt-8 space-y-8">
+            <form id="perjadin-form" action="{{ $isEdit ? route('perjadin.update', $entry) : route('add-perjadin.store') }}" method="POST" enctype="multipart/form-data" class="mt-8 space-y-8">
                 @csrf
                 @if ($isEdit)
                     @method('PUT')
@@ -51,6 +99,9 @@
                                     <option value="{{ $category }}" @selected($selectedCategoryValue === $category)>{{ $category }}</option>
                                 @endforeach
                             </select>
+                            @if($message = $inlineError('category'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                             <p class="mt-3 text-xs text-slate-500">Saat memilih <span class="font-semibold text-slate-700">Perjadin Dalam Daerah</span>, form asal dan tujuan akan muncul otomatis di bawah ini.</p>
                         </div>
 
@@ -70,6 +121,9 @@
                                     @endforeach
                                 </select>
                                 <input id="destination_city" name="destination_city" type="hidden" value="{{ $selectedOutsideDestination }}" />
+                                @if($message = $inlineError('destination_city'))
+                                    <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                @endif
                                 <p class="mt-2 text-xs text-slate-500">Daftar tujuan luar daerah diambil langsung dari master SBU agar acuan uang harian, representasi, penginapan, tiket, dan taksi bandara bisa tersinkron otomatis.</p>
                             </div>
                             
@@ -94,6 +148,9 @@
                                                     <option value="{{ $regency }}" @selected($selectedOriginRegency === $regency)>{{ $regency }}</option>
                                                 @endforeach
                                             </select>
+                                            @if($message = $inlineError('origin_regency'))
+                                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                            @endif
                                         </div>
                                         <div>
                                             <label for="origin_district" class="block text-sm font-medium text-slate-700">Kecamatan Asal</label>
@@ -103,6 +160,9 @@
                                                     <option value="{{ $district }}" @selected($selectedOriginDistrict === $district)>{{ $district }}</option>
                                                 @endforeach
                                             </select>
+                                            @if($message = $inlineError('origin_district'))
+                                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -124,6 +184,9 @@
                                                     <option value="{{ $regency }}" @selected($selectedDestinationRegency === $regency)>{{ $regency }}</option>
                                                 @endforeach
                                             </select>
+                                            @if($message = $inlineError('destination_regency'))
+                                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                            @endif
                                         </div>
                                         <div>
                                             <label for="destination_district" class="block text-sm font-medium text-slate-700">Kecamatan Tujuan</label>
@@ -133,6 +196,9 @@
                                                     <option value="{{ $district }}" @selected($selectedDestinationDistrict === $district)>{{ $district }}</option>
                                                 @endforeach
                                             </select>
+                                            @if($message = $inlineError('destination_district'))
+                                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -171,14 +237,23 @@
                         <div class="xl:col-span-2">
                             <label for="skpd_name" class="block text-sm font-medium text-slate-700">Nama SKPD</label>
                             <input id="skpd_name" name="skpd_name" type="text" value="{{ old('skpd_name', $isEdit ? $entry->skpd_name : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            @if($message = $inlineError('skpd_name'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div class="xl:col-span-2">
                             <label for="executor_name" class="block text-sm font-medium text-slate-700">Nama Pelaksana</label>
                             <input id="executor_name" name="executor_name" type="text" value="{{ old('executor_name', $isEdit ? $entry->executor_name : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            @if($message = $inlineError('executor_name'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div class="xl:col-span-2">
                             <label for="position_name" class="block text-sm font-medium text-slate-700">Jabatan</label>
                             <input id="position_name" name="position_name" type="text" value="{{ old('position_name', $isEdit ? $entry->position_name : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            @if($message = $inlineError('position_name'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div>
                             <label for="echelon_level" class="block text-sm font-medium text-slate-700">Eselon</label>
@@ -188,6 +263,9 @@
                                     <option value="{{ $echelon }}" @selected(old('echelon_level', $isEdit ? $entry->echelon_level : '') === $echelon)>{{ $echelon }}</option>
                                 @endforeach
                             </select>
+                            @if($message = $inlineError('echelon_level'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div>
                             <label for="grade" class="block text-sm font-medium text-slate-700">Golongan</label>
@@ -197,6 +275,9 @@
                                     <option value="{{ $grade }}" @selected(old('grade', $isEdit ? $entry->grade : '') === $grade)>{{ $grade }}</option>
                                 @endforeach
                             </select>
+                            @if($message = $inlineError('grade'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                     </div>
                 </section>
@@ -214,28 +295,46 @@
                         <div>
                             <label for="start_date" class="block text-sm font-medium text-slate-700">Dari</label>
                             <input id="start_date" name="start_date" type="date" value="{{ old('start_date', $isEdit && $entry->start_date ? $entry->start_date->format('Y-m-d') : $defaultStartDate) }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            @if($message = $inlineError('start_date'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div>
                             <label for="end_date" class="block text-sm font-medium text-slate-700">Sampai</label>
                             <input id="end_date" name="end_date" type="date" value="{{ old('end_date', $isEdit && $entry->end_date ? $entry->end_date->format('Y-m-d') : $defaultStartDate) }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            @if($message = $inlineError('end_date'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div class="xl:col-span-2">
                             <label for="assignment_number" class="block text-sm font-medium text-slate-700">No Surat Tugas</label>
                             <input id="assignment_number" name="assignment_number" type="text" value="{{ old('assignment_number', $isEdit ? $entry->assignment_number : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            @if($message = $inlineError('assignment_number'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div class="xl:col-span-1">
                             <label for="assignment_date" class="block text-sm font-medium text-slate-700">Tanggal Surat Tugas</label>
                             <input id="assignment_date" name="assignment_date" type="date" value="{{ old('assignment_date', $isEdit && $entry->assignment_date ? $entry->assignment_date->format('Y-m-d') : $defaultStartDate) }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            @if($message = $inlineError('assignment_date'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div class="xl:col-span-1">
                             <label for="signature_location" class="block text-sm font-medium text-slate-700">Lokasi TTD</label>
                             <input id="signature_location" name="signature_location" type="text" value="{{ old('signature_location', $isEdit ? $entry->signature_location : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            @if($message = $inlineError('signature_location'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
                         </div>
                         <div id="destination-city-manual-wrapper" class="xl:col-span-6 {{ $showRegionalRouteFields ? '' : 'hidden' }}">
                             <div class="grid gap-5 xl:grid-cols-2">
                                 <div>
                                     <label for="destination_city_manual" class="block text-sm font-medium text-slate-700">Kota / Kab Tujuan</label>
                                     <input id="destination_city_manual" type="text" value="{{ old('destination_city', $isEdit ? $entry->destination_city : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    @if($message = $inlineError('destination_city'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                     <p class="mt-2 text-xs text-slate-500">Field ini diisi manual untuk kebutuhan administrasi perjadin dalam daerah.</p>
                                 </div>
                                 <div>
@@ -245,6 +344,9 @@
                                         <option value="dalam_kota_sofifi" @selected(old('regional_trip_scope', $isEdit ? $entry->regional_trip_scope : '') === 'dalam_kota_sofifi')>Dalam Kota Sofifi</option>
                                         <option value="luar_kota_sofifi" @selected(old('regional_trip_scope', $isEdit ? $entry->regional_trip_scope : '') === 'luar_kota_sofifi')>Luar Kota Sofifi</option>
                                     </select>
+                                    @if($message = $inlineError('regional_trip_scope'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                     <p class="mt-2 text-xs text-slate-500">Dipakai untuk membedakan kebutuhan perjalanan dalam daerah dari/ke Sofifi.</p>
                                 </div>
                             </div>
@@ -287,6 +389,9 @@
                                 <div>
                                     <label for="daily_allowance_days" class="block text-sm font-medium text-slate-700">Jumlah Hari</label>
                                     <input id="daily_allowance_days" name="daily_allowance_days" type="number" min="1" value="{{ old('daily_allowance_days', $isEdit ? $entry->daily_allowance_days : '') }}" data-multiply-left="daily" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    @if($message = $inlineError('daily_allowance_days'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="daily_allowance_rate" class="block text-sm font-medium text-slate-700">Uang Harian</label>
@@ -318,6 +423,9 @@
                                 <div>
                                     <label for="representation_days" class="block text-sm font-medium text-slate-700">Jumlah Hari</label>
                                     <input id="representation_days" name="representation_days" type="number" min="1" value="{{ old('representation_days', $isEdit ? $entry->representation_days : '') }}" data-multiply-left="representation" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    @if($message = $inlineError('representation_days'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="representation_rate" class="block text-sm font-medium text-slate-700">Nominal Sesuai SPPD</label>
@@ -354,14 +462,23 @@
                                             <option value="{{ $transportType }}" @selected(old('ticket_transport_type', $isEdit ? $entry->ticket_transport_type : '') === $transportType)>{{ $transportType }}</option>
                                         @endforeach
                                     </select>
+                                    @if($message = $inlineError('ticket_transport_type'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="ticket_departure_date" class="block text-sm font-medium text-slate-700">Tanggal Berangkat</label>
                                     <input id="ticket_departure_date" name="ticket_departure_date" type="date" value="{{ old('ticket_departure_date', $isEdit && $entry->ticket_departure_date ? $entry->ticket_departure_date->format('Y-m-d') : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    @if($message = $inlineError('ticket_departure_date'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="ticket_return_date" class="block text-sm font-medium text-slate-700">Tanggal Pulang</label>
                                     <input id="ticket_return_date" name="ticket_return_date" type="date" value="{{ old('ticket_return_date', $isEdit && $entry->ticket_return_date ? $entry->ticket_return_date->format('Y-m-d') : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    @if($message = $inlineError('ticket_return_date'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="ticket_total" class="block text-sm font-medium text-slate-700">Total</label>
@@ -373,6 +490,9 @@
                                         <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
                                         <input id="ticket_departure_price" name="ticket_departure_price" type="text" value="{{ old('ticket_departure_price', $isEdit ? $entry->ticket_departure_price : '') }}" data-nominal-input data-sum-ticket="departure" class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
                                     </div>
+                                    @if($message = $inlineError('ticket_departure_price'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="ticket_return_price" class="block text-sm font-medium text-slate-700">Harga Tiket Kembali</label>
@@ -380,35 +500,44 @@
                                         <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
                                         <input id="ticket_return_price" name="ticket_return_price" type="text" value="{{ old('ticket_return_price', $isEdit ? $entry->ticket_return_price : '') }}" data-nominal-input data-sum-ticket="return" class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
                                     </div>
+                                    @if($message = $inlineError('ticket_return_price'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                 </div>
                                 <div class="md:col-span-2 xl:col-span-2">
-                                    <div id="ticket-sbu-state" class="rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-sm leading-6 text-sky-700">
+                                    <p id="ticket-sbu-state" class="mt-2 text-xs leading-5 text-slate-500">
                                         Pilih tujuan luar daerah untuk melihat maksimal SBU tiket sebagai referensi.
-                                    </div>
+                                    </p>
                                 </div>
                                 <div>
                                     <label for="ticket_departure_operator" class="block text-sm font-medium text-slate-700" data-operator-label="departure">Maskapai Berangkat</label>
-                                    <input id="ticket_departure_operator" name="ticket_departure_operator" type="text" value="{{ old('ticket_departure_operator', $isEdit ? $entry->ticket_departure_operator : '') }}" data-operator-input="departure" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="ticket_departure_operator" name="ticket_departure_operator" type="text" value="{{ old('ticket_departure_operator', $isEdit ? $entry->ticket_departure_operator : '') }}" data-operator-input="departure" data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <p class="mt-2 text-xs text-slate-500">Jika belum ada datanya, boleh dikosongkan. Sistem akan mengisi <span class="font-medium text-slate-700">-</span> otomatis saat disimpan.</p>
                                 </div>
                                 <div>
                                     <label for="ticket_return_operator" class="block text-sm font-medium text-slate-700" data-operator-label="return">Maskapai Kembali</label>
-                                    <input id="ticket_return_operator" name="ticket_return_operator" type="text" value="{{ old('ticket_return_operator', $isEdit ? $entry->ticket_return_operator : '') }}" data-operator-input="return" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="ticket_return_operator" name="ticket_return_operator" type="text" value="{{ old('ticket_return_operator', $isEdit ? $entry->ticket_return_operator : '') }}" data-operator-input="return" data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <p class="mt-2 text-xs text-slate-500">Jika belum ada datanya, boleh dikosongkan. Sistem akan mengisi <span class="font-medium text-slate-700">-</span> otomatis saat disimpan.</p>
                                 </div>
                                 <div>
                                     <label for="ticket_departure_number" class="block text-sm font-medium text-slate-700">Nomor Tiket Berangkat</label>
-                                    <input id="ticket_departure_number" name="ticket_departure_number" type="text" value="{{ old('ticket_departure_number', $isEdit ? $entry->ticket_departure_number : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="ticket_departure_number" name="ticket_departure_number" type="text" value="{{ old('ticket_departure_number', $isEdit ? $entry->ticket_departure_number : '') }}" data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <p class="mt-2 text-xs text-slate-500">Jika belum ada datanya, boleh dikosongkan. Sistem akan mengisi <span class="font-medium text-slate-700">-</span> otomatis saat disimpan.</p>
                                 </div>
                                 <div>
                                     <label for="ticket_return_number" class="block text-sm font-medium text-slate-700">Nomor Tiket Pulang</label>
-                                    <input id="ticket_return_number" name="ticket_return_number" type="text" value="{{ old('ticket_return_number', $isEdit ? $entry->ticket_return_number : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="ticket_return_number" name="ticket_return_number" type="text" value="{{ old('ticket_return_number', $isEdit ? $entry->ticket_return_number : '') }}" data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <p class="mt-2 text-xs text-slate-500">Jika belum ada datanya, boleh dikosongkan. Sistem akan mengisi <span class="font-medium text-slate-700">-</span> otomatis saat disimpan.</p>
                                 </div>
                                 <div>
                                     <label for="ticket_departure_booking_code" class="block text-sm font-medium text-slate-700">Kode Booking Berangkat</label>
-                                    <input id="ticket_departure_booking_code" name="ticket_departure_booking_code" type="text" value="{{ old('ticket_departure_booking_code', $isEdit ? $entry->ticket_departure_booking_code : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="ticket_departure_booking_code" name="ticket_departure_booking_code" type="text" value="{{ old('ticket_departure_booking_code', $isEdit ? $entry->ticket_departure_booking_code : '') }}" data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <p class="mt-2 text-xs text-slate-500">Jika belum ada datanya, boleh dikosongkan. Sistem akan mengisi <span class="font-medium text-slate-700">-</span> otomatis saat disimpan.</p>
                                 </div>
                                 <div>
                                     <label for="ticket_return_booking_code" class="block text-sm font-medium text-slate-700">Kode Booking Pulang</label>
-                                    <input id="ticket_return_booking_code" name="ticket_return_booking_code" type="text" value="{{ old('ticket_return_booking_code', $isEdit ? $entry->ticket_return_booking_code : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="ticket_return_booking_code" name="ticket_return_booking_code" type="text" value="{{ old('ticket_return_booking_code', $isEdit ? $entry->ticket_return_booking_code : '') }}" data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <p class="mt-2 text-xs text-slate-500">Jika belum ada datanya, boleh dikosongkan. Sistem akan mengisi <span class="font-medium text-slate-700">-</span> otomatis saat disimpan.</p>
                                 </div>
                             </div>
                         </article>
@@ -428,6 +557,9 @@
                                 <div>
                                     <label for="lodging_nights" class="block text-sm font-medium text-slate-700">Jumlah Malam</label>
                                     <input id="lodging_nights" name="lodging_nights" type="number" min="1" value="{{ old('lodging_nights', $isEdit ? $entry->lodging_nights : '') }}" data-multiply-left="lodging" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    @if($message = $inlineError('lodging_nights'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                 </div>
                                 <div class="md:col-span-2 xl:col-span-3">
                                     <input type="hidden" name="lodging_has_receipt" value="0" />
@@ -445,11 +577,15 @@
                                         <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
                                         <input id="lodging_rate" name="lodging_rate" type="text" value="{{ old('lodging_rate', $isEdit ? $entry->lodging_rate : '') }}" data-nominal-input data-multiply-right="lodging" class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
                                     </div>
+                                    @if($message = $inlineError('lodging_rate'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                     <p id="lodging-sbu-state" class="mt-2 text-xs leading-5 text-slate-500">Nominal penginapan akan mengikuti acuan SBU sesuai tujuan, eselon, dan golongan yang berlaku.</p>
                                 </div>
                                 <div class="xl:col-span-2">
                                     <label for="lodging_hotel_name" class="block text-sm font-medium text-slate-700">Nama Hotel</label>
-                                    <input id="lodging_hotel_name" name="lodging_hotel_name" type="text" value="{{ old('lodging_hotel_name', $isEdit ? $entry->lodging_hotel_name : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="lodging_hotel_name" name="lodging_hotel_name" type="text" value="{{ old('lodging_hotel_name', $isEdit ? $entry->lodging_hotel_name : '') }}" data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <p class="mt-2 text-xs text-slate-500">Jika belum ada datanya, boleh dikosongkan. Sistem akan mengisi <span class="font-medium text-slate-700">-</span> otomatis saat disimpan.</p>
                                 </div>
                                 <div>
                                     <label for="lodging_total" class="block text-sm font-medium text-slate-700">Total</label>
@@ -489,9 +625,9 @@
                                     </div>
                                 @endforeach
                                 <div class="md:col-span-2 xl:col-span-3">
-                                    <div id="local-transport-sbu-state" class="rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-sm leading-6 text-sky-700">
+                                    <p id="local-transport-sbu-state" class="mt-2 text-xs leading-5 text-slate-500">
                                         Transport lokal luar daerah akan mengambil acuan Taksi Bandara dari master SBU.
-                                    </div>
+                                    </p>
                                 </div>
                                 <div>
                                     <label for="local_transport_total" class="block text-sm font-medium text-slate-700">Total</label>

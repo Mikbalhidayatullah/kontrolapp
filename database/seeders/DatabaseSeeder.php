@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(SavingAllocationSeeder::class);
+        #$this->call(SavingAllocationSeeder::class);
         $this->call(TravelDestinationRegionSeeder::class);
         $this->call(LocalTransportSbuSeeder::class);
         $this->call(FlightTicketSbuSeeder::class);

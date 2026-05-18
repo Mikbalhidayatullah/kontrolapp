@@ -21,12 +21,63 @@
                     </div>
                 @endif
 
-                @if ($errors->any())
+                @if ($errors->any() && ! request()->routeIs('add-perjadin', 'add-perjadin.store', 'perjadin.edit', 'perjadin.update'))
+                    @php
+                        $fieldLabels = [
+                            'assignment number' => 'nomor surat tugas',
+                            'signature location' => 'lokasi tanda tangan',
+                            'start date' => 'tanggal mulai',
+                            'end date' => 'tanggal selesai',
+                            'assignment date' => 'tanggal surat tugas',
+                            'category' => 'kategori perjadin',
+                            'skpd name' => 'nama SKPD',
+                            'executor name' => 'nama pelaksana',
+                            'position name' => 'jabatan',
+                            'echelon level' => 'eselon',
+                            'grade' => 'golongan',
+                            'destination city' => 'kota / kabupaten tujuan',
+                            'destination regency' => 'kabupaten tujuan',
+                            'destination district' => 'kecamatan tujuan',
+                            'origin regency' => 'kabupaten asal',
+                            'origin district' => 'kecamatan asal',
+                            'regional trip scope' => 'jenis perjalanan dalam daerah',
+                            'daily allowance days' => 'jumlah hari uang harian',
+                            'daily allowance rate' => 'nominal uang harian',
+                            'representation days' => 'jumlah hari representasi',
+                            'representation rate' => 'nominal representasi',
+                            'lodging nights' => 'jumlah malam penginapan',
+                            'lodging rate' => 'nominal penginapan',
+                            'ticket departure date' => 'tanggal berangkat tiket',
+                            'ticket return date' => 'tanggal pulang tiket',
+                            'ticket departure price' => 'harga tiket berangkat',
+                            'ticket return price' => 'harga tiket kembali',
+                            'ticket transport type' => 'jenis transport tiket',
+                        ];
+
+                        $humanizeError = function (string $error) use ($fieldLabels): string {
+                            $message = trim($error);
+
+                            foreach ($fieldLabels as $english => $indo) {
+                                if (str_contains(strtolower($message), $english.' field is required')) {
+                                    return 'Kolom '.ucfirst($indo).' masih perlu diisi.';
+                                }
+                            }
+
+                            if (str_contains(strtolower($message), 'field is required')) {
+                                $normalized = strtolower($message);
+                                $field = trim(str_replace(' field is required.', '', $normalized));
+
+                                return 'Kolom '.ucfirst($field).' masih perlu diisi.';
+                            }
+
+                            return $message;
+                        };
+                    @endphp
                     <div class="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                        <p class="font-semibold">Ada data yang perlu diperiksa kembali.</p>
+                        <p class="font-semibold">Masih ada beberapa bagian yang perlu dilengkapi dulu.</p>
                         <ul class="mt-2 space-y-1">
                             @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
+                                <li>{{ $humanizeError($error) }}</li>
                             @endforeach
                         </ul>
                     </div>
