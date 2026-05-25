@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kwitansi Perjadin</title>
+    <title>Kuitansi Perjadin</title>
     <style>
         @page {
             margin: 16mm 18mm 18mm;
@@ -70,25 +70,68 @@
             margin: 8px 0 12px;
         }
 
-        .title {
-            text-align: center;
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            margin: 0;
-        }
-
-        .receipt-number {
-            text-align: center;
-            font-size: 12px;
-            margin-top: 4px;
-            margin-bottom: 12px;
-        }
-
+        .receipt-head-meta,
         .meta-table,
         .detail-table {
             width: 100%;
             border-collapse: collapse;
+        }
+
+        .receipt-head-meta {
+            margin-bottom: 14px;
+            font-size: 12px;
+        }
+
+        .receipt-head-left {
+            width: 50%;
+            vertical-align: top;
+        }
+
+        .receipt-head-right {
+            width: 50%;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        .receipt-head-inner {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .receipt-head-inner td {
+            padding: 0;
+            vertical-align: top;
+        }
+
+        .receipt-head-inner td:first-child {
+            width: 96px;
+        }
+
+        .receipt-head-inner td:nth-child(2) {
+            width: 14px;
+        }
+
+        .receipt-head-inner-right {
+            margin-left: auto;
+            width: 220px;
+        }
+
+        .receipt-head-inner-right td:first-child {
+            width: 126px;
+        }
+
+        .receipt-head-label,
+        .receipt-head-label-year,
+        .receipt-head-colon {
+            white-space: nowrap;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            margin: 0 0 12px;
         }
 
         .meta-table td {
@@ -104,27 +147,43 @@
             width: 14px;
         }
 
-        .terbilang-box {
-            border: 1px solid #9ca3af;
-            padding: 7px 10px;
-            margin: 6px 0 10px;
+        .meta-italic {
             font-style: italic;
         }
 
         .label-rincian {
+            width: 100%;
+            display: table;
             margin-bottom: 6px;
-            font-weight: 700;
+            font-weight: 400;
+        }
+
+        .label-rincian-row {
+            display: table-row;
+        }
+
+        .label-rincian-spacer,
+        .label-rincian-colon,
+        .label-rincian-text {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .label-rincian-spacer {
+            width: 130px;
+        }
+
+        .label-rincian-colon {
+            width: 14px;
         }
 
         .detail-table th,
         .detail-table td {
-            border: 1px solid #d1d5db;
             padding: 5px 7px;
             vertical-align: top;
         }
 
         .detail-table th {
-            background: #f3f4f6;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.04em;
@@ -145,7 +204,11 @@
 
         .detail-total td {
             font-weight: 700;
-            background: #f9fafb;
+        }
+
+        .detail-table-wrap {
+            margin-left: 144px;
+            width: calc(100% - 144px);
         }
 
         .receipt-date {
@@ -197,6 +260,10 @@
             margin-top: 2px;
         }
 
+        .approval-subtitle-plain {
+            margin-top: 18px;
+        }
+
         .approval-space {
             height: 54px;
         }
@@ -237,8 +304,35 @@
 
         <div class="divider"></div>
 
-        <div class="title">KWITANSI</div>
-        <div class="receipt-number">Nomor: {{ $receiptNumber }}</div>
+        <table class="receipt-head-meta">
+            <tr>
+                <td class="receipt-head-left">
+                    <table class="receipt-head-inner">
+                        <tr>
+                            <td class="receipt-head-label">No. kuitansi</td>
+                            <td class="receipt-head-colon">:</td>
+                            <td>{{ $receiptNumber }}</td>
+                        </tr>
+                        <tr>
+                            <td class="receipt-head-label">Lembaran</td>
+                            <td class="receipt-head-colon">:</td>
+                            <td>{{ $sheetTitle }}</td>
+                        </tr>
+                    </table>
+                </td>
+                <td class="receipt-head-right">
+                    <table class="receipt-head-inner receipt-head-inner-right">
+                        <tr>
+                            <td class="receipt-head-label-year">Tahun Anggaran</td>
+                            <td class="receipt-head-colon">:</td>
+                            <td>{{ $budgetYear }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <div class="title">KUITANSI</div>
 
         <table class="meta-table">
             <tr>
@@ -252,9 +346,9 @@
                 <td>{{ $grandTotalLabel }}</td>
             </tr>
             <tr>
-                <td colspan="3">
-                    <div class="terbilang-box">Terbilang rupiah: {{ $grandTotalWords }}</div>
-                </td>
+                <td>Terbilang</td>
+                <td>:</td>
+                <td><span class="meta-italic">{{ $grandTotalWords }}</span></td>
             </tr>
             <tr>
                 <td>Untuk pengeluaran</td>
@@ -263,36 +357,44 @@
             </tr>
         </table>
 
-        <div class="label-rincian">Dengan rincian :</div>
+        <div class="label-rincian">
+            <div class="label-rincian-row">
+                <span class="label-rincian-spacer"></span>
+                <span class="label-rincian-colon"></span>
+                <span class="label-rincian-text">dengan rincian :</span>
+            </div>
+        </div>
 
-        <table class="detail-table">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Uraian</th>
-                    <th>Jumlah</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($receiptBreakdown as $index => $item)
+        <div class="detail-table-wrap">
+            <table class="detail-table">
+                <thead>
                     <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $item['description'] }}</td>
-                        <td>{{ $item['total_label'] }}</td>
+                        <th>No</th>
+                        <th>Uraian</th>
+                        <th>Jumlah</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td>1</td>
-                        <td>Biaya perjalanan dinas sesuai rincian SPPD</td>
+                </thead>
+                <tbody>
+                    @forelse ($receiptBreakdown as $index => $item)
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ $item['description'] }}</td>
+                            <td>{{ $item['total_label'] }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td>1</td>
+                            <td>Biaya perjalanan dinas sesuai rincian SPPD</td>
+                            <td>{{ $grandTotalLabel }}</td>
+                        </tr>
+                    @endforelse
+                    <tr class="detail-total">
+                        <td colspan="2">Total Jumlah</td>
                         <td>{{ $grandTotalLabel }}</td>
                     </tr>
-                @endforelse
-                <tr class="detail-total">
-                    <td colspan="2">Total Jumlah</td>
-                    <td>{{ $grandTotalLabel }}</td>
-                </tr>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
 
         <div class="receipt-date">{{ $receiptPlace }}, {{ \Carbon\Carbon::parse($receiptDate)->translatedFormat('d F Y') }}</div>
 
@@ -306,15 +408,15 @@
         <table class="approval-grid">
             <tr>
                 <td>
-                    <div class="approval-title">Setuju Dibayar</div>
-                    <div class="approval-subtitle">Kepala Badan</div>
+                    <div class="approval-title">Mengetahui dan Menyetujui,</div>
+                    <div class="approval-subtitle">Kepala Dinas Pendidikan Dan Kebudayaan</div>
+                    <div>Provinsi Maluku Utara</div>
                     <div class="approval-space"></div>
                     <div class="approval-name">{{ $approverName }}</div>
                     <div>NIP. {{ $approverNip }}</div>
                 </td>
                 <td>
-                    <div class="approval-title">Lunas Dibayar</div>
-                    <div class="approval-subtitle">Bendahara Pengeluaran</div>
+                    <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran</div>
                     <div class="approval-space"></div>
                     <div class="approval-name">{{ $treasurerName }}</div>
                     <div>NIP. {{ $treasurerNip }}</div>

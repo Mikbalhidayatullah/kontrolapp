@@ -175,12 +175,15 @@ class PerjadinController extends Controller
             'entry' => $perjadinEntry,
             'currentPeriod' => $period,
             'periodLabel' => $period['label'].' '.$period['year'],
+            'receiptYearOptions' => $this->yearOptions(),
             'activeCategory' => $request->string('category')->toString(),
             'activeKeyword' => trim($request->string('keyword')->toString()),
             'costGroups' => $this->costGroups($perjadinEntry),
             'receiptBreakdown' => $this->receiptBreakdown($perjadinEntry),
             'receiptDefaults' => [
                 'receipt_number' => old('receipt_number', ''),
+                'sheet_title' => old('sheet_title', ''),
+                'budget_year' => (int) old('budget_year', optional($perjadinEntry->assignment_date)->year ?? now()->year),
                 'received_from' => old('received_from', $perjadinEntry->skpd_name),
                 'payment_purpose' => old('payment_purpose', 'Biaya perjalanan dinas '.$perjadinEntry->category.' tujuan '.$perjadinEntry->destination_city),
                 'receipt_place' => old('receipt_place', $perjadinEntry->signature_location ?: $perjadinEntry->destination_city),
@@ -201,6 +204,8 @@ class PerjadinController extends Controller
 
         $data = $request->validate([
             'receipt_number' => ['required', 'string', 'max:255'],
+            'sheet_title' => ['nullable', 'string', 'max:255'],
+            'budget_year' => ['required', 'integer', 'digits:4'],
             'received_from' => ['required', 'string', 'max:255'],
             'payment_purpose' => ['required', 'string', 'max:1000'],
             'receipt_place' => ['required', 'string', 'max:255'],
@@ -218,6 +223,8 @@ class PerjadinController extends Controller
         $pdf = Pdf::loadView('pdf.perjadin-receipt', [
             'entry' => $perjadinEntry,
             'receiptNumber' => $data['receipt_number'],
+            'sheetTitle' => $data['sheet_title'] ?: '-',
+            'budgetYear' => (string) $data['budget_year'],
             'receivedFrom' => $data['received_from'],
             'paymentPurpose' => $data['payment_purpose'],
             'receiptPlace' => $data['receipt_place'],
