@@ -51,6 +51,7 @@ Route::middleware(['auth', 'role:admin,bendahara'])->group(function () {
 
 Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {
     Route::get('/perjadin', [PerjadinController::class, 'index'])->name('perjadin');
+    Route::get('/perjadin/export/excel', [PerjadinController::class, 'exportExcel'])->name('perjadin.export.xlsx');
     Route::get('/add-perjadin', [PerjadinController::class, 'create'])->name('add-perjadin');
     Route::post('/add-perjadin', [PerjadinController::class, 'store'])->name('add-perjadin.store');
     Route::get('/perjadin/{perjadinEntry}', [PerjadinController::class, 'show'])->name('perjadin.show');

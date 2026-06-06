@@ -10,6 +10,7 @@ use App\Models\NationalLodgingSbu;
 use App\Models\PerjadinEntry;
 use App\Models\RepresentationSbu;
 use App\Models\TravelDestinationRegion;
+use App\Services\PerjadinExcelExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -147,6 +148,26 @@ class PerjadinController extends Controller
                 'activeCategories' => $entries->pluck('category')->unique()->count(),
             ],
         ]);
+    }
+
+    public function exportExcel(PerjadinExcelExporter $exporter)
+    {
+        $entries = PerjadinEntry::query()
+            ->with(['creator:id,name', 'updater:id,name'])
+            ->orderBy('category')
+            ->orderBy('start_date')
+            ->orderBy('assignment_date')
+            ->orderBy('id')
+            ->get();
+
+        $path = $exporter->export($entries);
+        $filename = 'perjadin-semua-data-'.now()->format('Ymd-His').'.xlsx';
+
+        return response()
+            ->download($path, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+            ->deleteFileAfterSend(true);
     }
 
     public function create(Request $request): View
