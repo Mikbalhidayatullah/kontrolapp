@@ -42,8 +42,8 @@
         }
 
         .kop-logo {
-            width: 62px;
-            height: 62px;
+            width: 56px;
+            height: 56px;
             object-fit: contain;
             display: block;
         }
@@ -52,22 +52,36 @@
             font-size: 16px;
             font-weight: 700;
             letter-spacing: 0.02em;
+            line-height: 1.05;
         }
 
         .kop-line-2 {
             font-size: 14px;
             font-weight: 700;
-            margin-top: 2px;
+            line-height: 1.05;
+            margin-top: 0;
         }
 
         .kop-line-3 {
-            font-size: 12px;
-            margin-top: 2px;
+            font-size: 13px;
+            line-height: 1.05;
+            margin-top: 0;
+        }
+        
+        .kop-line-4 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.38em;
+            line-height: 1.05;
+            margin-top: 1px;
+            padding-left: 0.38em;
         }
 
         .divider {
             border-top: 2px solid #111827;
-            margin: 8px 0 12px;
+            border-bottom: 1px solid #111827;
+            height: 2px;
+            margin: 6px 0 12px;
         }
 
         .receipt-head-meta,
@@ -212,15 +226,17 @@
         }
 
         .receipt-date {
-            width: 50%;
+            width: 160px;
             margin-top: 14px;
             margin-left: auto;
+            margin-right: 0;
             text-align: center;
         }
 
         .recipient-block {
-            width: 50%;
+            width: 160px;
             margin-left: auto;
+            margin-right: 0;
             margin-top: 6px;
             text-align: center;
         }
@@ -243,13 +259,29 @@
         .approval-grid {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 24px;
+            margin-top: 42px;
         }
 
         .approval-grid td {
             width: 50%;
             vertical-align: top;
             text-align: center;
+        }
+
+        .approval-block {
+            text-align: center;
+        }
+
+        .approval-block-left {
+            width: 230px;
+            margin-left: 0;
+            margin-right: auto;
+        }
+
+        .approval-block-right {
+            width: 160px;
+            margin-left: auto;
+            margin-right: 0;
         }
 
         .approval-title {
@@ -261,11 +293,11 @@
         }
 
         .approval-subtitle-plain {
-            margin-top: 18px;
+            margin-top: 31px;
         }
 
         .approval-space {
-            height: 54px;
+            height: 64px;
         }
 
         .approval-name {
@@ -296,7 +328,8 @@
                     <td class="kop-text-cell">
                         <div class="kop-line-1">PEMERINTAH PROVINSI MALUKU UTARA</div>
                         <div class="kop-line-2">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
-                        <div class="kop-line-3">Jln. Raya Sultan Nuku, Sofifi</div>
+                        <div class="kop-line-3">Jln. Raya Sultan Nuku, Kota Tidore Kepulauan</div>
+                        <div class="kop-line-4">SOFIFI</div>
                     </td>
                 </tr>
             </table>
@@ -408,18 +441,22 @@
         <table class="approval-grid">
             <tr>
                 <td>
-                    <div class="approval-title">Mengetahui dan Menyetujui,</div>
-                    <div class="approval-subtitle">Kepala Dinas Pendidikan Dan Kebudayaan</div>
-                    <div>Provinsi Maluku Utara</div>
-                    <div class="approval-space"></div>
-                    <div class="approval-name">{{ $approverName }}</div>
-                    <div>NIP. {{ $approverNip }}</div>
+                    <div class="approval-block approval-block-left">
+                        <div class="approval-title">Mengetahui dan Menyetujui,</div>
+                        <div class="approval-subtitle">Kepala Dinas Pendidikan Dan Kebudayaan</div>
+                        <div>Provinsi Maluku Utara</div>
+                        <div class="approval-space"></div>
+                        <div class="approval-name">{{ $approverName }}</div>
+                        <div>NIP. {{ $approverNip }}</div>
+                    </div>
                 </td>
                 <td>
-                    <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran</div>
-                    <div class="approval-space"></div>
-                    <div class="approval-name">{{ $treasurerName }}</div>
-                    <div>NIP. {{ $treasurerNip }}</div>
+                    <div class="approval-block approval-block-right">
+                        <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran</div>
+                        <div class="approval-space"></div>
+                        <div class="approval-name">{{ $treasurerName }}</div>
+                        <div>NIP. {{ $treasurerNip }}</div>
+                    </div>
                 </td>
             </tr>
         </table>

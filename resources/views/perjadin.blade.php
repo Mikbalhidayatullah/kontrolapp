@@ -242,4 +242,3 @@
         </div>
     </div>
 </x-layout>
-

@@ -369,16 +369,17 @@
                   <div id="receipt-preview" class="mx-auto max-w-[780px] rounded-[24px] border border-slate-300 bg-white px-8 py-7 shadow-sm">
                       <div class="grid grid-cols-[78px_minmax(0,1fr)] items-center gap-3">
                           <div class="flex items-center justify-start">
-                              <img src="{{ asset('images/logos/maluku_utara.png') }}" alt="Logo Provinsi Maluku Utara" class="h-[62px] w-[62px] object-contain" />
+                              <img src="{{ asset('images/logos/maluku_utara.png') }}" alt="Logo Provinsi Maluku Utara" class="h-[56px] w-[56px] object-contain" />
                           </div>
-                          <div class="pr-8 text-center">
+                          <div class="pr-8 text-center leading-tight">
                               <p class="text-[16px] font-bold uppercase tracking-[0.02em] text-slate-900">PEMERINTAH PROVINSI MALUKU UTARA</p>
-                              <p class="mt-1 text-[14px] font-bold uppercase text-slate-900">DINAS PENDIDIKAN DAN KEBUDAYAAN</p>
-                              <p class="mt-1 text-[12px] text-slate-700">Jln. Raya Sultan Nuku, Sofifi</p>
+                              <p class="text-[14px] font-bold uppercase text-slate-900">DINAS PENDIDIKAN DAN KEBUDAYAAN</p>
+                              <p class="text-[13px] text-slate-700">Jln. Raya Sultan Nuku, Kota Tidore Kepulauan</p>
+                              <p class="pl-[0.38em] text-[18px] font-bold tracking-[0.38em] text-slate-900">SOFIFI</p>
                           </div>
                       </div>
 
-                    <div class="mt-3 border-t-2 border-slate-900"></div>
+                    <div class="mt-2 h-[3px] border-t-2 border-b border-slate-900"></div>
 
                     <div class="mt-3 grid grid-cols-2 gap-4 text-[12px] leading-5 text-slate-800">
                         <div class="space-y-1">
@@ -465,19 +466,19 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 text-right text-sm text-slate-700">
+                    <div class="mt-5 ml-auto w-[160px] text-center text-sm text-slate-700">
                         <span data-receipt-preview="receipt_place">{{ $receiptDefaults['receipt_place'] }}</span>, <span data-receipt-preview="receipt_date_label"></span>
                     </div>
 
-                    <div class="mt-3 ml-auto w-[260px] text-center text-sm text-slate-700">
+                    <div class="mt-3 ml-auto w-[160px] text-center text-sm text-slate-700">
                         <p>Penerima,</p>
                         <p class="mt-7 text-slate-500">Materai 10rb</p>
                         <p class="mt-5 font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="recipient_name">{{ $receiptDefaults['recipient_name'] }}</p>
                         <p class="mt-1" data-receipt-preview="recipient_nip">NIP. {{ $receiptDefaults['recipient_nip'] ?: '-' }}</p>
                     </div>
 
-                    <div class="mt-8 grid grid-cols-2 gap-8 text-sm text-slate-700">
-                        <div class="text-center">
+                    <div class="mt-12 grid grid-cols-2 text-sm text-slate-700">
+                        <div class="w-[230px] justify-self-start text-center">
                             <p class="font-semibold text-slate-900">Mengetahui dan Menyetujui,</p>
                             <p class="mt-1">Kepala Dinas Pendidikan Dan Kebudayaan</p>
                             <p>Provinsi Maluku Utara</p>
@@ -486,8 +487,8 @@
                                 <p class="mt-1" data-receipt-preview="approver_nip">NIP. {{ $receiptDefaults['approver_nip'] ?: '........................................' }}</p>
                             </div>
                         </div>
-                        <div class="text-center">
-                            <p class="pt-7">Bendahara Pengeluaran</p>
+                        <div class="w-[160px] justify-self-end text-center">
+                            <p class="pt-8">Bendahara Pengeluaran</p>
                             <div class="pt-14">
                                 <p class="font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="treasurer_name">{{ $receiptDefaults['treasurer_name'] ?: '........................................' }}</p>
                                 <p class="mt-1" data-receipt-preview="treasurer_nip">NIP. {{ $receiptDefaults['treasurer_nip'] ?: '........................................' }}</p>
@@ -624,7 +625,8 @@
                                   <td class="kop-text-cell">
                                       <div class="kop-line-1">PEMERINTAH PROVINSI MALUKU UTARA</div>
                                       <div class="kop-line-2">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
-                                      <div class="kop-line-3">Jln. Raya Sultan Nuku, Sofifi</div>
+                                      <div class="kop-line-3">Jln. Raya Sultan Nuku, Kota Tidore Kepulauan</div>
+                                      <div class="kop-line-4">SOFIFI</div>
                                   </td>
                               </tr>
                           </table>
@@ -689,18 +691,22 @@
                     <table class="approval-grid">
                         <tr>
                             <td>
-                                <div class="approval-title">Mengetahui dan Menyetujui,</div>
-                                <div class="approval-subtitle">Kepala Dinas Pendidikan Dan Kebudayaan</div>
-                                <div>Provinsi Maluku Utara</div>
-                                <div class="approval-space"></div>
-                                <div class="approval-name">${escapeHtml(state.approverName)}</div>
-                                <div>NIP. ${escapeHtml(state.approverNip)}</div>
+                                <div class="approval-block approval-block-left">
+                                    <div class="approval-title">Mengetahui dan Menyetujui,</div>
+                                    <div class="approval-subtitle">Kepala Dinas Pendidikan Dan Kebudayaan</div>
+                                    <div>Provinsi Maluku Utara</div>
+                                    <div class="approval-space"></div>
+                                    <div class="approval-name">${escapeHtml(state.approverName)}</div>
+                                    <div>NIP. ${escapeHtml(state.approverNip)}</div>
+                                </div>
                             </td>
                             <td>
-                                <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran</div>
-                                <div class="approval-space"></div>
-                                <div class="approval-name">${escapeHtml(state.treasurerName)}</div>
-                                <div>NIP. ${escapeHtml(state.treasurerNip)}</div>
+                                <div class="approval-block approval-block-right">
+                                    <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran</div>
+                                    <div class="approval-space"></div>
+                                    <div class="approval-name">${escapeHtml(state.treasurerName)}</div>
+                                    <div>NIP. ${escapeHtml(state.treasurerNip)}</div>
+                                </div>
                             </td>
                         </tr>
                     </table>
@@ -717,11 +723,12 @@
                   .kop-table { width: 100%; border-collapse: collapse; }
                   .kop-logo-cell { width: 78px; vertical-align: middle; text-align: left; }
                   .kop-text-cell { vertical-align: middle; text-align: center; padding-right: 32px; }
-                  .kop-logo { width: 62px; height: 62px; object-fit: contain; display: block; }
-                  .kop-line-1 { font-size: 16px; font-weight: 700; letter-spacing: .02em; }
-                .kop-line-2 { font-size: 14px; font-weight: 700; margin-top: 2px; }
-                .kop-line-3 { font-size: 12px; margin-top: 2px; }
-                .divider { border-top: 2px solid #111827; margin: 8px 0 12px; }
+                  .kop-logo { width: 56px; height: 56px; object-fit: contain; display: block; }
+                  .kop-line-1 { font-size: 16px; font-weight: 700; letter-spacing: .02em; line-height: 1.05; }
+                .kop-line-2 { font-size: 14px; font-weight: 700; line-height: 1.05; margin-top: 0; }
+                .kop-line-3 { font-size: 13px; line-height: 1.05; margin-top: 0; }
+                .kop-line-4 { font-size: 18px; font-weight: 700; letter-spacing: .38em; line-height: 1.05; margin-top: 1px; padding-left: .38em; }
+                .divider { border-top: 2px solid #111827; border-bottom: 1px solid #111827; height: 2px; margin: 6px 0 12px; }
                 .receipt-head-meta, .meta-table, .detail-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
                 .receipt-head-meta { margin-bottom: 14px; font-size: 12px; }
                 .receipt-head-left { width: 50%; vertical-align: top; }
@@ -745,16 +752,19 @@
                 .detail-table td:first-child, .detail-table th:first-child { width: 34px; text-align: center; }
                 .detail-total td { font-weight: 700; }
                 .detail-table-wrap { margin-left: 144px; width: calc(100% - 144px); }
-                .receipt-date { width: 50%; margin-top: 14px; margin-left: auto; text-align: center; }
-                .recipient-block { width: 50%; margin-left: auto; margin-top: 6px; text-align: center; }
+                .receipt-date { width: 160px; margin-top: 14px; margin-left: auto; margin-right: 0; text-align: center; }
+                .recipient-block { width: 160px; margin-left: auto; margin-right: 0; margin-top: 6px; text-align: center; }
                 .stamp { margin-top: 26px; font-size: 11px; }
                 .signature-name { margin-top: 18px; font-weight: 700; text-decoration: underline; }
                 .signature-nip { margin-top: 4px; }
-                .approval-grid { width: 100%; border-collapse: collapse; margin-top: 24px; }
+                .approval-grid { width: 100%; border-collapse: collapse; margin-top: 42px; }
                 .approval-grid td { width: 50%; vertical-align: top; text-align: center; }
+                .approval-block { text-align: center; }
+                .approval-block-left { width: 230px; margin-left: 0; margin-right: auto; }
+                .approval-block-right { width: 160px; margin-left: auto; margin-right: 0; }
                 .approval-title { font-weight: 700; }
                 .approval-subtitle { margin-top: 2px; }
-                .approval-subtitle-plain { margin-top: 18px; }
+                .approval-subtitle-plain { margin-top: 31px; }
                 .approval-space { height: 54px; }
                 .approval-name { font-weight: 700; text-decoration: underline; }
             `;
