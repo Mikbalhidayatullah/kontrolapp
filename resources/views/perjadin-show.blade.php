@@ -473,7 +473,7 @@
                     <div class="mt-3 ml-auto w-[160px] text-center text-sm text-slate-700">
                         <p>Penerima,</p>
                         <p class="mt-7 text-slate-500">Materai 10rb</p>
-                        <p class="mt-5 font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="recipient_name">{{ $receiptDefaults['recipient_name'] }}</p>
+                        <p class="mt-5 whitespace-nowrap font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="recipient_name">{{ $receiptDefaults['recipient_name'] }}</p>
                         <p class="mt-1" data-receipt-preview="recipient_nip">NIP. {{ $receiptDefaults['recipient_nip'] ?: '-' }}</p>
                     </div>
 
@@ -483,14 +483,14 @@
                             <p class="mt-1">Kepala Dinas Pendidikan Dan Kebudayaan</p>
                             <p>Provinsi Maluku Utara</p>
                             <div class="pt-14">
-                                <p class="font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="approver_name">{{ $receiptDefaults['approver_name'] ?: '........................................' }}</p>
+                                <p class="whitespace-nowrap font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="approver_name">{{ $receiptDefaults['approver_name'] ?: '........................................' }}</p>
                                 <p class="mt-1" data-receipt-preview="approver_nip">NIP. {{ $receiptDefaults['approver_nip'] ?: '........................................' }}</p>
                             </div>
                         </div>
                         <div class="w-[160px] justify-self-end text-center">
                             <p class="pt-8">Bendahara Pengeluaran</p>
                             <div class="pt-14">
-                                <p class="font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="treasurer_name">{{ $receiptDefaults['treasurer_name'] ?: '........................................' }}</p>
+                                <p class="whitespace-nowrap font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="treasurer_name">{{ $receiptDefaults['treasurer_name'] ?: '........................................' }}</p>
                                 <p class="mt-1" data-receipt-preview="treasurer_nip">NIP. {{ $receiptDefaults['treasurer_nip'] ?: '........................................' }}</p>
                             </div>
                         </div>
@@ -755,7 +755,7 @@
                 .receipt-date { width: 160px; margin-top: 14px; margin-left: auto; margin-right: 0; text-align: center; }
                 .recipient-block { width: 160px; margin-left: auto; margin-right: 0; margin-top: 6px; text-align: center; }
                 .stamp { margin-top: 26px; font-size: 11px; }
-                .signature-name { margin-top: 18px; font-weight: 700; text-decoration: underline; }
+                .signature-name { margin-top: 18px; font-weight: 700; text-decoration: underline; white-space: nowrap; }
                 .signature-nip { margin-top: 4px; }
                 .approval-grid { width: 100%; border-collapse: collapse; margin-top: 42px; }
                 .approval-grid td { width: 50%; vertical-align: top; text-align: center; }
@@ -766,7 +766,7 @@
                 .approval-subtitle { margin-top: 2px; }
                 .approval-subtitle-plain { margin-top: 31px; }
                 .approval-space { height: 54px; }
-                .approval-name { font-weight: 700; text-decoration: underline; }
+                .approval-name { font-weight: 700; text-decoration: underline; white-space: nowrap; }
             `;
 
             const syncPreview = () => {

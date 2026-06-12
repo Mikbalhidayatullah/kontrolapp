@@ -250,6 +250,7 @@
             margin-top: 18px;
             font-weight: 700;
             text-decoration: underline;
+            white-space: nowrap;
         }
 
         .signature-nip {
@@ -303,6 +304,7 @@
         .approval-name {
             font-weight: 700;
             text-decoration: underline;
+            white-space: nowrap;
         }
     </style>
 </head>
