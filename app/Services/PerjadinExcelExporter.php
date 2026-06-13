@@ -194,6 +194,8 @@ class PerjadinExcelExporter
 
     private function entryCells(PerjadinEntry $entry, int $sequence): array
     {
+        $effectiveLodgingRate = $this->effectiveLodgingRate($entry);
+
         $values = [
             $sequence,
             optional($entry->start_date)->translatedFormat('F Y') ?: '-',
@@ -233,7 +235,7 @@ class PerjadinExcelExporter
             $entry->ticket_return_booking_code ?: '-',
             $entry->lodging_enabled ? (int) $entry->lodging_nights : null,
             $entry->lodging_enabled ? ($entry->lodging_has_receipt ? 'Ya' : 'Tidak') : '-',
-            $entry->lodging_enabled ? (int) $entry->lodging_rate : null,
+            $entry->lodging_enabled ? $effectiveLodgingRate : null,
             $entry->lodging_hotel_name ?: '-',
             (int) $entry->lodging_total,
             $entry->local_transport_enabled ? (int) $entry->local_transport_domicile_to_airport : null,
@@ -267,6 +269,23 @@ class PerjadinExcelExporter
         }
 
         return $cells;
+    }
+
+    private function effectiveLodgingRate(PerjadinEntry $entry): int
+    {
+        if (! $entry->lodging_enabled) {
+            return 0;
+        }
+
+        if ($entry->lodging_has_receipt) {
+            return (int) $entry->lodging_rate;
+        }
+
+        if ((int) $entry->lodging_nights > 0 && (int) $entry->lodging_total > 0) {
+            return (int) round((int) $entry->lodging_total / (int) $entry->lodging_nights);
+        }
+
+        return (int) round(max((int) $entry->lodging_rate, 0) * 0.3);
     }
 
     private function rowXml(int $rowNumber, array $cells): string

@@ -653,8 +653,11 @@ class PerjadinController extends Controller
         $ticketTotal = $ticketEnabled ? $ticketDeparturePrice + $ticketReturnPrice : 0;
 
         $lodgingNights = $lodgingEnabled ? (int) ($validated['lodging_nights'] ?? 0) : null;
-        $lodgingRate = $lodgingEnabled ? $this->parseMoney($validated['lodging_rate'] ?? null) : null;
-        $lodgingTotal = $lodgingEnabled ? $lodgingNights * $lodgingRate : 0;
+        $lodgingBaseRate = $lodgingEnabled ? $this->parseMoney($validated['lodging_rate'] ?? null) : null;
+        $lodgingEffectiveRate = $lodgingEnabled
+            ? ($lodgingHasReceipt ? $lodgingBaseRate : $this->lumpsumLodgingRate($lodgingBaseRate))
+            : null;
+        $lodgingTotal = $lodgingEnabled ? $lodgingNights * $lodgingEffectiveRate : 0;
 
         $localTransportDomicileToAirport = $localTransportEnabled ? $this->parseMoney($validated['local_transport_domicile_to_airport'] ?? null) : null;
         $localTransportAirportToDomicile = $localTransportEnabled ? $this->parseMoney($validated['local_transport_airport_to_domicile'] ?? null) : null;
@@ -715,7 +718,7 @@ class PerjadinController extends Controller
             'lodging_enabled' => $lodgingEnabled,
             'lodging_has_receipt' => $lodgingEnabled ? $lodgingHasReceipt : false,
             'lodging_nights' => $lodgingNights,
-            'lodging_rate' => $lodgingRate,
+            'lodging_rate' => $lodgingBaseRate,
             'lodging_total' => $lodgingTotal,
             'lodging_hotel_name' => $lodgingEnabled ? ($validated['lodging_hotel_name'] ?? null) : null,
 
@@ -756,6 +759,11 @@ class PerjadinController extends Controller
         }
 
         return (int) preg_replace('/\D/', '', (string) $value);
+    }
+
+    private function lumpsumLodgingRate(?int $baseRate): int
+    {
+        return (int) round(max((int) $baseRate, 0) * 0.3);
     }
 
     private function duplicateStoredFile(?string $path, string $directory): ?string
@@ -896,7 +904,7 @@ class PerjadinController extends Controller
                 'rows' => [
                     ['label' => 'Jumlah Malam', 'value' => $entry->lodging_nights ?: '-'],
                     ['label' => 'Ada Nota', 'value' => $entry->lodging_has_receipt ? 'Ya, full SBU' : 'Tidak, lumpsum 30% dari SBU'],
-                    ['label' => 'Nominal Dipakai', 'value' => $this->moneyLabel($entry->lodging_rate)],
+                    ['label' => 'Nominal Dipakai', 'value' => $this->moneyLabel($this->effectiveLodgingRate($entry))],
                     ['label' => 'Nama Hotel', 'value' => $entry->lodging_hotel_name ?: '-'],
                     ['label' => 'Total', 'value' => $this->moneyLabel($entry->lodging_total)],
                 ],
@@ -953,7 +961,7 @@ class PerjadinController extends Controller
 
         if ($entry->lodging_enabled && $entry->lodging_total > 0) {
             $items[] = [
-                'description' => 'Biaya Penginapan '.(int) $entry->lodging_nights.' malam x '.$this->moneyLabel($entry->lodging_rate).($entry->lodging_has_receipt ? ' (full SBU / ada nota)' : ' (lumpsum 30% tanpa nota)'),
+                'description' => 'Biaya Penginapan '.(int) $entry->lodging_nights.' malam x '.$this->moneyLabel($this->effectiveLodgingRate($entry)).($entry->lodging_has_receipt ? ' (full SBU / ada nota)' : ' (lumpsum 30% tanpa nota)'),
                 'total' => (int) $entry->lodging_total,
                 'total_label' => $this->moneyLabel($entry->lodging_total),
             ];
@@ -976,6 +984,23 @@ class PerjadinController extends Controller
         }
 
         return $items;
+    }
+
+    private function effectiveLodgingRate(PerjadinEntry $entry): int
+    {
+        if (! $entry->lodging_enabled) {
+            return 0;
+        }
+
+        if ($entry->lodging_has_receipt) {
+            return (int) $entry->lodging_rate;
+        }
+
+        if ((int) $entry->lodging_nights > 0 && (int) $entry->lodging_total > 0) {
+            return (int) round((int) $entry->lodging_total / (int) $entry->lodging_nights);
+        }
+
+        return $this->lumpsumLodgingRate((int) $entry->lodging_rate);
     }
 
     private function destinationCityLabel(string $regency, string $district): string
