@@ -2,6 +2,8 @@
     $user = auth()->user();
     $role = $user?->role;
     $navItems = [];
+    $afterPerjadinNavItems = [];
+    $perjadinSbuMenu = null;
 
     if (in_array($role, ['admin', 'bendahara'], true)) {
         $navItems[] = ['label' => 'Dashboard', 'href' => route('dashboard'), 'active' => request()->routeIs('dashboard')];
@@ -13,16 +15,26 @@
     }
 
     if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {
-        $navItems[] = ['label' => 'Perjadin', 'href' => route('perjadin'), 'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*')];
-        $navItems[] = ['label' => 'SBU', 'href' => route('local-transport-sbus.index'), 'active' => request()->routeIs('local-transport-sbus.*')];
+        $navItems[] = ['label' => 'Pajak', 'href' => route('pajak.index'), 'active' => request()->routeIs('pajak.*')];
     }
 
     if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {
-        $navItems[] = ['label' => $role === 'verifikator' ? 'Report Perjadin' : 'Report', 'href' => route('report'), 'active' => request()->routeIs('report')];
+        $perjadinSbuMenu = [
+            'label' => 'Perjadin & SBU',
+            'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*') || request()->routeIs('local-transport-sbus.*'),
+            'items' => [
+                ['label' => 'Perjadin', 'href' => route('perjadin'), 'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*')],
+                ['label' => 'SBU', 'href' => route('local-transport-sbus.index'), 'active' => request()->routeIs('local-transport-sbus.*')],
+            ],
+        ];
+    }
+
+    if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {
+        $afterPerjadinNavItems[] = ['label' => $role === 'verifikator' ? 'Report Perjadin' : 'Report', 'href' => route('report'), 'active' => request()->routeIs('report')];
     }
 
     if ($role === 'admin') {
-        $navItems[] = ['label' => 'Kelola User', 'href' => route('users.index'), 'active' => request()->routeIs('users.*')];
+        $afterPerjadinNavItems[] = ['label' => 'Kelola User', 'href' => route('users.index'), 'active' => request()->routeIs('users.*')];
     }
 @endphp
 
@@ -44,6 +56,35 @@
             @auth
                 <div class="hidden items-center gap-2 lg:flex">
                     @foreach ($navItems as $item)
+                        <x-nav-link href="{{ $item['href'] }}" :active="$item['active']">{{ $item['label'] }}</x-nav-link>
+                    @endforeach
+
+                    @if ($perjadinSbuMenu)
+                        <details class="group relative">
+                            <summary
+                                aria-current="{{ $perjadinSbuMenu['active'] ? 'page' : false }}"
+                                class="{{ $perjadinSbuMenu['active'] ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} inline-flex cursor-pointer list-none items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition [&::-webkit-details-marker]:hidden"
+                            >
+                                {{ $perjadinSbuMenu['label'] }}
+                                <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 transition group-open:rotate-180" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                                </svg>
+                            </summary>
+                            <div class="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-xl shadow-slate-950/20">
+                                @foreach ($perjadinSbuMenu['items'] as $child)
+                                    <a
+                                        href="{{ $child['href'] }}"
+                                        aria-current="{{ $child['active'] ? 'page' : false }}"
+                                        class="{{ $child['active'] ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950' }} block rounded-xl px-3 py-2 text-sm font-medium transition"
+                                    >
+                                        {{ $child['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </details>
+                    @endif
+
+                    @foreach ($afterPerjadinNavItems as $item)
                         <x-nav-link href="{{ $item['href'] }}" :active="$item['active']">{{ $item['label'] }}</x-nav-link>
                     @endforeach
                 </div>
@@ -86,6 +127,41 @@
         <div class="space-y-2 px-4 py-4">
             @auth
                 @foreach ($navItems as $item)
+                    <a
+                        href="{{ $item['href'] }}"
+                        aria-current="{{ $item['active'] ? 'page' : false }}"
+                        class="{{ $item['active'] ? 'bg-white text-slate-950' : 'bg-white/5 text-slate-200 hover:bg-white/10' }} block rounded-2xl px-4 py-3 text-sm font-medium transition"
+                    >
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+
+                @if ($perjadinSbuMenu)
+                    <details class="rounded-2xl bg-white/5">
+                        <summary
+                            aria-current="{{ $perjadinSbuMenu['active'] ? 'page' : false }}"
+                            class="{{ $perjadinSbuMenu['active'] ? 'bg-white text-slate-950' : 'text-slate-200 hover:bg-white/10' }} flex cursor-pointer list-none items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition [&::-webkit-details-marker]:hidden"
+                        >
+                            {{ $perjadinSbuMenu['label'] }}
+                            <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                            </svg>
+                        </summary>
+                        <div class="space-y-1 px-2 pb-2 pt-1">
+                            @foreach ($perjadinSbuMenu['items'] as $child)
+                                <a
+                                    href="{{ $child['href'] }}"
+                                    aria-current="{{ $child['active'] ? 'page' : false }}"
+                                    class="{{ $child['active'] ? 'bg-white text-slate-950' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} block rounded-xl px-4 py-2.5 text-sm font-medium transition"
+                                >
+                                    {{ $child['label'] }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </details>
+                @endif
+
+                @foreach ($afterPerjadinNavItems as $item)
                     <a
                         href="{{ $item['href'] }}"
                         aria-current="{{ $item['active'] ? 'page' : false }}"

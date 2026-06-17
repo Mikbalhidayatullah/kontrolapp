@@ -8,6 +8,7 @@ use App\Http\Controllers\LocalTransportSbuController;
 use App\Http\Controllers\PerjadinController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SavingAllocationController;
+use App\Http\Controllers\TaxEntryController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -47,6 +48,15 @@ Route::middleware(['auth', 'role:admin,bendahara'])->group(function () {
     Route::get('/dana-saving/{savingAllocation}/edit', [SavingAllocationController::class, 'edit'])->name('dana-saving.edit');
     Route::put('/dana-saving/{savingAllocation}', [SavingAllocationController::class, 'update'])->name('dana-saving.update');
     Route::delete('/dana-saving/{savingAllocation}', [SavingAllocationController::class, 'destroy'])->name('dana-saving.destroy');
+});
+
+Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {
+    Route::get('/pajak', [TaxEntryController::class, 'index'])->name('pajak.index');
+    Route::get('/pajak/tambah', [TaxEntryController::class, 'create'])->name('pajak.create');
+    Route::post('/pajak', [TaxEntryController::class, 'store'])->name('pajak.store');
+    Route::get('/pajak/{taxEntry}/edit', [TaxEntryController::class, 'edit'])->name('pajak.edit');
+    Route::put('/pajak/{taxEntry}', [TaxEntryController::class, 'update'])->name('pajak.update');
+    Route::delete('/pajak/{taxEntry}', [TaxEntryController::class, 'destroy'])->name('pajak.destroy');
 });
 
 Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {

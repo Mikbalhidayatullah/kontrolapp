@@ -257,7 +257,7 @@ class PerjadinController extends Controller
             'treasurerName' => $data['treasurer_name'] ?: '........................................',
             'treasurerNip' => $data['treasurer_nip'] ?: '........................................',
             'grandTotal' => $grandTotal,
-            'grandTotalLabel' => $this->moneyLabel($grandTotal),
+            'grandTotalLabel' => $this->receiptMoneyLabel($grandTotal),
             'grandTotalWords' => ucfirst(trim($this->terbilang($grandTotal))).' rupiah',
             'receiptBreakdown' => $this->receiptBreakdown($perjadinEntry),
         ])->setPaper('a4', 'portrait');
@@ -937,7 +937,9 @@ class PerjadinController extends Controller
 
         if ($entry->daily_allowance_enabled && $entry->daily_allowance_total > 0) {
             $items[] = [
-                'description' => 'Uang Harian '.(int) $entry->daily_allowance_days.' hari x '.$this->moneyLabel($entry->daily_allowance_rate),
+                'title' => 'Uang Harian',
+                'calculation_label' => (int) $entry->daily_allowance_days.' Hari X '.$this->receiptMoneyLabel($entry->daily_allowance_rate).' = '.$this->receiptMoneyLabel($entry->daily_allowance_total),
+                'description' => 'Uang Harian '.(int) $entry->daily_allowance_days.' Hari X '.$this->receiptMoneyLabel($entry->daily_allowance_rate).' = '.$this->receiptMoneyLabel($entry->daily_allowance_total),
                 'total' => (int) $entry->daily_allowance_total,
                 'total_label' => $this->moneyLabel($entry->daily_allowance_total),
             ];
@@ -945,7 +947,9 @@ class PerjadinController extends Controller
 
         if ($entry->representation_enabled && $entry->representation_total > 0) {
             $items[] = [
-                'description' => 'Uang Representasi '.(int) $entry->representation_days.' hari x '.$this->moneyLabel($entry->representation_rate),
+                'title' => 'Uang Representasi Perjalanan Dinas',
+                'calculation_label' => (int) $entry->representation_days.' Hari X '.$this->receiptMoneyLabel($entry->representation_rate).' = '.$this->receiptMoneyLabel($entry->representation_total),
+                'description' => 'Uang Representasi Perjalanan Dinas '.(int) $entry->representation_days.' Hari X '.$this->receiptMoneyLabel($entry->representation_rate).' = '.$this->receiptMoneyLabel($entry->representation_total),
                 'total' => (int) $entry->representation_total,
                 'total_label' => $this->moneyLabel($entry->representation_total),
             ];
@@ -953,7 +957,9 @@ class PerjadinController extends Controller
 
         if ($entry->ticket_enabled && $entry->ticket_total > 0) {
             $items[] = [
-                'description' => 'Biaya Transportasi 1 orang x '.$this->moneyLabel($entry->ticket_total),
+                'title' => 'Biaya Transportasi',
+                'calculation_label' => $this->receiptMoneyLabel($entry->ticket_total),
+                'description' => 'Biaya Transportasi '.$this->receiptMoneyLabel($entry->ticket_total),
                 'total' => (int) $entry->ticket_total,
                 'total_label' => $this->moneyLabel($entry->ticket_total),
             ];
@@ -961,7 +967,9 @@ class PerjadinController extends Controller
 
         if ($entry->lodging_enabled && $entry->lodging_total > 0) {
             $items[] = [
-                'description' => 'Biaya Penginapan '.(int) $entry->lodging_nights.' malam x '.$this->moneyLabel($this->effectiveLodgingRate($entry)).($entry->lodging_has_receipt ? ' (full SBU / ada nota)' : ' (lumpsum 30% tanpa nota)'),
+                'title' => 'Biaya Penginapan',
+                'calculation_label' => (int) $entry->lodging_nights.' Hari X '.$this->receiptMoneyLabel($this->effectiveLodgingRate($entry)).' = '.$this->receiptMoneyLabel($entry->lodging_total),
+                'description' => 'Biaya Penginapan '.(int) $entry->lodging_nights.' Hari X '.$this->receiptMoneyLabel($this->effectiveLodgingRate($entry)).' = '.$this->receiptMoneyLabel($entry->lodging_total),
                 'total' => (int) $entry->lodging_total,
                 'total_label' => $this->moneyLabel($entry->lodging_total),
             ];
@@ -969,7 +977,9 @@ class PerjadinController extends Controller
 
         if ($entry->local_transport_enabled && $entry->local_transport_total > 0) {
             $items[] = [
-                'description' => 'Transportasi Lokal 1 orang x '.$this->moneyLabel($entry->local_transport_total),
+                'title' => 'Biaya Taksi',
+                'calculation_label' => $this->receiptMoneyLabel($entry->local_transport_total),
+                'description' => 'Biaya Taksi '.$this->receiptMoneyLabel($entry->local_transport_total),
                 'total' => (int) $entry->local_transport_total,
                 'total_label' => $this->moneyLabel($entry->local_transport_total),
             ];
@@ -977,13 +987,20 @@ class PerjadinController extends Controller
 
         if ($entry->other_cost_enabled && $entry->other_cost_amount > 0) {
             $items[] = [
-                'description' => 'Biaya Lain-lain 1 orang x '.$this->moneyLabel($entry->other_cost_amount),
+                'title' => 'Biaya Lain-lain',
+                'calculation_label' => $this->receiptMoneyLabel($entry->other_cost_amount),
+                'description' => 'Biaya Lain-lain '.$this->receiptMoneyLabel($entry->other_cost_amount),
                 'total' => (int) $entry->other_cost_amount,
                 'total_label' => $this->moneyLabel($entry->other_cost_amount),
             ];
         }
 
         return $items;
+    }
+
+    private function receiptMoneyLabel(int|float|null $amount): string
+    {
+        return 'Rp. '.number_format((int) $amount, 0, ',', '.').',00';
     }
 
     private function effectiveLodgingRate(PerjadinEntry $entry): int

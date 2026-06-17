@@ -402,29 +402,29 @@
                     </div>
 
                     <div class="mt-6 text-center">
-                        <p class="text-[22px] font-bold tracking-[0.08em] text-slate-900">KUITANSI</p>
+                        <p class="text-[22px] font-bold tracking-[0.08em] text-slate-900 underline underline-offset-4">KUITANSI</p>
                     </div>
 
                     <div class="mt-4 space-y-2 text-sm leading-6 text-slate-700">
                         <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
                             <span>Sudah terima dari</span>
                             <span>:</span>
-                            <span data-receipt-preview="received_from">{{ $receiptDefaults['received_from'] }}</span>
+                            <span class="block border-b border-slate-900 leading-5" data-receipt-preview="received_from">{{ $receiptDefaults['received_from'] }}</span>
                         </div>
                         <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
                             <span>Sebesar</span>
                             <span>:</span>
-                            <span class="font-semibold text-slate-900">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</span>
+                            <span class="block border-b border-slate-900 font-semibold leading-5 text-slate-900">Rp. {{ number_format($entry->grand_total, 0, ',', '.') }},00</span>
                         </div>
                         <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
                             <span>Terbilang</span>
                             <span>:</span>
-                            <span class="italic text-slate-600" data-receipt-preview="grand_total_words"></span>
+                            <span class="block border-b border-slate-900 italic leading-5 text-slate-600" data-receipt-preview="grand_total_words"></span>
                         </div>
                         <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
                             <span>Untuk pengeluaran</span>
                             <span>:</span>
-                            <span data-receipt-preview="payment_purpose">{{ $receiptDefaults['payment_purpose'] }}</span>
+                            <span class="block min-h-[44px] border-b border-slate-900 leading-5" data-receipt-preview="payment_purpose">{{ $receiptDefaults['payment_purpose'] }}</span>
                         </div>
                     </div>
 
@@ -434,52 +434,43 @@
                             <span></span>
                             <span>dengan rincian :</span>
                         </div>
-                        <div class="mt-2 ml-[181px] overflow-hidden rounded-2xl">
-                            <table class="min-w-full text-sm">
-                                <thead class="text-left text-slate-700">
-                                    <tr>
-                                        <th class="w-12 px-3 py-2 font-semibold">No</th>
-                                        <th class="px-3 py-2 font-semibold">Uraian</th>
-                                        <th class="w-40 px-3 py-2 text-right font-semibold">Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white">
+                        <div class="mt-1 ml-[181px]">
+                            <table class="w-full table-fixed text-sm leading-5 text-slate-700">
+                                <tbody>
                                     @forelse ($receiptBreakdown as $index => $item)
                                         <tr>
-                                            <td class="px-3 py-2 text-center text-slate-600">{{ $index + 1 }}</td>
-                                            <td class="px-3 py-2 text-slate-700">{{ $item['description'] }}</td>
-                                            <td class="px-3 py-2 text-right font-medium text-slate-900">{{ $item['total_label'] }}</td>
+                                            <td class="w-[22px] align-top">{{ $index + 1 }}.</td>
+                                            <td class="w-[250px] align-top">{{ $item['title'] ?? $item['description'] }}</td>
+                                            <td class="w-[16px] text-center align-top">:</td>
+                                            <td class="align-top">{{ $item['calculation_label'] ?? $item['total_label'] }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td class="px-3 py-2 text-center text-slate-600">1</td>
-                                            <td class="px-3 py-2 text-slate-700">Biaya perjalanan dinas sesuai rincian SPPD</td>
-                                            <td class="px-3 py-2 text-right font-medium text-slate-900">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</td>
+                                            <td class="w-[22px] align-top">1.</td>
+                                            <td class="w-[250px] align-top">Biaya perjalanan dinas sesuai rincian SPPD</td>
+                                            <td class="w-[16px] text-center align-top">:</td>
+                                            <td class="align-top">Rp. {{ number_format($entry->grand_total, 0, ',', '.') }},00</td>
                                         </tr>
                                     @endforelse
-                                    <tr class="bg-slate-50 font-semibold text-slate-900">
-                                        <td colspan="2" class="px-3 py-2">Total Jumlah</td>
-                                        <td class="px-3 py-2 text-right">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <div class="mt-5 ml-auto w-[160px] text-center text-sm text-slate-700">
+                    <div class="mt-5 ml-auto mr-[30px] w-[160px] text-center text-sm text-slate-700">
                         <span data-receipt-preview="receipt_place">{{ $receiptDefaults['receipt_place'] }}</span>, <span data-receipt-preview="receipt_date_label"></span>
                     </div>
 
-                    <div class="mt-3 ml-auto w-[160px] text-center text-sm text-slate-700">
-                        <p>Penerima,</p>
+                    <div class="mt-3 ml-auto mr-[30px] w-[160px] text-center text-sm text-slate-700">
+                        <p>Penerima</p>
                         <p class="mt-7 text-slate-500">Materai 10rb</p>
                         <p class="mt-5 whitespace-nowrap font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="recipient_name">{{ $receiptDefaults['recipient_name'] }}</p>
                         <p class="mt-1" data-receipt-preview="recipient_nip">NIP. {{ $receiptDefaults['recipient_nip'] ?: '-' }}</p>
                     </div>
 
-                    <div class="mt-12 grid grid-cols-2 text-sm text-slate-700">
-                        <div class="w-[230px] justify-self-start text-center">
-                            <p class="font-semibold text-slate-900">Mengetahui dan Menyetujui,</p>
+                    <div class="mt-6 grid grid-cols-2 text-sm text-slate-700">
+                        <div class="ml-[30px] w-[230px] justify-self-start text-center">
+                            <p class="font-semibold text-slate-900">Mengetahui dan Menyetujui :</p>
                             <p class="mt-1">Kepala Dinas Pendidikan Dan Kebudayaan</p>
                             <p>Provinsi Maluku Utara</p>
                             <div class="pt-14">
@@ -487,8 +478,8 @@
                                 <p class="mt-1" data-receipt-preview="approver_nip">NIP. {{ $receiptDefaults['approver_nip'] ?: '........................................' }}</p>
                             </div>
                         </div>
-                        <div class="w-[160px] justify-self-end text-center">
-                            <p class="pt-8">Bendahara Pengeluaran</p>
+                        <div class="mr-[30px] w-[160px] justify-self-end text-center">
+                            <p class="pt-8">Bendahara Pengeluaran,</p>
                             <div class="pt-14">
                                 <p class="whitespace-nowrap font-semibold underline underline-offset-4 text-slate-900" data-receipt-preview="treasurer_name">{{ $receiptDefaults['treasurer_name'] ?: '........................................' }}</p>
                                 <p class="mt-1" data-receipt-preview="treasurer_nip">NIP. {{ $receiptDefaults['treasurer_nip'] ?: '........................................' }}</p>
@@ -592,7 +583,7 @@
                 approverNip: document.getElementById('approver_nip')?.value || '........................................',
                 treasurerName: document.getElementById('treasurer_name')?.value || '........................................',
                 treasurerNip: document.getElementById('treasurer_nip')?.value || '........................................',
-                grandTotalLabel: `Rp ${new Intl.NumberFormat('id-ID').format(grandTotal)}`,
+                grandTotalLabel: `Rp. ${new Intl.NumberFormat('id-ID').format(grandTotal)},00`,
                 grandTotalWords: terbilang(grandTotal).replace(/^./, (char) => char.toUpperCase()),
             });
 
@@ -600,18 +591,20 @@
                 if (!staticReceipt.breakdown.length) {
                     return `
                         <tr>
-                            <td>1</td>
-                            <td>Biaya perjalanan dinas sesuai rincian SPPD</td>
-                            <td>${escapeHtml(`Rp ${new Intl.NumberFormat('id-ID').format(grandTotal)}`)}</td>
+                            <td class="detail-list-no">1.</td>
+                            <td class="detail-list-title">Biaya perjalanan dinas sesuai rincian SPPD</td>
+                            <td class="detail-list-colon">:</td>
+                            <td>${escapeHtml(`Rp. ${new Intl.NumberFormat('id-ID').format(grandTotal)},00`)}</td>
                         </tr>
                     `;
                 }
 
                 return staticReceipt.breakdown.map((item, index) => `
                     <tr>
-                        <td>${index + 1}</td>
-                        <td>${escapeHtml(item.description)}</td>
-                        <td>${escapeHtml(item.total_label)}</td>
+                        <td class="detail-list-no">${index + 1}.</td>
+                        <td class="detail-list-title">${escapeHtml(item.title || item.description)}</td>
+                        <td class="detail-list-colon">:</td>
+                        <td>${escapeHtml(item.calculation_label || item.total_label)}</td>
                     </tr>
                 `).join('');
             };
@@ -653,28 +646,17 @@
                     <div class="title">KUITANSI</div>
 
                     <table class="meta-table">
-                        <tr><td>Sudah terima dari</td><td>:</td><td>${escapeHtml(state.receivedFrom)}</td></tr>
-                        <tr><td>Sebesar</td><td>:</td><td>${escapeHtml(state.grandTotalLabel)}</td></tr>
-                        <tr><td>Terbilang</td><td>:</td><td><span class="meta-italic">${escapeHtml(state.grandTotalWords)}</span></td></tr>
-                        <tr><td>Untuk pengeluaran</td><td>:</td><td>${escapeHtml(state.paymentPurpose)}</td></tr>
+                        <tr><td>Sudah terima dari</td><td>:</td><td class="meta-line">${escapeHtml(state.receivedFrom)}</td></tr>
+                        <tr><td>Sebesar</td><td>:</td><td class="meta-line">${escapeHtml(state.grandTotalLabel)}</td></tr>
+                        <tr><td>Terbilang</td><td>:</td><td class="meta-line"><span class="meta-italic">${escapeHtml(state.grandTotalWords)}</span></td></tr>
+                        <tr><td>Untuk pengeluaran</td><td>:</td><td class="meta-line meta-line-multi">${escapeHtml(state.paymentPurpose)}</td></tr>
                     </table>
 
                     <div class="label-rincian"><span></span><span></span><span>dengan rincian :</span></div>
-                    <div class="detail-table-wrap">
-                        <table class="detail-table">
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Uraian</th>
-                                    <th>Jumlah</th>
-                                </tr>
-                            </thead>
+                    <div class="detail-list-wrap">
+                        <table class="detail-list">
                             <tbody>
                                 ${buildBreakdownRows()}
-                                <tr class="detail-total">
-                                    <td colspan="2">Total Jumlah</td>
-                                    <td>${escapeHtml(state.grandTotalLabel)}</td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -682,7 +664,7 @@
                     <div class="receipt-date">${escapeHtml(state.receiptPlace)}, ${escapeHtml(state.receiptDate)}</div>
 
                     <div class="recipient-block">
-                        <div>Penerima,</div>
+                        <div>Penerima</div>
                         <div class="stamp">Materai 10rb</div>
                         <div class="signature-name">${escapeHtml(state.recipientName)}</div>
                         <div class="signature-nip">NIP. ${escapeHtml(state.recipientNip)}</div>
@@ -692,7 +674,7 @@
                         <tr>
                             <td>
                                 <div class="approval-block approval-block-left">
-                                    <div class="approval-title">Mengetahui dan Menyetujui,</div>
+                                    <div class="approval-title">Mengetahui dan Menyetujui :</div>
                                     <div class="approval-subtitle">Kepala Dinas Pendidikan Dan Kebudayaan</div>
                                     <div>Provinsi Maluku Utara</div>
                                     <div class="approval-space"></div>
@@ -702,7 +684,7 @@
                             </td>
                             <td>
                                 <div class="approval-block approval-block-right">
-                                    <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran</div>
+                                    <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran,</div>
                                     <div class="approval-space"></div>
                                     <div class="approval-name">${escapeHtml(state.treasurerName)}</div>
                                     <div>NIP. ${escapeHtml(state.treasurerNip)}</div>
@@ -717,7 +699,7 @@
                 @page { size: A4 portrait; margin: 16mm 18mm 18mm; }
                 * { box-sizing: border-box; }
                 html, body { margin: 0; padding: 0; background: #ffffff; }
-                body { font-family: "DejaVu Sans", Arial, sans-serif; color: #111827; font-size: 11px; line-height: 1.38; }
+                body { font-family: "DejaVu Sans", Arial, sans-serif; color: #111827; font-size: 11px; line-height: 1.18; }
                 .sheet { min-height: 257mm; width: 100%; max-width: 174mm; margin: 0 auto; }
                   .kop { margin-bottom: 6px; }
                   .kop-table { width: 100%; border-collapse: collapse; }
@@ -730,7 +712,7 @@
                 .kop-line-4 { font-size: 18px; font-weight: 700; letter-spacing: .38em; line-height: 1.05; margin-top: 1px; padding-left: .38em; }
                 .divider { border-top: 2px solid #111827; border-bottom: 1px solid #111827; height: 2px; margin: 6px 0 12px; }
                 .receipt-head-meta, .meta-table, .detail-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-                .receipt-head-meta { margin-bottom: 14px; font-size: 12px; }
+                .receipt-head-meta { margin-bottom: 10px; font-size: 12px; }
                 .receipt-head-left { width: 50%; vertical-align: top; }
                 .receipt-head-right { width: 50%; vertical-align: top; text-align: right; }
                 .receipt-head-inner { width: 100%; border-collapse: collapse; }
@@ -740,32 +722,34 @@
                 .receipt-head-inner-right { margin-left: auto; width: 220px; }
                 .receipt-head-inner-right td:first-child { width: 126px; }
                 .receipt-head-label, .receipt-head-label-year, .receipt-head-colon { white-space: nowrap; }
-                .title { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: .12em; margin: 0 0 12px; }
-                .meta-table td { padding: 2px 0; vertical-align: top; word-break: break-word; }
+                .title { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: .12em; text-decoration: underline; margin: 0 0 10px; }
+                .meta-table td { padding: 1px 0; vertical-align: top; word-break: break-word; }
                 .meta-table td:first-child { width: 130px; }
                 .meta-table td:nth-child(2) { width: 14px; }
                 .meta-italic { font-style: italic; }
-                .label-rincian { display: grid; grid-template-columns: 130px 14px minmax(0,1fr); gap: 0; margin-bottom: 6px; font-weight: 400; }
-                .detail-table th, .detail-table td { padding: 5px 7px; vertical-align: top; word-break: break-word; }
-                .detail-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; text-align: left; }
-                .detail-table td:last-child, .detail-table th:last-child { text-align: right; white-space: nowrap; }
-                .detail-table td:first-child, .detail-table th:first-child { width: 34px; text-align: center; }
-                .detail-total td { font-weight: 700; }
-                .detail-table-wrap { margin-left: 144px; width: calc(100% - 144px); }
-                .receipt-date { width: 160px; margin-top: 14px; margin-left: auto; margin-right: 0; text-align: center; }
-                .recipient-block { width: 160px; margin-left: auto; margin-right: 0; margin-top: 6px; text-align: center; }
-                .stamp { margin-top: 26px; font-size: 11px; }
-                .signature-name { margin-top: 18px; font-weight: 700; text-decoration: underline; white-space: nowrap; }
+                .meta-line { border-bottom: 1px solid #111827; line-height: 1.12; min-height: 13px; padding-left: 2px; }
+                .meta-line-multi { min-height: 42px; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 12px, #111827 12px, #111827 13px); }
+                .label-rincian { display: grid; grid-template-columns: 130px 14px minmax(0,1fr); gap: 0; margin-top: 8px; margin-bottom: 4px; font-weight: 400; }
+                .detail-list-wrap { margin-left: 144px; width: calc(100% - 144px); }
+                .detail-list { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                .detail-list td { padding: 1px 0; vertical-align: top; line-height: 1.18; word-break: break-word; }
+                .detail-list-no { width: 18px; }
+                .detail-list-title { width: 250px; }
+                .detail-list-colon { width: 14px; text-align: center; }
+                .receipt-date { width: 160px; margin-top: 12px; margin-left: auto; margin-right: 8mm; text-align: center; }
+                .recipient-block { width: 160px; margin-left: auto; margin-right: 8mm; margin-top: 4px; text-align: center; }
+                .stamp { margin-top: 24px; font-size: 11px; }
+                .signature-name { margin-top: 16px; font-weight: 700; text-decoration: underline; white-space: nowrap; }
                 .signature-nip { margin-top: 4px; }
-                .approval-grid { width: 100%; border-collapse: collapse; margin-top: 42px; }
+                .approval-grid { width: 100%; border-collapse: collapse; margin-top: 18px; }
                 .approval-grid td { width: 50%; vertical-align: top; text-align: center; }
                 .approval-block { text-align: center; }
-                .approval-block-left { width: 230px; margin-left: 0; margin-right: auto; }
-                .approval-block-right { width: 160px; margin-left: auto; margin-right: 0; }
+                .approval-block-left { width: 230px; margin-left: 8mm; margin-right: auto; }
+                .approval-block-right { width: 160px; margin-left: auto; margin-right: 8mm; }
                 .approval-title { font-weight: 700; }
                 .approval-subtitle { margin-top: 2px; }
-                .approval-subtitle-plain { margin-top: 31px; }
-                .approval-space { height: 54px; }
+                .approval-subtitle-plain { margin-top: 29px; }
+                .approval-space { height: 52px; }
                 .approval-name { font-weight: 700; text-decoration: underline; white-space: nowrap; }
             `;
 

@@ -12,7 +12,7 @@
             font-family: DejaVu Sans, sans-serif;
             color: #111827;
             font-size: 11px;
-            line-height: 1.38;
+            line-height: 1.18;
             margin: 0;
         }
 
@@ -92,7 +92,7 @@
         }
 
         .receipt-head-meta {
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             font-size: 12px;
         }
 
@@ -145,11 +145,12 @@
             font-size: 22px;
             font-weight: 700;
             letter-spacing: 0.12em;
-            margin: 0 0 12px;
+            text-decoration: underline;
+            margin: 0 0 10px;
         }
 
         .meta-table td {
-            padding: 2px 0;
+            padding: 1px 0;
             vertical-align: top;
         }
 
@@ -165,10 +166,29 @@
             font-style: italic;
         }
 
+        .meta-line {
+            border-bottom: 1px solid #111827;
+            line-height: 1.12;
+            min-height: 13px;
+            padding-left: 2px;
+        }
+
+        .meta-line-multi {
+            min-height: 42px;
+            background-image: repeating-linear-gradient(
+                to bottom,
+                transparent 0,
+                transparent 12px,
+                #111827 12px,
+                #111827 13px
+            );
+        }
+
         .label-rincian {
             width: 100%;
             display: table;
-            margin-bottom: 6px;
+            margin-top: 8px;
+            margin-bottom: 4px;
             font-weight: 400;
         }
 
@@ -191,63 +211,59 @@
             width: 14px;
         }
 
-        .detail-table th,
-        .detail-table td {
-            padding: 5px 7px;
-            vertical-align: top;
-        }
-
-        .detail-table th {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            text-align: left;
-        }
-
-        .detail-table td:last-child,
-        .detail-table th:last-child {
-            text-align: right;
-            white-space: nowrap;
-        }
-
-        .detail-table td:first-child,
-        .detail-table th:first-child {
-            width: 34px;
-            text-align: center;
-        }
-
-        .detail-total td {
-            font-weight: 700;
-        }
-
-        .detail-table-wrap {
+        .detail-list-wrap {
             margin-left: 144px;
             width: calc(100% - 144px);
         }
 
+        .detail-list {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .detail-list td {
+            padding: 1px 0;
+            vertical-align: top;
+            line-height: 1.18;
+        }
+
+        .detail-list-no {
+            width: 18px;
+        }
+
+        .detail-list-title {
+            width: 250px;
+        }
+
+        .detail-list-colon {
+            width: 14px;
+            text-align: center;
+        }
+
         .receipt-date {
             width: 160px;
-            margin-top: 14px;
+            margin-top: 12px;
             margin-left: auto;
-            margin-right: 0;
+            margin-right: 8mm;
             text-align: center;
         }
 
         .recipient-block {
             width: 160px;
             margin-left: auto;
-            margin-right: 0;
-            margin-top: 6px;
+            margin-right: 8mm;
+            margin-top: 4px;
             text-align: center;
         }
 
         .stamp {
-            margin-top: 26px;
+            margin-top: 24px;
             font-size: 11px;
         }
 
         .signature-name {
-            margin-top: 18px;
+            margin-top: 16px;
             font-weight: 700;
             text-decoration: underline;
             white-space: nowrap;
@@ -260,7 +276,7 @@
         .approval-grid {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 42px;
+            margin-top: 18px;
         }
 
         .approval-grid td {
@@ -275,14 +291,14 @@
 
         .approval-block-left {
             width: 230px;
-            margin-left: 0;
+            margin-left: 8mm;
             margin-right: auto;
         }
 
         .approval-block-right {
             width: 160px;
             margin-left: auto;
-            margin-right: 0;
+            margin-right: 8mm;
         }
 
         .approval-title {
@@ -294,11 +310,11 @@
         }
 
         .approval-subtitle-plain {
-            margin-top: 31px;
+            margin-top: 29px;
         }
 
         .approval-space {
-            height: 64px;
+            height: 52px;
         }
 
         .approval-name {
@@ -373,22 +389,22 @@
             <tr>
                 <td>Sudah terima dari</td>
                 <td>:</td>
-                <td>{{ $receivedFrom }}</td>
+                <td class="meta-line">{{ $receivedFrom }}</td>
             </tr>
             <tr>
                 <td>Sebesar</td>
                 <td>:</td>
-                <td>{{ $grandTotalLabel }}</td>
+                <td class="meta-line">{{ $grandTotalLabel }}</td>
             </tr>
             <tr>
                 <td>Terbilang</td>
                 <td>:</td>
-                <td><span class="meta-italic">{{ $grandTotalWords }}</span></td>
+                <td class="meta-line"><span class="meta-italic">{{ $grandTotalWords }}</span></td>
             </tr>
             <tr>
                 <td>Untuk pengeluaran</td>
                 <td>:</td>
-                <td>{{ $paymentPurpose }}</td>
+                <td class="meta-line meta-line-multi">{{ $paymentPurpose }}</td>
             </tr>
         </table>
 
@@ -400,33 +416,24 @@
             </div>
         </div>
 
-        <div class="detail-table-wrap">
-            <table class="detail-table">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Uraian</th>
-                        <th>Jumlah</th>
-                    </tr>
-                </thead>
+        <div class="detail-list-wrap">
+            <table class="detail-list">
                 <tbody>
                     @forelse ($receiptBreakdown as $index => $item)
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $item['description'] }}</td>
-                            <td>{{ $item['total_label'] }}</td>
+                            <td class="detail-list-no">{{ $index + 1 }}.</td>
+                            <td class="detail-list-title">{{ $item['title'] ?? $item['description'] }}</td>
+                            <td class="detail-list-colon">:</td>
+                            <td>{{ $item['calculation_label'] ?? $item['total_label'] }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td>1</td>
-                            <td>Biaya perjalanan dinas sesuai rincian SPPD</td>
+                            <td class="detail-list-no">1.</td>
+                            <td class="detail-list-title">Biaya perjalanan dinas sesuai rincian SPPD</td>
+                            <td class="detail-list-colon">:</td>
                             <td>{{ $grandTotalLabel }}</td>
                         </tr>
                     @endforelse
-                    <tr class="detail-total">
-                        <td colspan="2">Total Jumlah</td>
-                        <td>{{ $grandTotalLabel }}</td>
-                    </tr>
                 </tbody>
             </table>
         </div>
@@ -434,7 +441,7 @@
         <div class="receipt-date">{{ $receiptPlace }}, {{ \Carbon\Carbon::parse($receiptDate)->translatedFormat('d F Y') }}</div>
 
         <div class="recipient-block">
-            <div>Penerima,</div>
+            <div>Penerima</div>
             <div class="stamp">Materai 10rb</div>
             <div class="signature-name">{{ $recipientName }}</div>
             <div class="signature-nip">NIP. {{ $recipientNip }}</div>
@@ -444,7 +451,7 @@
             <tr>
                 <td>
                     <div class="approval-block approval-block-left">
-                        <div class="approval-title">Mengetahui dan Menyetujui,</div>
+                        <div class="approval-title">Mengetahui dan Menyetujui :</div>
                         <div class="approval-subtitle">Kepala Dinas Pendidikan Dan Kebudayaan</div>
                         <div>Provinsi Maluku Utara</div>
                         <div class="approval-space"></div>
@@ -454,7 +461,7 @@
                 </td>
                 <td>
                     <div class="approval-block approval-block-right">
-                        <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran</div>
+                        <div class="approval-subtitle approval-subtitle-plain">Bendahara Pengeluaran,</div>
                         <div class="approval-space"></div>
                         <div class="approval-name">{{ $treasurerName }}</div>
                         <div>NIP. {{ $treasurerNip }}</div>
