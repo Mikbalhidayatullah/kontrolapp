@@ -934,69 +934,55 @@ class PerjadinController extends Controller
 
     private function receiptBreakdown(PerjadinEntry $entry): array
     {
-        $items = [];
+        $dailyAllowanceTotal = $entry->daily_allowance_enabled ? (int) $entry->daily_allowance_total : 0;
+        $ticketTotal = $entry->ticket_enabled ? (int) $entry->ticket_total : 0;
+        $lodgingTotal = $entry->lodging_enabled ? (int) $entry->lodging_total : 0;
+        $representationTotal = $entry->representation_enabled ? (int) $entry->representation_total : 0;
+        $localTransportTotal = $entry->local_transport_enabled ? (int) $entry->local_transport_total : 0;
 
-        if ($entry->daily_allowance_enabled && $entry->daily_allowance_total > 0) {
-            $items[] = [
+        return [
+            [
                 'title' => 'Uang Harian',
-                'calculation_label' => (int) $entry->daily_allowance_days.' Hari X '.$this->receiptMoneyLabel($entry->daily_allowance_rate).' = '.$this->receiptMoneyLabel($entry->daily_allowance_total),
-                'description' => 'Uang Harian '.(int) $entry->daily_allowance_days.' Hari X '.$this->receiptMoneyLabel($entry->daily_allowance_rate).' = '.$this->receiptMoneyLabel($entry->daily_allowance_total),
-                'total' => (int) $entry->daily_allowance_total,
-                'total_label' => $this->moneyLabel($entry->daily_allowance_total),
-            ];
-        }
-
-        if ($entry->representation_enabled && $entry->representation_total > 0) {
-            $items[] = [
-                'title' => 'Uang Representasi Perjalanan Dinas',
-                'calculation_label' => (int) $entry->representation_days.' Hari X '.$this->receiptMoneyLabel($entry->representation_rate).' = '.$this->receiptMoneyLabel($entry->representation_total),
-                'description' => 'Uang Representasi Perjalanan Dinas '.(int) $entry->representation_days.' Hari X '.$this->receiptMoneyLabel($entry->representation_rate).' = '.$this->receiptMoneyLabel($entry->representation_total),
-                'total' => (int) $entry->representation_total,
-                'total_label' => $this->moneyLabel($entry->representation_total),
-            ];
-        }
-
-        if ($entry->ticket_enabled && $entry->ticket_total > 0) {
-            $items[] = [
+                'calculation_label' => $dailyAllowanceTotal > 0
+                    ? (int) $entry->daily_allowance_days.' Hari X '.$this->receiptMoneyLabel($entry->daily_allowance_rate).' = '.$this->receiptMoneyLabel($dailyAllowanceTotal)
+                    : $this->receiptMoneyLabel(0),
+                'description' => 'Uang Harian',
+                'total' => $dailyAllowanceTotal,
+                'total_label' => $this->receiptMoneyLabel($dailyAllowanceTotal),
+            ],
+            [
                 'title' => 'Biaya Transportasi',
-                'calculation_label' => $this->receiptMoneyLabel($entry->ticket_total),
-                'description' => 'Biaya Transportasi '.$this->receiptMoneyLabel($entry->ticket_total),
-                'total' => (int) $entry->ticket_total,
-                'total_label' => $this->moneyLabel($entry->ticket_total),
-            ];
-        }
-
-        if ($entry->lodging_enabled && $entry->lodging_total > 0) {
-            $items[] = [
+                'calculation_label' => $this->receiptMoneyLabel($ticketTotal),
+                'description' => 'Biaya Transportasi',
+                'total' => $ticketTotal,
+                'total_label' => $this->receiptMoneyLabel($ticketTotal),
+            ],
+            [
                 'title' => 'Biaya Penginapan',
-                'calculation_label' => (int) $entry->lodging_nights.' Hari X '.$this->receiptMoneyLabel($this->effectiveLodgingRate($entry)).' = '.$this->receiptMoneyLabel($entry->lodging_total),
-                'description' => 'Biaya Penginapan '.(int) $entry->lodging_nights.' Hari X '.$this->receiptMoneyLabel($this->effectiveLodgingRate($entry)).' = '.$this->receiptMoneyLabel($entry->lodging_total),
-                'total' => (int) $entry->lodging_total,
-                'total_label' => $this->moneyLabel($entry->lodging_total),
-            ];
-        }
-
-        if ($entry->local_transport_enabled && $entry->local_transport_total > 0) {
-            $items[] = [
+                'calculation_label' => $lodgingTotal > 0
+                    ? (int) $entry->lodging_nights.' Hari X '.$this->receiptMoneyLabel($this->effectiveLodgingRate($entry)).' = '.$this->receiptMoneyLabel($lodgingTotal)
+                    : $this->receiptMoneyLabel(0),
+                'description' => 'Biaya Penginapan',
+                'total' => $lodgingTotal,
+                'total_label' => $this->receiptMoneyLabel($lodgingTotal),
+            ],
+            [
+                'title' => 'Uang Representasi Perjalanan Dinas',
+                'calculation_label' => $representationTotal > 0
+                    ? (int) $entry->representation_days.' Hari X '.$this->receiptMoneyLabel($entry->representation_rate).' = '.$this->receiptMoneyLabel($representationTotal)
+                    : $this->receiptMoneyLabel(0),
+                'description' => 'Uang Representasi Perjalanan Dinas',
+                'total' => $representationTotal,
+                'total_label' => $this->receiptMoneyLabel($representationTotal),
+            ],
+            [
                 'title' => 'Biaya Taksi',
-                'calculation_label' => $this->receiptMoneyLabel($entry->local_transport_total),
-                'description' => 'Biaya Taksi '.$this->receiptMoneyLabel($entry->local_transport_total),
-                'total' => (int) $entry->local_transport_total,
-                'total_label' => $this->moneyLabel($entry->local_transport_total),
-            ];
-        }
-
-        if ($entry->other_cost_enabled && $entry->other_cost_amount > 0) {
-            $items[] = [
-                'title' => 'Biaya Lain-lain',
-                'calculation_label' => $this->receiptMoneyLabel($entry->other_cost_amount),
-                'description' => 'Biaya Lain-lain '.$this->receiptMoneyLabel($entry->other_cost_amount),
-                'total' => (int) $entry->other_cost_amount,
-                'total_label' => $this->moneyLabel($entry->other_cost_amount),
-            ];
-        }
-
-        return $items;
+                'calculation_label' => $this->receiptMoneyLabel($localTransportTotal),
+                'description' => 'Biaya Taksi',
+                'total' => $localTransportTotal,
+                'total_label' => $this->receiptMoneyLabel($localTransportTotal),
+            ],
+        ];
     }
 
     private function receiptMoneyLabel(int|float|null $amount): string

@@ -174,14 +174,14 @@
         }
 
         .meta-line-multi {
-            min-height: 42px;
-            background-image: repeating-linear-gradient(
-                to bottom,
-                transparent 0,
-                transparent 12px,
-                #111827 12px,
-                #111827 13px
-            );
+            height: 65px;
+            min-height: 65px;
+            vertical-align: top;
+            border-bottom: 0;
+            line-height: 13px;
+            background-image: linear-gradient(to bottom, transparent 12px, #111827 12px, #111827 13px);
+            background-size: 100% 13px;
+            background-repeat: repeat-y;
         }
 
         .label-rincian {

@@ -424,7 +424,7 @@
                         <div class="grid grid-cols-[165px_16px_minmax(0,1fr)] gap-2">
                             <span>Untuk pengeluaran</span>
                             <span>:</span>
-                            <span class="block min-h-[44px] border-b border-slate-900 leading-5" data-receipt-preview="payment_purpose">{{ $receiptDefaults['payment_purpose'] }}</span>
+                            <span class="block leading-5" style="display: block; height: 100px; min-height: 100px; background-image: linear-gradient(to bottom, transparent 19px, #0f172a 19px, #0f172a 20px); background-size: 100% 20px; background-repeat: repeat-y;" data-receipt-preview="payment_purpose">{{ $receiptDefaults['payment_purpose'] }}</span>
                         </div>
                     </div>
 
@@ -728,7 +728,7 @@
                 .meta-table td:nth-child(2) { width: 14px; }
                 .meta-italic { font-style: italic; }
                 .meta-line { border-bottom: 1px solid #111827; line-height: 1.12; min-height: 13px; padding-left: 2px; }
-                .meta-line-multi { min-height: 42px; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 12px, #111827 12px, #111827 13px); }
+                .meta-line-multi { height: 65px; min-height: 65px; vertical-align: top; border-bottom: 0; line-height: 13px; background-image: linear-gradient(to bottom, transparent 12px, #111827 12px, #111827 13px); background-size: 100% 13px; background-repeat: repeat-y; }
                 .label-rincian { display: grid; grid-template-columns: 130px 14px minmax(0,1fr); gap: 0; margin-top: 8px; margin-bottom: 4px; font-weight: 400; }
                 .detail-list-wrap { margin-left: 144px; width: calc(100% - 144px); }
                 .detail-list { width: 100%; border-collapse: collapse; table-layout: fixed; }
