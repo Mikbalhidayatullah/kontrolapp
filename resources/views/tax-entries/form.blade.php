@@ -1,6 +1,22 @@
 <x-layout>
     <x-slot:title>{{ $title }}</x-slot:title>
 
+    <style>
+        [data-add-tax-row] {
+            min-width: 140px;
+            border-color: #059669;
+            background-color: #059669;
+            color: #ffffff;
+        }
+
+        [data-add-tax-row]:hover,
+        [data-add-tax-row]:focus-visible {
+            border-color: #047857;
+            background-color: #ffffff;
+            color: #047857;
+        }
+    </style>
+
     @php
         $isEdit = isset($entry) && $entry !== null;
         $formAction = $isEdit ? route('pajak.update', $entry) : route('pajak.store');
@@ -88,7 +104,7 @@
                                     <p class="text-sm text-slate-500">Tambahkan beberapa data pajak di dalam kategori yang sama.</p>
                                 </div>
                             </div>
-                            <button type="button" data-add-tax-row class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                            <button type="button" data-add-tax-row class="inline-flex items-center justify-center rounded-2xl border px-4 py-2.5 text-sm font-semibold transition">
                                 Tambah Data
                             </button>
                         </div>

@@ -44,6 +44,7 @@ class PerjadinController extends Controller
     private const GRADE_OPTIONS = [
         '3A', '3B', '3C', '3D',
         '4A', '4B', '4C', '4D',
+        '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
     ];
 
     private const ECHELON_OPTIONS = [
