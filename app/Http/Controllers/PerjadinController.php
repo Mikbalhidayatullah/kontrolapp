@@ -1180,6 +1180,7 @@ class PerjadinController extends Controller
                 strtoupper(trim($entry->city_name)) => trim($entry->province_name),
             ])
             ->all();
+        $provinceReferences = $this->outsideProvinceReferenceNames();
 
         return FlightTicketSbu::query()
             ->where('is_active', true)
@@ -1190,14 +1191,15 @@ class PerjadinController extends Controller
                 'business_amount',
                 'economy_amount',
             ])
-            ->map(function (FlightTicketSbu $entry) use ($provinceMap): array {
+            ->map(function (FlightTicketSbu $entry) use ($provinceMap, $provinceReferences): array {
                 $destinationCity = trim((string) $entry->destination_city);
                 $normalizedDestination = strtoupper($destinationCity);
 
                 return [
                     'value' => $this->outsideRegionDestinationLabel($destinationCity),
                     'label' => $this->outsideRegionDestinationLabel($destinationCity),
-                    'province_name' => $provinceMap[$normalizedDestination] ?? null,
+                    'province_name' => $provinceMap[$normalizedDestination]
+                        ?? $this->inferOutsideProvinceName($destinationCity, $provinceReferences),
                     'ticket_destination' => $destinationCity,
                     'business_amount' => (int) $entry->business_amount,
                     'economy_amount' => (int) $entry->economy_amount,
@@ -1206,6 +1208,46 @@ class PerjadinController extends Controller
             ->unique('value')
             ->values()
             ->all();
+    }
+
+    private function outsideProvinceReferenceNames(): array
+    {
+        return collect()
+            ->merge(DailyAllowanceSbu::query()
+                ->where('is_active', true)
+                ->pluck('province_name'))
+            ->merge(NationalLodgingSbu::query()
+                ->where('is_active', true)
+                ->pluck('province_name'))
+            ->filter()
+            ->unique(fn (string $provinceName): string => $this->normalizeLookupText($provinceName))
+            ->values()
+            ->all();
+    }
+
+    private function inferOutsideProvinceName(string $destinationCity, array $provinceReferences): ?string
+    {
+        $normalizedDestination = $this->normalizeLookupText($destinationCity);
+
+        if ($normalizedDestination === '') {
+            return null;
+        }
+
+        foreach ($provinceReferences as $provinceName) {
+            if ($this->normalizeLookupText($provinceName) === $normalizedDestination) {
+                return $provinceName;
+            }
+        }
+
+        foreach ($provinceReferences as $provinceName) {
+            $normalizedProvince = $this->normalizeLookupText($provinceName);
+
+            if (str_contains($normalizedDestination, $normalizedProvince) || str_contains($normalizedProvince, $normalizedDestination)) {
+                return $provinceName;
+            }
+        }
+
+        return null;
     }
 
     private function outsideRegionDestinationChoices(): array

@@ -1339,7 +1339,23 @@
                     endLabel: details.at(-1)?.to || '',
                 };
             };
-            const selectedOutsideProvinceName = () => selectedOutsideDestination()?.province_name || '';
+            const selectedOutsideProvinceName = () => {
+                const destination = selectedOutsideDestination();
+
+                if (!destination) {
+                    return '';
+                }
+
+                if (destination.province_name) {
+                    return destination.province_name;
+                }
+
+                const fallbackName = destination.ticket_destination || destination.value || '';
+                const dailyAllowanceProvince = findProvinceReference(dailyAllowanceReferences, 'province_name', fallbackName);
+                const lodgingProvince = findProvinceReference(nationalLodgingReferences, 'province_name', fallbackName);
+
+                return dailyAllowanceProvince?.province_name || lodgingProvince?.province_name || '';
+            };
             const findOutsideProvinceReference = (collection, property) => {
                 const provinceName = selectedOutsideProvinceName();
                 if (!provinceName) {

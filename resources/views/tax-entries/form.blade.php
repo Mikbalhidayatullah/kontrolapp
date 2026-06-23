@@ -109,6 +109,14 @@
                             </button>
                         </div>
 
+                        <label class="inline-flex max-w-max items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                            <input type="checkbox" data-tax-date-follow-first checked class="mt-0.5 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500" />
+                            <span>
+                                <span class="block font-semibold">Tanggal mengikuti data pertama</span>
+                                <span class="mt-1 block text-xs leading-5 text-emerald-700">Matikan checklist jika tanggal setiap data ingin diisi manual.</span>
+                            </span>
+                        </label>
+
                         @error('items')
                             <p class="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{{ $message }}</p>
                         @enderror
@@ -287,6 +295,7 @@
             const newCategory = document.querySelector('[data-category-new]');
             const wrapper = document.querySelector('[data-tax-items-wrapper]');
             const addButton = document.querySelector('[data-add-tax-row]');
+            const dateFollowFirst = document.querySelector('[data-tax-date-follow-first]');
             let nextIndex = wrapper ? wrapper.querySelectorAll('[data-tax-row]').length : 0;
 
             const toNumber = (value) => Number((value || '').toString().replace(/\D/g, '')) || 0;
@@ -340,6 +349,39 @@
                 });
             };
 
+            const syncDateRows = () => {
+                if (!wrapper || !dateFollowFirst) {
+                    return;
+                }
+
+                const rows = Array.from(wrapper.querySelectorAll('[data-tax-row]'));
+                const firstDateInput = rows[0]?.querySelector('input[type="date"]');
+                const shouldFollow = dateFollowFirst.checked;
+
+                rows.forEach((row, index) => {
+                    const dateInput = row.querySelector('input[type="date"]');
+
+                    if (!dateInput) {
+                        return;
+                    }
+
+                    if (index === 0) {
+                        dateInput.readOnly = false;
+                        dateInput.classList.remove('cursor-not-allowed', 'bg-slate-100', 'text-slate-500');
+                        return;
+                    }
+
+                    if (shouldFollow && firstDateInput) {
+                        dateInput.value = firstDateInput.value;
+                    }
+
+                    dateInput.readOnly = shouldFollow;
+                    dateInput.classList.toggle('cursor-not-allowed', shouldFollow);
+                    dateInput.classList.toggle('bg-slate-100', shouldFollow);
+                    dateInput.classList.toggle('text-slate-500', shouldFollow);
+                });
+            };
+
             const resetClonedRow = (row, index) => {
                 row.querySelectorAll('input, textarea, select').forEach((field) => {
                     if (field.name) {
@@ -353,7 +395,9 @@
                     if (field.tagName === 'SELECT') {
                         field.selectedIndex = 0;
                     } else if (field.type === 'date') {
-                        field.value = '{{ $defaultEntryDate }}';
+                        field.value = dateFollowFirst?.checked
+                            ? wrapper?.querySelector('[data-tax-row] input[type="date"]')?.value || '{{ $defaultEntryDate }}'
+                            : '{{ $defaultEntryDate }}';
                     } else {
                         field.value = '';
                     }
@@ -382,6 +426,7 @@
 
                 removeButton.closest('[data-tax-row]').remove();
                 updateRowControls();
+                syncDateRows();
             });
 
             addButton?.addEventListener('click', () => {
@@ -397,11 +442,22 @@
                 bindMoneyInputs(row);
                 wrapper.appendChild(row);
                 updateRowControls();
+                syncDateRows();
             });
+
+            wrapper?.addEventListener('input', (event) => {
+                if (event.target.matches('[data-tax-row]:first-child input[type="date"], [data-tax-row]:first-of-type input[type="date"]')) {
+                    syncDateRows();
+                }
+            });
+
+            wrapper?.querySelector('[data-tax-row] input[type="date"]')?.addEventListener('change', syncDateRows);
+            dateFollowFirst?.addEventListener('change', syncDateRows);
 
             categoryMode?.addEventListener('change', syncCategoryMode);
             syncCategoryMode();
             updateRowControls();
+            syncDateRows();
         });
     </script>
 </x-layout>
