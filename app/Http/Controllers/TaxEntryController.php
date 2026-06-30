@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TaxEntry;
+use App\Services\TaxExcelExporter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -74,6 +75,19 @@ class TaxEntryController extends Controller
                 'balanceTotal' => (int) $entries->sum('balance_amount'),
             ],
         ]);
+    }
+
+    public function exportExcel(TaxExcelExporter $exporter)
+    {
+        $entries = TaxEntry::query()
+            ->orderBy('category')
+            ->orderBy('entry_date')
+            ->orderBy('id')
+            ->get();
+
+        $path = $exporter->export($entries);
+
+        return response()->download($path, 'data-pajak-'.now()->format('Ymd-His').'.xlsx')->deleteFileAfterSend(true);
     }
 
     public function create(): View

@@ -52,6 +52,7 @@ Route::middleware(['auth', 'role:admin,bendahara'])->group(function () {
 
 Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {
     Route::get('/pajak', [TaxEntryController::class, 'index'])->name('pajak.index');
+    Route::get('/pajak/export/excel', [TaxEntryController::class, 'exportExcel'])->name('pajak.export.xlsx');
     Route::get('/pajak/tambah', [TaxEntryController::class, 'create'])->name('pajak.create');
     Route::post('/pajak', [TaxEntryController::class, 'store'])->name('pajak.store');
     Route::get('/pajak/{taxEntry}/edit', [TaxEntryController::class, 'edit'])->name('pajak.edit');

@@ -50,6 +50,9 @@
                     </form>
 
                     <div class="flex flex-wrap justify-end gap-3">
+                        <a href="{{ route('pajak.export.xlsx') }}" class="inline-flex items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                            Download Excel
+                        </a>
                         <button type="button" data-open-tax-print class="inline-flex items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
                             Print
                         </button>
