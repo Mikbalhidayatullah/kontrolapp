@@ -10,6 +10,7 @@ use App\Models\NationalLodgingSbu;
 use App\Models\PerjadinEntry;
 use App\Models\RepresentationSbu;
 use App\Models\TravelDestinationRegion;
+use App\Services\PerjadinBpkExcelExporter;
 use App\Services\PerjadinExcelExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -41,10 +42,21 @@ class PerjadinController extends Controller
         'Perjadin Dalam Daerah',
     ];
 
-    private const GRADE_OPTIONS = [
-        '3A', '3B', '3C', '3D',
-        '4A', '4B', '4C', '4D',
-        '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
+    private const EMPLOYEE_STATUS_OPTIONS = [
+        'PNS',
+        'PPPK',
+    ];
+
+    private const PNS_GRADE_NUMBER_OPTIONS = [
+        '1', '2', '3', '4',
+    ];
+
+    private const PPPK_GRADE_NUMBER_OPTIONS = [
+        '6', '7', '8', '9', '10', '11', '12', '13',
+    ];
+
+    private const GRADE_LETTER_OPTIONS = [
+        'A', 'B', 'C', 'D',
     ];
 
     private const ECHELON_OPTIONS = [
@@ -163,6 +175,26 @@ class PerjadinController extends Controller
 
         $path = $exporter->export($entries);
         $filename = 'perjadin-semua-data-'.now()->format('Ymd-His').'.xlsx';
+
+        return response()
+            ->download($path, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+            ->deleteFileAfterSend(true);
+    }
+
+    public function exportBpkExcel(PerjadinBpkExcelExporter $exporter)
+    {
+        $entries = PerjadinEntry::query()
+            ->with(['creator:id,name', 'updater:id,name'])
+            ->orderBy('category')
+            ->orderBy('start_date')
+            ->orderBy('assignment_date')
+            ->orderBy('id')
+            ->get();
+
+        $path = $exporter->export($entries);
+        $filename = 'perjadin-versi-bpk-'.now()->format('Ymd-His').'.xlsx';
 
         return response()
             ->download($path, $filename, [
@@ -469,9 +501,11 @@ class PerjadinController extends Controller
             'category' => ['required', 'string', Rule::in(self::CATEGORY_OPTIONS)],
             'skpd_name' => ['required', 'string', 'max:255'],
             'executor_name' => ['required', 'string', 'max:255'],
+            'employee_status' => ['required', 'string', Rule::in(self::EMPLOYEE_STATUS_OPTIONS)],
             'position_name' => ['required', 'string', 'max:255'],
             'echelon_level' => ['required', 'string', Rule::in(self::ECHELON_OPTIONS)],
-            'grade' => ['required', 'string', Rule::in(self::GRADE_OPTIONS)],
+            'grade_number' => ['required', 'string', Rule::in($this->allGradeNumberOptions())],
+            'grade_letter' => ['required', 'string', Rule::in(self::GRADE_LETTER_OPTIONS)],
             'origin_regency' => ['nullable', 'string'],
             'origin_district' => ['nullable', 'string', 'max:255'],
             'destination_regency' => ['nullable', 'string'],
@@ -611,6 +645,16 @@ class PerjadinController extends Controller
             } elseif (! in_array($request->input('destination_city'), $this->outsideRegionDestinationChoices(), true)) {
                 $validator->errors()->add('destination_city', 'Kota / Kab tujuan luar daerah harus dipilih dari daftar acuan SBU.');
             }
+
+            $allowedGradeNumbers = match ($request->input('employee_status')) {
+                'PNS' => self::PNS_GRADE_NUMBER_OPTIONS,
+                'PPPK' => self::PPPK_GRADE_NUMBER_OPTIONS,
+                default => [],
+            };
+
+            if ($request->filled('grade_number') && ! in_array($request->input('grade_number'), $allowedGradeNumbers, true)) {
+                $validator->errors()->add('grade_number', 'Angka golongan tidak sesuai dengan status pegawai yang dipilih.');
+            }
         });
 
         $validated = $validator->validate();
@@ -676,9 +720,10 @@ class PerjadinController extends Controller
             'category' => $validated['category'],
             'skpd_name' => $validated['skpd_name'],
             'executor_name' => $validated['executor_name'],
+            'employee_status' => $validated['employee_status'],
             'position_name' => $validated['position_name'],
             'echelon_level' => $validated['echelon_level'],
-            'grade' => $validated['grade'],
+            'grade' => $validated['grade_number'].$validated['grade_letter'],
             'origin_regency' => $originRegency,
             'origin_district' => $originDistrict,
             'destination_regency' => $destinationRegency,
@@ -807,8 +852,14 @@ class PerjadinController extends Controller
             'activeCategory' => in_array($activeCategory, self::CATEGORY_OPTIONS, true) ? $activeCategory : '',
             'activeKeyword' => $activeKeyword,
             'categories' => self::CATEGORY_OPTIONS,
+            'employeeStatusOptions' => self::EMPLOYEE_STATUS_OPTIONS,
             'echelonOptions' => self::ECHELON_OPTIONS,
-            'gradeOptions' => self::GRADE_OPTIONS,
+            'gradeNumberOptions' => $this->allGradeNumberOptions(),
+            'gradeNumberOptionsByStatus' => [
+                'PNS' => self::PNS_GRADE_NUMBER_OPTIONS,
+                'PPPK' => self::PPPK_GRADE_NUMBER_OPTIONS,
+            ],
+            'gradeLetterOptions' => self::GRADE_LETTER_OPTIONS,
             'transportTypes' => self::TRANSPORT_OPTIONS,
             'regencyOptions' => array_keys($regionChoices),
             'originDistrictOptions' => $originChoices,
@@ -838,6 +889,14 @@ class PerjadinController extends Controller
             'year' => $year,
             'label' => self::PERIOD_MONTHS[$month],
         ];
+    }
+
+    private function allGradeNumberOptions(): array
+    {
+        return array_values(array_unique([
+            ...self::PNS_GRADE_NUMBER_OPTIONS,
+            ...self::PPPK_GRADE_NUMBER_OPTIONS,
+        ]));
     }
 
     private function monthOptions(): array

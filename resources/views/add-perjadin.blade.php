@@ -13,6 +13,15 @@
         $showRegionalRouteFields = $selectedCategoryValue === 'Perjadin Dalam Daerah';
         $selectedOutsideDestination = old('destination_city', $isEdit ? $entry->destination_city : '');
         $selectedLocalTransportSegmentIds = old('local_transport_segment_ids', $isEdit ? ($entry->local_transport_segment_ids ?? []) : []);
+        $storedGrade = old('grade', $isEdit ? $entry->grade : '');
+        preg_match('/\d+/', (string) $storedGrade, $gradeNumberMatch);
+        preg_match('/[A-D]$/i', (string) $storedGrade, $gradeLetterMatch);
+        $inferredGradeNumber = isset($gradeNumberMatch[0]) ? (int) $gradeNumberMatch[0] : 0;
+        $inferredEmployeeStatus = $inferredGradeNumber >= 6 ? 'PPPK' : 'PNS';
+        $selectedEmployeeStatus = old('employee_status', $isEdit ? ($entry->employee_status ?: $inferredEmployeeStatus) : 'PNS');
+        $selectedGradeNumber = old('grade_number', $gradeNumberMatch[0] ?? '');
+        $selectedGradeLetter = strtoupper(old('grade_letter', $gradeLetterMatch[0] ?? ''));
+        $selectedGrade = $selectedGradeNumber && $selectedGradeLetter ? $selectedGradeNumber.$selectedGradeLetter : (string) $storedGrade;
         $inlineFieldLabels = [
             'category' => 'kategori perjadin',
             'origin_regency' => 'kabupaten asal',
@@ -23,9 +32,12 @@
             'regional_trip_scope' => 'jenis perjalanan dalam daerah',
             'skpd_name' => 'nama SKPD',
             'executor_name' => 'nama pelaksana',
+            'employee_status' => 'status pegawai',
             'position_name' => 'jabatan',
             'echelon_level' => 'eselon',
             'grade' => 'golongan',
+            'grade_number' => 'angka golongan',
+            'grade_letter' => 'huruf golongan',
             'start_date' => 'tanggal mulai',
             'end_date' => 'tanggal selesai',
             'assignment_number' => 'nomor surat tugas',
@@ -233,7 +245,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+                    <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-6">
                         <div class="xl:col-span-2">
                             <label for="skpd_name" class="block text-sm font-medium text-slate-700">Nama SKPD</label>
                             <input id="skpd_name" name="skpd_name" type="text" value="{{ old('skpd_name', $isEdit ? $entry->skpd_name : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
@@ -245,6 +257,17 @@
                             <label for="executor_name" class="block text-sm font-medium text-slate-700">Nama Pelaksana</label>
                             <input id="executor_name" name="executor_name" type="text" value="{{ old('executor_name', $isEdit ? $entry->executor_name : '') }}" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
                             @if($message = $inlineError('executor_name'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
+                        </div>
+                        <div>
+                            <label for="employee_status" class="block text-sm font-medium text-slate-700">Status Pegawai</label>
+                            <select id="employee_status" name="employee_status" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                @foreach ($employeeStatusOptions as $status)
+                                    <option value="{{ $status }}" @selected($selectedEmployeeStatus === $status)>{{ $status }}</option>
+                                @endforeach
+                            </select>
+                            @if($message = $inlineError('employee_status'))
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @endif
                         </div>
@@ -267,15 +290,24 @@
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @endif
                         </div>
-                        <div>
-                            <label for="grade" class="block text-sm font-medium text-slate-700">Golongan</label>
-                            <select id="grade" name="grade" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
-                                <option value="">Pilih golongan</option>
-                                @foreach ($gradeOptions as $grade)
-                                    <option value="{{ $grade }}" @selected(old('grade', $isEdit ? $entry->grade : '') === $grade)>{{ $grade }}</option>
-                                @endforeach
-                            </select>
-                            @if($message = $inlineError('grade'))
+                        <div class="xl:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700">Golongan</label>
+                            <input id="grade" name="grade" type="hidden" value="{{ $selectedGrade }}" />
+                            <div class="mt-2 grid grid-cols-2 gap-3">
+                                <select id="grade_number" name="grade_number" class="block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                    <option value="">Angka</option>
+                                    @foreach ($gradeNumberOptions as $gradeNumber)
+                                        <option value="{{ $gradeNumber }}" @selected((string) $selectedGradeNumber === (string) $gradeNumber)>{{ $gradeNumber }}</option>
+                                    @endforeach
+                                </select>
+                                <select id="grade_letter" name="grade_letter" class="block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                    <option value="">Huruf</option>
+                                    @foreach ($gradeLetterOptions as $gradeLetter)
+                                        <option value="{{ $gradeLetter }}" @selected($selectedGradeLetter === $gradeLetter)>{{ $gradeLetter }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @if($message = $inlineError('grade_number', 'grade_letter', 'grade'))
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @endif
                         </div>
@@ -813,7 +845,11 @@
             const outsideRegionSbuSummary = document.getElementById('outside-region-sbu-summary');
             const outsideRegionSbuSummaryContent = document.getElementById('outside-region-sbu-summary-content');
             const echelonInput = document.getElementById('echelon_level');
+            const employeeStatusInput = document.getElementById('employee_status');
             const gradeInput = document.getElementById('grade');
+            const gradeNumberInput = document.getElementById('grade_number');
+            const gradeLetterInput = document.getElementById('grade_letter');
+            const gradeNumberOptionsByStatus = @json($gradeNumberOptionsByStatus);
             const positionInput = document.getElementById('position_name');
             const airportTaxiReference = @json($airportTaxiReference);
             const flightTicketReferences = @json($flightTicketReferences);
@@ -847,6 +883,48 @@
             const reportCurrentWrapper = document.getElementById('report-current-wrapper');
 
             const output = (key) => document.querySelector(`[data-total-output="${key}"]`);
+
+            const updateGradeNumberOptions = () => {
+                if (!gradeNumberInput) {
+                    return;
+                }
+
+                const selectedStatus = employeeStatusInput?.value || 'PNS';
+                const allowedNumbers = gradeNumberOptionsByStatus[selectedStatus] || [];
+
+                Array.from(gradeNumberInput.options).forEach((option) => {
+                    if (!option.value) {
+                        option.hidden = false;
+                        option.disabled = false;
+                        return;
+                    }
+
+                    const allowed = allowedNumbers.includes(option.value);
+                    option.hidden = !allowed;
+                    option.disabled = !allowed;
+                });
+
+                if (gradeNumberInput.value && !allowedNumbers.includes(gradeNumberInput.value)) {
+                    gradeNumberInput.value = '';
+                }
+            };
+
+            const syncGradeInput = () => {
+                if (!gradeInput) {
+                    return;
+                }
+
+                const gradeNumber = (gradeNumberInput?.value || '').trim();
+                const gradeLetter = (gradeLetterInput?.value || '').trim().toUpperCase();
+                const nextGrade = gradeNumber && gradeLetter ? `${gradeNumber}${gradeLetter}` : '';
+
+                if (gradeInput.value === nextGrade) {
+                    return;
+                }
+
+                gradeInput.value = nextGrade;
+                gradeInput.dispatchEvent(new Event('change'));
+            };
 
             const labelMap = {
                 Pesawat: 'Maskapai',
@@ -2124,6 +2202,14 @@
                 recalculateTotalsOnly();
             });
 
+            employeeStatusInput?.addEventListener('change', () => {
+                updateGradeNumberOptions();
+                syncGradeInput();
+            });
+
+            gradeNumberInput?.addEventListener('change', syncGradeInput);
+            gradeLetterInput?.addEventListener('change', syncGradeInput);
+
             gradeInput?.addEventListener('change', () => {
                 updateRepresentationRateFromReference();
                 updateLodgingRateFromReference();
@@ -2188,6 +2274,8 @@
             updateRouteFieldsVisibility();
             updateRegionalTripScopeVisibility();
             syncDestinationCityValue();
+            updateGradeNumberOptions();
+            syncGradeInput();
             populateDistrictSelect(originDistrictInput, originRegencyInput?.value || '', originDistrictInput?.dataset.selected || originDistrictInput?.value || '');
             populateDistrictSelect(destinationDistrictInput, destinationRegencyInput?.value || '', destinationDistrictInput?.dataset.selected || destinationDistrictInput?.value || '');
             updateLocalTransportReferences();

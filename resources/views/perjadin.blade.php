@@ -56,13 +56,26 @@
 
                     <div class="flex justify-end">
                         <div class="flex flex-wrap gap-3">
-                            <a href="{{ route('perjadin.export.xlsx') }}" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
-                                    <path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M5 19h14" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                Download Excel
-                            </a>
+                            <details class="group relative">
+                                <summary class="inline-flex cursor-pointer list-none items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 [&::-webkit-details-marker]:hidden">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+                                        <path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M5 19h14" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    Download Excel
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4 transition group-open:rotate-180" aria-hidden="true">
+                                        <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </summary>
+                                <div class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
+                                    <a href="{{ route('perjadin.export.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
+                                        Custom (Format Lama)
+                                    </a>
+                                    <a href="{{ route('perjadin.export.bpk.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
+                                        Versi BPK
+                                    </a>
+                                </div>
+                            </details>
                             <a href="{{ route('add-perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
                                 Tambah Perjadin
                             </a>

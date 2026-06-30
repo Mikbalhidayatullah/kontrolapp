@@ -14,6 +14,7 @@ class PerjadinEntry extends Model
         'category',
         'skpd_name',
         'executor_name',
+        'employee_status',
         'position_name',
         'echelon_level',
         'grade',
