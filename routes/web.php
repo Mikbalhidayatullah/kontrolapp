@@ -66,6 +66,7 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
     Route::get('/perjadin/export/bpk-excel', [PerjadinController::class, 'exportBpkExcel'])->name('perjadin.export.bpk.xlsx');
     Route::get('/add-perjadin', [PerjadinController::class, 'create'])->name('add-perjadin');
     Route::post('/add-perjadin', [PerjadinController::class, 'store'])->name('add-perjadin.store');
+    Route::post('/perjadin/{perjadinEntry}/bayar', [PerjadinController::class, 'togglePayment'])->name('perjadin.payment.toggle');
     Route::get('/perjadin/{perjadinEntry}', [PerjadinController::class, 'show'])->name('perjadin.show');
     Route::post('/perjadin/{perjadinEntry}/duplicate', [PerjadinController::class, 'duplicate'])->name('perjadin.duplicate');
     Route::get('/perjadin/{perjadinEntry}/detail/pdf', [PerjadinController::class, 'downloadDetailPdf'])->name('perjadin.detail.pdf');

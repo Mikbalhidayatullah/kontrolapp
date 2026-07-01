@@ -68,6 +68,8 @@ class PerjadinEntry extends Model
         'other_cost_enabled',
         'other_cost_amount',
         'grand_total',
+        'paid_at',
+        'paid_by',
         'activity_file_path',
         'activity_file_original_name',
         'receipt_file_path',
@@ -84,6 +86,7 @@ class PerjadinEntry extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'assignment_date' => 'date',
+            'paid_at' => 'datetime',
             'ticket_departure_date' => 'date',
             'ticket_return_date' => 'date',
             'sofifi_over_8_hours' => 'boolean',
@@ -123,6 +126,11 @@ class PerjadinEntry extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by');
     }
 }
 

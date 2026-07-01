@@ -27,7 +27,7 @@ class PerjadinBpkExcelExporter
         ],
     ];
 
-    private const COLUMN_COUNT = 41;
+    private const COLUMN_COUNT = 42;
 
     private const MONEY_COLUMNS = [
         11, 12, 14, 15, 18, 19, 20, 28, 29, 31, 32, 33, 34, 35, 36, 37, 38,
@@ -181,6 +181,7 @@ class PerjadinBpkExcelExporter
             'Grand Total SPPD',
             'DOKUMENTASI',
             '', '',
+            'Keterangan',
         ];
 
         $bottom = [
@@ -222,6 +223,7 @@ class PerjadinBpkExcelExporter
             'KEGIATAN',
             'BUKTI NOTA/TIKET',
             'DOKUMENTASI',
+            '',
         ];
 
         $rows = [
@@ -243,6 +245,7 @@ class PerjadinBpkExcelExporter
             'AK'.$rowNumber.':AK'.($rowNumber + 1),
             'AL'.$rowNumber.':AL'.($rowNumber + 1),
             'AM'.$rowNumber.':AO'.$rowNumber,
+            'AP'.$rowNumber.':AP'.($rowNumber + 1),
         ];
 
         return [$rows, $merges, $rowNumber + 2];
@@ -299,6 +302,7 @@ class PerjadinBpkExcelExporter
             $entry->activity_file_original_name ?: '',
             $entry->receipt_file_original_name ?: '',
             $entry->report_file_original_name ?: '',
+            $this->paymentStatusLabel($entry),
         ];
 
         $cells = [];
@@ -389,6 +393,11 @@ class PerjadinBpkExcelExporter
         ])->filter()->implode('-');
     }
 
+    private function paymentStatusLabel(PerjadinEntry $entry): string
+    {
+        return $entry->paid_at ? 'Sudah Dibayar' : 'Belum Dibayar';
+    }
+
     private function filledRowCells(array $values, int $style): array
     {
         $values = array_pad($values, self::COLUMN_COUNT, '');
@@ -473,6 +482,7 @@ class PerjadinBpkExcelExporter
             39 => 28,
             40 => 28,
             41 => 28,
+            42 => 18,
         ];
 
         $xml = '<cols>';

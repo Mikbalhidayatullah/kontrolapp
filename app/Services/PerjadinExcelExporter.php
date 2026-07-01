@@ -75,6 +75,7 @@ class PerjadinExcelExporter
         'Diedit Oleh',
         'Tanggal Input',
         'Terakhir Update',
+        'Keterangan',
     ];
 
     public function export(Collection $entries): string
@@ -253,6 +254,7 @@ class PerjadinExcelExporter
             $entry->updater?->name ?: '-',
             optional($entry->created_at)->format('Y-m-d H:i') ?: '-',
             optional($entry->updated_at)->format('Y-m-d H:i') ?: '-',
+            $this->paymentStatusLabel($entry),
         ];
 
         $cells = [];
@@ -323,6 +325,11 @@ class PerjadinExcelExporter
             'luar_kota_sofifi' => 'Luar Kota Sofifi',
             default => '-',
         };
+    }
+
+    private function paymentStatusLabel(PerjadinEntry $entry): string
+    {
+        return $entry->paid_at ? 'Sudah Dibayar' : 'Belum Dibayar';
     }
 
     private function columnsXml(): string

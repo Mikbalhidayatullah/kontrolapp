@@ -83,7 +83,7 @@ class PerjadinController extends Controller
         }
 
         $entriesQuery = PerjadinEntry::query()
-            ->with(['creator:id,name', 'updater:id,name'])
+            ->with(['creator:id,name', 'updater:id,name', 'payer:id,name'])
             ->whereYear('start_date', $period['year'])
             ->whereMonth('start_date', $period['month'])
             ->when($selectedCategory !== '', fn ($query) => $query->where('category', $selectedCategory))
@@ -158,6 +158,8 @@ class PerjadinController extends Controller
                 'totalCount' => $entries->count(),
                 'totalGrandTotal' => (int) $entries->sum('grand_total'),
                 'completeDocuments' => $entries->filter(fn (PerjadinEntry $entry) => $entry->activity_file_path && $entry->receipt_file_path && $entry->report_file_path)->count(),
+                'paidCount' => $entries->filter(fn (PerjadinEntry $entry) => filled($entry->paid_at))->count(),
+                'paidGrandTotal' => (int) $entries->filter(fn (PerjadinEntry $entry) => filled($entry->paid_at))->sum('grand_total'),
                 'activeCategories' => $entries->pluck('category')->unique()->count(),
             ],
         ]);
@@ -321,6 +323,8 @@ class PerjadinController extends Controller
             'receipt_file_original_name',
             'report_file_path',
             'report_file_original_name',
+            'paid_at',
+            'paid_by',
             'created_at',
             'updated_at',
         ]);
@@ -332,6 +336,8 @@ class PerjadinController extends Controller
             'receipt_file_original_name' => $perjadinEntry->receipt_file_original_name,
             'report_file_path' => $this->duplicateStoredFile($perjadinEntry->report_file_path, 'proofs/perjadin/reports'),
             'report_file_original_name' => $perjadinEntry->report_file_original_name,
+            'paid_at' => null,
+            'paid_by' => null,
             'created_by' => $request->user()->id,
         ]);
 
@@ -344,6 +350,32 @@ class PerjadinController extends Controller
             'category' => $request->string('category')->toString() ?: $duplicate->category,
             'keyword' => trim($request->string('keyword')->toString()),
         ])->with('status', 'Data perjadin berhasil diduplikat.');
+    }
+
+    public function togglePayment(Request $request, PerjadinEntry $perjadinEntry): RedirectResponse
+    {
+        if ($perjadinEntry->paid_at) {
+            $perjadinEntry->forceFill([
+                'paid_at' => null,
+                'paid_by' => null,
+            ])->save();
+
+            $message = 'Status pembayaran perjadin dibatalkan.';
+        } else {
+            $perjadinEntry->forceFill([
+                'paid_at' => now(),
+                'paid_by' => $request->user()->id,
+            ])->save();
+
+            $message = 'Perjadin berhasil ditandai sudah dibayar.';
+        }
+
+        return redirect()->route('perjadin', [
+            'month' => (int) $request->integer('month', optional($perjadinEntry->start_date)->month ?? now()->month),
+            'year' => (int) $request->integer('year', optional($perjadinEntry->start_date)->year ?? now()->year),
+            'category' => $request->string('category')->toString() ?: $perjadinEntry->category,
+            'keyword' => trim($request->string('keyword')->toString()),
+        ])->with('status', $message);
     }
 
     public function edit(Request $request, PerjadinEntry $perjadinEntry): View

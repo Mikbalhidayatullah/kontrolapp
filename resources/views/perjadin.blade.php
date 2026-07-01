@@ -2,7 +2,7 @@
     <x-slot:title>{{ $title }}</x-slot:title>
 
     <div class="space-y-6">
-        <section class="grid gap-4 lg:grid-cols-3">
+        <section class="grid gap-4 lg:grid-cols-4">
             <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm font-medium text-slate-500">Total Dokumen</p>
                 <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $summary['totalCount'] }}</p>
@@ -17,6 +17,11 @@
                 <p class="text-sm font-medium text-emerald-700">Dokumen Lengkap</p>
                 <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $summary['completeDocuments'] }}</p>
                 <p class="mt-2 text-sm text-slate-500">Sudah ada PDF kegiatan dan bukti nota</p>
+            </article>
+            <article class="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
+                <p class="text-sm font-medium text-amber-700">Perjadin Terbayarkan</p>
+                <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $summary['paidCount'] }}</p>
+                <p class="mt-2 text-sm text-slate-500">Rp {{ number_format($summary['paidGrandTotal'], 0, ',', '.') }} sudah dibayar</p>
             </article>
         </section>
 
@@ -130,6 +135,7 @@
                                         <th class="px-4 py-3 font-medium">Periode</th>
                                         <th class="px-4 py-3 font-medium">Rincian Aktif</th>
                                         <th class="px-4 py-3 font-medium">Grand Total</th>
+                                        <th class="px-4 py-3 font-medium">Pembayaran</th>
                                         <th class="px-4 py-3 font-medium">Lampiran</th>
                                         <th class="px-4 py-3 font-medium">Aksi</th>
                                     </tr>
@@ -187,6 +193,18 @@
                                                 @endif
                                             </td>
                                             <td class="px-4 py-4 align-top">
+                                                @if ($entry->paid_at)
+                                                    <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                                        Sudah dibayar
+                                                    </span>
+                                                    <p class="mt-2 text-xs text-slate-400">{{ optional($entry->paid_at)->translatedFormat('d M Y') }}</p>
+                                                @else
+                                                    <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                                        Belum dibayar
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-4 align-top">
                                                 <div class="space-y-2">
                                                     @if ($entry->activity_file_path)
                                                         <a href="{{ route('perjadin.attachments.show', [$entry, 'activity']) }}" target="_blank" class="block text-sm font-medium text-sky-700 hover:text-sky-900 hover:underline">
@@ -204,39 +222,31 @@
                                                 </div>
                                             </td>
                                             <td class="px-4 py-4 align-top">
-                                                <div class="flex flex-wrap gap-2">
-                                                    <a href="{{ route('perjadin.show', ['perjadinEntry' => $entry, 'month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-700" title="Lihat detail" aria-label="Lihat detail">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
-                                                            <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z" stroke-linecap="round" stroke-linejoin="round" />
-                                                            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke-linecap="round" stroke-linejoin="round" />
-                                                        </svg>
+                                                <div class="flex min-w-52 flex-wrap gap-2">
+                                                    <a href="{{ route('perjadin.show', ['perjadinEntry' => $entry, 'month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-sky-300 hover:text-sky-700">
+                                                        Detail
                                                     </a>
-                                                    <form action="{{ route('perjadin.duplicate', $entry) }}?month={{ $currentPeriod['month'] }}&year={{ $currentPeriod['year'] }}&category={{ urlencode($selectedCategory) }}&keyword={{ urlencode($selectedKeyword) }}" method="POST">
+                                                    <form action="{{ route('perjadin.payment.toggle', $entry) }}?month={{ $currentPeriod['month'] }}&year={{ $currentPeriod['year'] }}&category={{ urlencode($selectedCategory) }}&keyword={{ urlencode($selectedKeyword) }}" method="POST" onsubmit="return confirm('{{ $entry->paid_at ? 'Batalkan status pembayaran perjadin ini?' : 'Tandai perjadin ini sudah dibayar?' }}');">
                                                         @csrf
-                                                        <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100" title="Duplikat data" aria-label="Duplikat data">
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
-                                                                <rect x="9" y="9" width="10" height="10" rx="2" />
-                                                                <path d="M5 15V7a2 2 0 0 1 2-2h8" stroke-linecap="round" stroke-linejoin="round" />
-                                                            </svg>
+                                                        <button type="submit" class="inline-flex items-center justify-center rounded-full border {{ $entry->paid_at ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }} px-3 py-1.5 text-xs font-semibold transition">
+                                                            {{ $entry->paid_at ? 'Batalkan Bayar' : 'Bayar' }}
                                                         </button>
                                                     </form>
-                                                    <a href="{{ route('perjadin.edit', ['perjadinEntry' => $entry, 'month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-sky-700 transition hover:bg-sky-100" title="Edit data" aria-label="Edit data">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
-                                                            <path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z" stroke-linecap="round" stroke-linejoin="round" />
-                                                            <path d="m13.5 6.5 3 3" stroke-linecap="round" stroke-linejoin="round" />
-                                                        </svg>
+                                                    <form action="{{ route('perjadin.duplicate', $entry) }}?month={{ $currentPeriod['month'] }}&year={{ $currentPeriod['year'] }}&category={{ urlencode($selectedCategory) }}&keyword={{ urlencode($selectedKeyword) }}" method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50">
+                                                            Duplikat
+                                                        </button>
+                                                    </form>
+                                                    <a href="{{ route('perjadin.edit', ['perjadinEntry' => $entry, 'month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center justify-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">
+                                                        Edit
                                                     </a>
                                                     @if (auth()->user()->hasAnyRole(['admin', 'bendahara']))
                                                         <form action="{{ route('perjadin.destroy', $entry) }}?month={{ $currentPeriod['month'] }}&year={{ $currentPeriod['year'] }}&category={{ urlencode($selectedCategory) }}&keyword={{ urlencode($selectedKeyword) }}" method="POST" onsubmit="return confirm('Hapus data perjadin ini?');">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" title="Hapus data" aria-label="Hapus data">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
-                                                                    <path d="M3 6h18" stroke-linecap="round" stroke-linejoin="round" />
-                                                                    <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" stroke-linecap="round" stroke-linejoin="round" />
-                                                                    <path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6" stroke-linecap="round" stroke-linejoin="round" />
-                                                                    <path d="M10 11v6M14 11v6" stroke-linecap="round" stroke-linejoin="round" />
-                                                                </svg>
+                                                            <button type="submit" class="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
+                                                                Hapus
                                                             </button>
                                                         </form>
                                                     @endif
