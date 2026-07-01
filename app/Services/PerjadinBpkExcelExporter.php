@@ -108,51 +108,31 @@ class PerjadinBpkExcelExporter
         $merges = [];
         $highestColumn = $this->columnName(self::COLUMN_COUNT);
 
-        $rows[] = $this->rowXml($rowNumber, $this->filledRowCells(['REKAPITULASI BELANJA PERJALANAN DINAS'], 1), 24);
+        $rows[] = $this->rowXml($rowNumber, $this->filledRowCells(['DIMOHON UNTUK TIDAK MENGGUBAH FORMAT ISI Nama Lengkap Pelaksana Tanpa Gelar'], 3), 20);
         $merges[] = 'A'.$rowNumber.':'.$highestColumn.$rowNumber;
         $rowNumber++;
 
-        $rows[] = $this->rowXml($rowNumber, $this->filledRowCells([$periodLabel], 2), 20);
-        $merges[] = 'A'.$rowNumber.':'.$highestColumn.$rowNumber;
-        $rowNumber++;
-
-        $rows[] = $this->rowXml($rowNumber, $this->filledRowCells(['PROVINSI MALUKU UTARA'], 1), 22);
-        $merges[] = 'A'.$rowNumber.':'.$highestColumn.$rowNumber;
-        $rowNumber++;
-
-        $rows[] = $this->rowXml($rowNumber, $this->filledRowCells(['DIMOHON UNTUK TIDAK MENGGUBAH FORMAT'], 3), 20);
-        $merges[] = 'A'.$rowNumber.':'.$highestColumn.$rowNumber;
-        $rowNumber++;
-
-        $rows[] = $this->rowXml($rowNumber++, $this->blankCells());
+        [$headerRows, $headerMerges, $nextRow] = $this->headerRows($rowNumber);
+        $rows = array_merge($rows, $headerRows);
+        $merges = array_merge($merges, $headerMerges);
+        $rowNumber = $nextRow;
 
         if ($entries->isEmpty()) {
-            $rows[] = $this->rowXml($rowNumber, $this->filledRowCells(['BELUM ADA DATA '.$sheetName], 4), 22);
+            $rows[] = $this->rowXml($rowNumber, $this->filledRowCells(['BELUM ADA DATA '.$sheetName], 4), 20);
             $merges[] = 'A'.$rowNumber.':'.$highestColumn.$rowNumber;
             $rowNumber++;
-            [$headerRows, $headerMerges, $nextRow] = $this->headerRows($rowNumber);
-            $rows = array_merge($rows, $headerRows);
-            $merges = array_merge($merges, $headerMerges);
-            $rowNumber = $nextRow;
         } else {
             $sequence = 1;
             $entries
                 ->groupBy(fn (PerjadinEntry $entry) => optional($entry->start_date)->format('Y-m') ?: 'tanpa-tanggal')
                 ->each(function (Collection $monthEntries, string $monthKey) use (&$rowNumber, &$rows, &$merges, &$sequence, $highestColumn): void {
-                    $rows[] = $this->rowXml($rowNumber, $this->filledRowCells([$this->monthGroupLabel($monthKey, $monthEntries)], 4), 22);
+                    $rows[] = $this->rowXml($rowNumber, $this->filledRowCells([$this->monthGroupLabel($monthKey, $monthEntries)], 4), 18);
                     $merges[] = 'A'.$rowNumber.':'.$highestColumn.$rowNumber;
                     $rowNumber++;
 
-                    [$headerRows, $headerMerges, $nextRow] = $this->headerRows($rowNumber);
-                    $rows = array_merge($rows, $headerRows);
-                    $merges = array_merge($merges, $headerMerges);
-                    $rowNumber = $nextRow;
-
                     foreach ($monthEntries as $entry) {
-                        $rows[] = $this->rowXml($rowNumber++, $this->entryCells($entry, $sequence++), 24);
+                        $rows[] = $this->rowXml($rowNumber++, $this->entryCells($entry, $sequence++), 34);
                     }
-
-                    $rows[] = $this->rowXml($rowNumber++, $this->blankCells());
                 });
         }
 
@@ -183,7 +163,7 @@ class PerjadinBpkExcelExporter
         $top = [
             'No.',
             'Nama SKPD',
-            'Nama Lengkap Pelaksana Tanpa Gelar',
+            'Nama Pelaksana',
             'Jabatan/Golongan',
             'Jangka Waktu Surat Perintah Tugas',
             '', '', '', '', '',
@@ -578,16 +558,16 @@ class PerjadinBpkExcelExporter
 <font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font>
 <font><b/><sz val="14"/><color rgb="FF000000"/><name val="Calibri"/></font>
 <font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font>
-<font><b/><sz val="11"/><color rgb="FF9A3412"/><name val="Calibri"/></font>
-<font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+<font><b/><sz val="12"/><color rgb="FF000000"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font>
 <font><b/><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font>
 </fonts>
 <fills count="6">
 <fill><patternFill patternType="none"/></fill>
 <fill><patternFill patternType="gray125"/></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FF047857"/><bgColor indexed="64"/></patternFill></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FF111827"/><bgColor indexed="64"/></patternFill></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FFE5E7EB"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFFFF00"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFBDD7EE"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFBDD7EE"/><bgColor indexed="64"/></patternFill></fill>
 <fill><patternFill patternType="solid"><fgColor rgb="FFFFFFFF"/><bgColor indexed="64"/></patternFill></fill>
 </fills>
 <borders count="2">
@@ -599,9 +579,9 @@ class PerjadinBpkExcelExporter
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
 <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
 <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-<xf numFmtId="0" fontId="4" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
+<xf numFmtId="0" fontId="4" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
+<xf numFmtId="0" fontId="5" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
 <xf numFmtId="0" fontId="5" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
 <xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
 <xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
