@@ -19,13 +19,20 @@
     }
 
     if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {
+        $perjadinSbuItems = [
+            ['label' => 'Perjadin', 'href' => route('perjadin'), 'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*')],
+        ];
+
+        if (in_array($role, ['admin', 'bendahara'], true)) {
+            $perjadinSbuItems[] = ['label' => 'Halaman Bayar', 'href' => route('perjadin-payments.index'), 'active' => request()->routeIs('perjadin-payments.*')];
+        }
+
+        $perjadinSbuItems[] = ['label' => 'SBU', 'href' => route('local-transport-sbus.index'), 'active' => request()->routeIs('local-transport-sbus.*')];
+
         $perjadinSbuMenu = [
             'label' => 'Perjadin & SBU',
-            'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*') || request()->routeIs('local-transport-sbus.*'),
-            'items' => [
-                ['label' => 'Perjadin', 'href' => route('perjadin'), 'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*')],
-                ['label' => 'SBU', 'href' => route('local-transport-sbus.index'), 'active' => request()->routeIs('local-transport-sbus.*')],
-            ],
+            'active' => request()->routeIs('perjadin') || request()->routeIs('add-perjadin') || request()->routeIs('perjadin.*') || request()->routeIs('perjadin-payments.*') || request()->routeIs('local-transport-sbus.*'),
+            'items' => $perjadinSbuItems,
         ];
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\ControlEntryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocalTransportSbuController;
 use App\Http\Controllers\PerjadinController;
+use App\Http\Controllers\PerjadinPaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SavingAllocationController;
 use App\Http\Controllers\TaxEntryController;
@@ -63,7 +64,10 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
 Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {
     Route::get('/perjadin', [PerjadinController::class, 'index'])->name('perjadin');
     Route::get('/perjadin/export/excel', [PerjadinController::class, 'exportExcel'])->name('perjadin.export.xlsx');
-    Route::get('/perjadin/export/bpk-excel', [PerjadinController::class, 'exportBpkExcel'])->name('perjadin.export.bpk.xlsx');
+    Route::get('/perjadin/export/bpk-excel', [PerjadinController::class, 'exportBpkExcel'])->middleware('role:admin,bendahara')->name('perjadin.export.bpk.xlsx');
+    Route::get('/perjadin/halaman-bayar', [PerjadinPaymentController::class, 'index'])->middleware('role:admin,bendahara')->name('perjadin-payments.index');
+    Route::post('/perjadin/halaman-bayar/{paymentGroup}', [PerjadinPaymentController::class, 'updatePurpose'])->middleware('role:admin,bendahara')->name('perjadin-payments.update-purpose');
+    Route::post('/perjadin/halaman-bayar/export/excel', [PerjadinPaymentController::class, 'exportExcel'])->middleware('role:admin,bendahara')->name('perjadin-payments.export.xlsx');
     Route::get('/add-perjadin', [PerjadinController::class, 'create'])->name('add-perjadin');
     Route::post('/add-perjadin', [PerjadinController::class, 'store'])->name('add-perjadin.store');
     Route::post('/perjadin/{perjadinEntry}/bayar', [PerjadinController::class, 'togglePayment'])->name('perjadin.payment.toggle');

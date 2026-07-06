@@ -76,9 +76,11 @@
                                     <a href="{{ route('perjadin.export.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
                                         Custom (Format Lama)
                                     </a>
-                                    <a href="{{ route('perjadin.export.bpk.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
-                                        Versi BPK
-                                    </a>
+                                    @if (auth()->user()->hasAnyRole(['admin', 'bendahara']))
+                                        <a href="{{ route('perjadin.export.bpk.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
+                                            Versi BPK
+                                        </a>
+                                    @endif
                                 </div>
                             </details>
                             <a href="{{ route('add-perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
