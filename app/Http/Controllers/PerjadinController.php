@@ -8,6 +8,7 @@ use App\Models\LodgingSbu;
 use App\Models\LocalTransportSbu;
 use App\Models\NationalLodgingSbu;
 use App\Models\PerjadinEntry;
+use App\Models\PerjadinPaymentGroup;
 use App\Models\RepresentationSbu;
 use App\Models\TravelDestinationRegion;
 use App\Services\PerjadinBpkExcelExporter;
@@ -45,6 +46,7 @@ class PerjadinController extends Controller
     private const EMPLOYEE_STATUS_OPTIONS = [
         'PNS',
         'PPPK',
+        'Disetarakan',
     ];
 
     private const PNS_GRADE_NUMBER_OPTIONS = [
@@ -400,6 +402,7 @@ class PerjadinController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatedData($request);
+        $assignmentPurpose = trim($request->string('assignment_purpose')->toString());
 
         $activityFile = $this->storePdf($request, 'activity_file', 'proofs/perjadin/activity');
         $receiptFile = $this->storePdf($request, 'receipt_file', 'proofs/perjadin/receipts');
@@ -415,6 +418,7 @@ class PerjadinController extends Controller
             'report_file_original_name' => $reportFile['name'],
             'created_by' => $request->user()->id,
         ]);
+        $this->syncPaymentGroupPurpose($data, $assignmentPurpose);
 
         return redirect()->route('perjadin', [
             'month' => (int) date('n', strtotime($data['start_date'])),
@@ -427,6 +431,7 @@ class PerjadinController extends Controller
     public function update(Request $request, PerjadinEntry $perjadinEntry): RedirectResponse
     {
         $data = $this->validatedData($request);
+        $assignmentPurpose = trim($request->string('assignment_purpose')->toString());
         $activityFile = $this->storePdf($request, 'activity_file', 'proofs/perjadin/activity');
         $receiptFile = $this->storePdf($request, 'receipt_file', 'proofs/perjadin/receipts');
         $reportFile = $this->storePdf($request, 'report_file', 'proofs/perjadin/reports');
@@ -454,6 +459,7 @@ class PerjadinController extends Controller
             'report_file_original_name' => $nextReportName,
             'updated_by' => $request->user()->id,
         ]);
+        $this->syncPaymentGroupPurpose($data, $assignmentPurpose);
 
         if (($activityFile['path'] || $removeActivityFile) && $oldActivityPath) {
             Storage::disk('public')->delete($oldActivityPath);
@@ -536,8 +542,8 @@ class PerjadinController extends Controller
             'employee_status' => ['required', 'string', Rule::in(self::EMPLOYEE_STATUS_OPTIONS)],
             'position_name' => ['required', 'string', 'max:255'],
             'echelon_level' => ['required', 'string', Rule::in(self::ECHELON_OPTIONS)],
-            'grade_number' => ['required', 'string', Rule::in($this->allGradeNumberOptions())],
-            'grade_letter' => ['required', 'string', Rule::in(self::GRADE_LETTER_OPTIONS)],
+            'grade_number' => ['nullable', 'string', Rule::in($this->allGradeNumberOptions())],
+            'grade_letter' => ['nullable', 'string', Rule::in(self::GRADE_LETTER_OPTIONS)],
             'origin_regency' => ['nullable', 'string'],
             'origin_district' => ['nullable', 'string', 'max:255'],
             'destination_regency' => ['nullable', 'string'],
@@ -546,6 +552,7 @@ class PerjadinController extends Controller
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'assignment_number' => ['required', 'string', 'max:255'],
             'assignment_date' => ['required', 'date'],
+            'assignment_purpose' => ['required', 'string', 'max:2000'],
             'signature_location' => ['required', 'string', 'max:255'],
             'destination_city' => ['nullable', 'string', 'max:255'],
             'regional_trip_scope' => ['nullable', 'string', Rule::in(['dalam_kota_sofifi', 'luar_kota_sofifi'])],
@@ -684,7 +691,21 @@ class PerjadinController extends Controller
                 default => [],
             };
 
-            if ($request->filled('grade_number') && ! in_array($request->input('grade_number'), $allowedGradeNumbers, true)) {
+            if ($request->input('employee_status') === 'PNS') {
+                if (blank($request->input('grade_number'))) {
+                    $validator->errors()->add('grade_number', 'Angka golongan wajib dipilih.');
+                }
+
+                if (blank($request->input('grade_letter'))) {
+                    $validator->errors()->add('grade_letter', 'Huruf golongan wajib dipilih.');
+                }
+            }
+
+            if ($request->input('employee_status') === 'PPPK' && blank($request->input('grade_number'))) {
+                $validator->errors()->add('grade_number', 'Angka golongan PPPK wajib dipilih.');
+            }
+
+            if ($request->filled('grade_number') && $request->input('employee_status') !== 'Disetarakan' && ! in_array($request->input('grade_number'), $allowedGradeNumbers, true)) {
                 $validator->errors()->add('grade_number', 'Angka golongan tidak sesuai dengan status pegawai yang dipilih.');
             }
         });
@@ -755,7 +776,7 @@ class PerjadinController extends Controller
             'employee_status' => $validated['employee_status'],
             'position_name' => $validated['position_name'],
             'echelon_level' => $validated['echelon_level'],
-            'grade' => $validated['grade_number'].$validated['grade_letter'],
+            'grade' => $this->gradeValueForStatus($validated['employee_status'], $validated['grade_number'] ?? null, $validated['grade_letter'] ?? null),
             'origin_regency' => $originRegency,
             'origin_district' => $originDistrict,
             'destination_regency' => $destinationRegency,
@@ -890,6 +911,7 @@ class PerjadinController extends Controller
             'gradeNumberOptionsByStatus' => [
                 'PNS' => self::PNS_GRADE_NUMBER_OPTIONS,
                 'PPPK' => self::PPPK_GRADE_NUMBER_OPTIONS,
+                'Disetarakan' => [],
             ],
             'gradeLetterOptions' => self::GRADE_LETTER_OPTIONS,
             'transportTypes' => self::TRANSPORT_OPTIONS,
@@ -904,7 +926,47 @@ class PerjadinController extends Controller
             'nationalLodgingReferences' => $this->nationalLodgingReferences(),
             'representationReferences' => $this->representationReferences(),
             'dailyAllowanceReferences' => $this->dailyAllowanceReferences(),
+            'assignmentPurpose' => $entry ? $this->paymentGroupPurpose($entry) : '',
         ]);
+    }
+
+    private function paymentGroupPurpose(PerjadinEntry $entry): string
+    {
+        if (! $entry->assignment_date) {
+            return '';
+        }
+
+        return (string) (PerjadinPaymentGroup::query()
+            ->where('assignment_number', $entry->assignment_number)
+            ->whereDate('assignment_date', $entry->assignment_date)
+            ->value('purpose') ?? '');
+    }
+
+    private function syncPaymentGroupPurpose(array $data, string $purpose): void
+    {
+        if (blank($data['assignment_number'] ?? null) || blank($data['assignment_date'] ?? null)) {
+            return;
+        }
+
+        PerjadinPaymentGroup::query()->updateOrCreate(
+            [
+                'assignment_number' => $data['assignment_number'],
+                'assignment_date' => $data['assignment_date'],
+            ],
+            [
+                'purpose' => $purpose,
+            ]
+        );
+    }
+
+    private function gradeValueForStatus(string $employeeStatus, ?string $gradeNumber, ?string $gradeLetter): string
+    {
+        return match ($employeeStatus) {
+            'PNS' => (string) $gradeNumber.strtoupper((string) $gradeLetter),
+            'PPPK' => (string) $gradeNumber,
+            'Disetarakan' => '-',
+            default => '-',
+        };
     }
 
     private function selectedPeriod(Request $request): array

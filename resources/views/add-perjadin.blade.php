@@ -21,7 +21,11 @@
         $selectedEmployeeStatus = old('employee_status', $isEdit ? ($entry->employee_status ?: $inferredEmployeeStatus) : 'PNS');
         $selectedGradeNumber = old('grade_number', $gradeNumberMatch[0] ?? '');
         $selectedGradeLetter = strtoupper(old('grade_letter', $gradeLetterMatch[0] ?? ''));
-        $selectedGrade = $selectedGradeNumber && $selectedGradeLetter ? $selectedGradeNumber.$selectedGradeLetter : (string) $storedGrade;
+        $selectedGrade = match ($selectedEmployeeStatus) {
+            'PPPK' => (string) $selectedGradeNumber,
+            'Disetarakan' => '',
+            default => $selectedGradeNumber && $selectedGradeLetter ? $selectedGradeNumber.$selectedGradeLetter : (string) $storedGrade,
+        };
         $inlineFieldLabels = [
             'category' => 'kategori perjadin',
             'origin_regency' => 'kabupaten asal',
@@ -42,6 +46,7 @@
             'end_date' => 'tanggal selesai',
             'assignment_number' => 'nomor surat tugas',
             'assignment_date' => 'tanggal surat tugas',
+            'assignment_purpose' => 'tujuan / kegiatan surat tugas',
             'signature_location' => 'lokasi tanda tangan',
             'daily_allowance_days' => 'jumlah hari uang harian',
             'daily_allowance_rate' => 'nominal uang harian',
@@ -290,17 +295,17 @@
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @endif
                         </div>
-                        <div class="xl:col-span-2">
+                        <div id="grade-wrapper" class="xl:col-span-2">
                             <label class="block text-sm font-medium text-slate-700">Golongan</label>
                             <input id="grade" name="grade" type="hidden" value="{{ $selectedGrade }}" />
-                            <div class="mt-2 grid grid-cols-2 gap-3">
+                            <div id="grade-fields" class="mt-2 grid grid-cols-2 gap-3">
                                 <select id="grade_number" name="grade_number" class="block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
                                     <option value="">Angka</option>
                                     @foreach ($gradeNumberOptions as $gradeNumber)
                                         <option value="{{ $gradeNumber }}" @selected((string) $selectedGradeNumber === (string) $gradeNumber)>{{ $gradeNumber }}</option>
                                     @endforeach
                                 </select>
-                                <select id="grade_letter" name="grade_letter" class="block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                <select id="grade_letter" name="grade_letter" data-grade-letter class="block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
                                     <option value="">Huruf</option>
                                     @foreach ($gradeLetterOptions as $gradeLetter)
                                         <option value="{{ $gradeLetter }}" @selected($selectedGradeLetter === $gradeLetter)>{{ $gradeLetter }}</option>
@@ -358,6 +363,14 @@
                             @if($message = $inlineError('signature_location'))
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @endif
+                        </div>
+                        <div class="xl:col-span-6">
+                            <label for="assignment_purpose" class="block text-sm font-medium text-slate-700">Tujuan / Kegiatan Surat Tugas</label>
+                            <textarea id="assignment_purpose" name="assignment_purpose" rows="4" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" placeholder="Contoh: Melakukan monitoring dan evaluasi ...">{{ old('assignment_purpose', $assignmentPurpose ?? '') }}</textarea>
+                            @if($message = $inlineError('assignment_purpose'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
+                            <p class="mt-2 text-xs text-slate-500">Tujuan ini disimpan per nomor surat tugas dan otomatis muncul di Halaman Bayar.</p>
                         </div>
                         <div id="destination-city-manual-wrapper" class="xl:col-span-6 {{ $showRegionalRouteFields ? '' : 'hidden' }}">
                             <div class="grid gap-5 xl:grid-cols-2">
@@ -847,6 +860,8 @@
             const echelonInput = document.getElementById('echelon_level');
             const employeeStatusInput = document.getElementById('employee_status');
             const gradeInput = document.getElementById('grade');
+            const gradeWrapper = document.getElementById('grade-wrapper');
+            const gradeFields = document.getElementById('grade-fields');
             const gradeNumberInput = document.getElementById('grade_number');
             const gradeLetterInput = document.getElementById('grade_letter');
             const gradeNumberOptionsByStatus = @json($gradeNumberOptionsByStatus);
@@ -891,6 +906,21 @@
 
                 const selectedStatus = employeeStatusInput?.value || 'PNS';
                 const allowedNumbers = gradeNumberOptionsByStatus[selectedStatus] || [];
+                const isDisetarakan = selectedStatus === 'Disetarakan';
+                const isPppk = selectedStatus === 'PPPK';
+
+                gradeWrapper?.classList.toggle('hidden', isDisetarakan);
+                gradeFields?.classList.toggle('grid-cols-1', isPppk);
+                gradeFields?.classList.toggle('grid-cols-2', !isPppk);
+                gradeNumberInput.disabled = isDisetarakan;
+
+                if (gradeLetterInput) {
+                    gradeLetterInput.disabled = isDisetarakan || isPppk;
+                    gradeLetterInput.classList.toggle('hidden', isDisetarakan || isPppk);
+                    if (isDisetarakan || isPppk) {
+                        gradeLetterInput.value = '';
+                    }
+                }
 
                 Array.from(gradeNumberInput.options).forEach((option) => {
                     if (!option.value) {
@@ -907,6 +937,10 @@
                 if (gradeNumberInput.value && !allowedNumbers.includes(gradeNumberInput.value)) {
                     gradeNumberInput.value = '';
                 }
+
+                if (isDisetarakan) {
+                    gradeNumberInput.value = '';
+                }
             };
 
             const syncGradeInput = () => {
@@ -916,7 +950,10 @@
 
                 const gradeNumber = (gradeNumberInput?.value || '').trim();
                 const gradeLetter = (gradeLetterInput?.value || '').trim().toUpperCase();
-                const nextGrade = gradeNumber && gradeLetter ? `${gradeNumber}${gradeLetter}` : '';
+                const selectedStatus = employeeStatusInput?.value || 'PNS';
+                const nextGrade = selectedStatus === 'Disetarakan'
+                    ? ''
+                    : (selectedStatus === 'PPPK' ? gradeNumber : (gradeNumber && gradeLetter ? `${gradeNumber}${gradeLetter}` : ''));
 
                 if (gradeInput.value === nextGrade) {
                     return;

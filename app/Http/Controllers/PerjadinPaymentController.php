@@ -58,26 +58,6 @@ class PerjadinPaymentController extends Controller
         ]);
     }
 
-    public function updatePurpose(Request $request, PerjadinPaymentGroup $paymentGroup): RedirectResponse
-    {
-        $data = $request->validate([
-            'purpose' => ['required', 'string', 'max:2000'],
-            'month' => ['nullable', 'integer', 'between:1,12'],
-            'year' => ['nullable', 'integer', 'digits:4'],
-            'keyword' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $paymentGroup->update([
-            'purpose' => $data['purpose'],
-        ]);
-
-        return redirect()->route('perjadin-payments.index', [
-            'month' => $data['month'] ?? now()->month,
-            'year' => $data['year'] ?? now()->year,
-            'keyword' => $data['keyword'] ?? null,
-        ])->with('status', 'Tujuan/kegiatan surat tugas berhasil disimpan.');
-    }
-
     public function exportExcel(Request $request, PerjadinPaymentExcelExporter $exporter): BinaryFileResponse|RedirectResponse
     {
         $data = $request->validate([

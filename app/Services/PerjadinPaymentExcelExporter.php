@@ -250,7 +250,7 @@ class PerjadinPaymentExcelExporter
             $sequence,
             $entry->executor_name ?: '',
             $this->gradeLabel($entry),
-            $entry->destination_city ?: $entry->destination_regency ?: '',
+            $entry->position_name ?: '',
             $entry->skpd_name ?: '',
             $transportTotal,
             $dailyDays,
