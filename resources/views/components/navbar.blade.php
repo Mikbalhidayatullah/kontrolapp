@@ -37,7 +37,7 @@
     }
 
     if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {
-        $afterPerjadinNavItems[] = ['label' => $role === 'verifikator' ? 'Report Perjadin' : 'Report', 'href' => route('report'), 'active' => request()->routeIs('report')];
+        $afterPerjadinNavItems[] = ['label' => 'LRFK', 'href' => route('lrfk.index'), 'active' => request()->routeIs('lrfk.*')];
     }
 
     if ($role === 'admin') {

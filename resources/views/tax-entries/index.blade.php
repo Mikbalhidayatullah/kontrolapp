@@ -30,7 +30,7 @@
                 <div>
                     <p class="text-sm font-medium text-sky-600">Daftar Pajak</p>
                     <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Data pembayaran dan pencatatan pajak</h2>
-                    <p class="mt-2 text-sm text-slate-500">Kelola periode GU, ID Billing, NTPN, rekening pajak, dan nominal transaksi.</p>
+                    <p class="mt-2 text-sm text-slate-500">Kelola periode GU/LS, TU, ID Billing, NTPN, rekening pajak, dan nominal transaksi.</p>
                 </div>
 
                 <div class="flex flex-col gap-3">
@@ -65,12 +65,17 @@
         </section>
 
         <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            @if ($entries->isEmpty())
+            @if ($entries->isEmpty() && $tuEntries->isEmpty())
                 <div class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
                     Belum ada data pajak pada filter ini.
                 </div>
-            @else
+            @endif
+
+            @if ($entries->isNotEmpty())
                 <div class="overflow-hidden rounded-3xl border border-slate-200">
+                    <div class="border-b border-slate-200 bg-slate-50 px-5 py-3">
+                        <h3 class="text-sm font-semibold text-slate-900">Data Pajak GU / LS</h3>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-slate-200 text-sm">
                             <thead class="bg-slate-950 text-left text-slate-200">
@@ -119,6 +124,81 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" title="Hapus data" aria-label="Hapus data">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+                                                            <path d="M3 6h18" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="M10 11v6M14 11v6" stroke-linecap="round" stroke-linejoin="round" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            @if ($tuEntries->isNotEmpty())
+                <div class="mt-6 overflow-hidden rounded-3xl border border-emerald-200">
+                    <div class="border-b border-emerald-100 bg-emerald-50 px-5 py-3">
+                        <h3 class="text-sm font-semibold text-emerald-900">Data Pajak TU</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-[1500px] divide-y divide-slate-200 text-sm">
+                            <thead class="bg-slate-950 text-left text-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">Kategori</th>
+                                    <th class="px-4 py-3 font-medium">Kode Kegiatan</th>
+                                    <th class="px-4 py-3 font-medium">Nama Belanja</th>
+                                    <th class="px-4 py-3 font-medium">SP2D</th>
+                                    <th class="px-4 py-3 text-right font-medium">Diminta</th>
+                                    <th class="px-4 py-3 text-right font-medium">Realisasi</th>
+                                    <th class="px-4 py-3 text-right font-medium">Sisa TU</th>
+                                    <th class="px-4 py-3 text-right font-medium">STS</th>
+                                    <th class="px-4 py-3 text-right font-medium">Sisa Setoran</th>
+                                    <th class="px-4 py-3 font-medium">Pajak</th>
+                                    <th class="px-4 py-3 font-medium">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                @foreach ($tuEntries as $tuEntry)
+                                    <tr>
+                                        <td class="px-4 py-4 align-top">
+                                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">{{ $tuEntry->category }}</span>
+                                        </td>
+                                        <td class="px-4 py-4 align-top text-slate-600">{{ $tuEntry->kode_kegiatan ?: '-' }}</td>
+                                        <td class="max-w-sm px-4 py-4 align-top font-medium text-slate-900">{{ $tuEntry->nama_belanja }}</td>
+                                        <td class="px-4 py-4 align-top text-slate-600">
+                                            <p>{{ $tuEntry->sp2d_number ?: '-' }}</p>
+                                            <p class="mt-1 text-xs text-slate-400">{{ optional($tuEntry->sp2d_date)->translatedFormat('d M Y') ?: '-' }}</p>
+                                        </td>
+                                        <td class="px-4 py-4 text-right align-top font-medium text-slate-900">Rp {{ number_format($tuEntry->requested_amount, 0, ',', '.') }}</td>
+                                        <td class="px-4 py-4 text-right align-top font-medium text-sky-700">Rp {{ number_format($tuEntry->totalRealization(), 0, ',', '.') }}</td>
+                                        <td class="px-4 py-4 text-right align-top font-medium text-amber-700">Rp {{ number_format($tuEntry->tuBalance(), 0, ',', '.') }}</td>
+                                        <td class="px-4 py-4 text-right align-top font-medium text-emerald-700">Rp {{ number_format($tuEntry->deposit_amount, 0, ',', '.') }}</td>
+                                        <td class="px-4 py-4 text-right align-top font-semibold text-slate-900">Rp {{ number_format($tuEntry->depositBalance(), 0, ',', '.') }}</td>
+                                        <td class="px-4 py-4 align-top text-xs text-slate-600">
+                                            <p>PPN: Rp {{ number_format($tuEntry->ppn_amount, 0, ',', '.') }}</p>
+                                            <p class="mt-1">PPh 21: Rp {{ number_format($tuEntry->pph21_amount, 0, ',', '.') }}</p>
+                                            <p class="mt-1">PPh 22: Rp {{ number_format($tuEntry->pph22_amount, 0, ',', '.') }}</p>
+                                            <p class="mt-1">PPh 23: Rp {{ number_format($tuEntry->pph23_amount, 0, ',', '.') }}</p>
+                                        </td>
+                                        <td class="px-4 py-4 align-top">
+                                            <div class="flex flex-wrap gap-2">
+                                                <a href="{{ route('pajak.tu.edit', $tuEntry) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-sky-700 transition hover:bg-sky-100" title="Edit data TU" aria-label="Edit data TU">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+                                                        <path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z" stroke-linecap="round" stroke-linejoin="round" />
+                                                        <path d="m13.5 6.5 3 3" stroke-linecap="round" stroke-linejoin="round" />
+                                                    </svg>
+                                                </a>
+                                                <form action="{{ route('pajak.tu.destroy', $tuEntry) }}" method="POST" onsubmit="return confirm('Hapus data pajak TU ini?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100" title="Hapus data TU" aria-label="Hapus data TU">
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
                                                             <path d="M3 6h18" stroke-linecap="round" stroke-linejoin="round" />
                                                             <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" stroke-linecap="round" stroke-linejoin="round" />
@@ -287,7 +367,9 @@
 
             openButton?.addEventListener('click', () => {
                 if (categoryInput && !categoryInput.value && categoryInput.options.length > 1) {
-                    categoryInput.selectedIndex = 1;
+                    const printableCategory = entries.find((entry) => entry.category)?.category || '';
+                    const printableOption = Array.from(categoryInput.options).find((option) => option.value === printableCategory);
+                    categoryInput.value = printableOption ? printableOption.value : categoryInput.options[1].value;
                 }
 
                 syncPreview();

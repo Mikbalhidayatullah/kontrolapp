@@ -19,9 +19,11 @@
 
     @php
         $isEdit = isset($entry) && $entry !== null;
-        $formAction = $isEdit ? route('pajak.update', $entry) : route('pajak.store');
-        $currentCategory = old('category', $isEdit ? $entry->category : '');
+        $isTuEdit = isset($tuEntry) && $tuEntry !== null;
+        $formAction = $isEdit ? route('pajak.update', $entry) : ($isTuEdit ? route('pajak.tu.update', $tuEntry) : route('pajak.store'));
+        $currentCategory = old('category', $isEdit ? $entry->category : ($isTuEdit ? $tuEntry->category : ''));
         $currentCategoryMode = old('category_mode', $categories === [] ? 'new' : 'existing');
+        $currentTaxFormat = old('tax_format', $isTuEdit ? 'tu' : 'gu_ls');
         $moneyValue = fn ($value) => is_numeric($value) ? number_format((int) $value, 0, ',', '.') : $value;
         $itemRows = old('items', [[
             'entry_date' => $defaultEntryDate,
@@ -35,15 +37,47 @@
             'expense_amount' => '',
             'balance_amount' => '',
         ]]);
+        $tuItemRows = old('tu_items', [[
+            'kode_kegiatan' => '',
+            'nama_belanja' => '',
+            'sp2d_number' => '',
+            'sp2d_date' => '',
+            'pagu_amount' => '',
+            'requested_amount' => '',
+            'realization_1_amount' => '',
+            'realization_1_date' => '',
+            'realization_2_amount' => '',
+            'realization_2_date' => '',
+            'realization_3_amount' => '',
+            'realization_3_date' => '',
+            'realization_4_amount' => '',
+            'realization_4_date' => '',
+            'deposit_letter_number' => '',
+            'deposit_amount' => '',
+            'deposit_date' => '',
+            'ppn_amount' => '',
+            'ppn_billing_id' => '',
+            'ppn_ntpn' => '',
+            'pph21_amount' => '',
+            'pph21_billing_id' => '',
+            'pph21_ntpn' => '',
+            'pph22_amount' => '',
+            'pph22_billing_id' => '',
+            'pph22_ntpn' => '',
+            'pph23_amount' => '',
+            'pph23_billing_id' => '',
+            'pph23_ntpn' => '',
+            'notes' => '',
+        ]]);
     @endphp
 
     <div class="space-y-6">
         <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div class="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p class="text-sm font-medium text-sky-600">{{ $isEdit ? 'Form Edit Pajak' : 'Form Input Pajak' }}</p>
-                    <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{{ $isEdit ? 'Edit data pajak' : 'Tambah data pajak dalam satu kategori' }}</h2>
-                    <p class="mt-2 text-sm text-slate-500">Kategori dipakai seperti periode, lalu isi satu atau beberapa data pajak di dalamnya.</p>
+                    <p class="text-sm font-medium text-sky-600">{{ ($isEdit || $isTuEdit) ? 'Form Edit Pajak' : 'Form Input Pajak' }}</p>
+                    <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{{ ($isEdit || $isTuEdit) ? 'Edit data pajak' : 'Tambah data pajak dalam satu kategori' }}</h2>
+                    <p class="mt-2 text-sm text-slate-500">Kategori dipakai seperti periode, lalu pilih format GU/LS atau TU.</p>
                 </div>
                 <a href="{{ route('pajak.index') }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-sky-300 hover:text-sky-700">
                     Kembali ke Pajak
@@ -53,6 +87,9 @@
             <form action="{{ $formAction }}" method="POST" class="mt-8 space-y-8">
                 @csrf
                 @if ($isEdit)
+                    @method('PUT')
+                @endif
+                @if ($isTuEdit)
                     @method('PUT')
                 @endif
 
@@ -92,10 +129,23 @@
                             <p class="mt-2 text-sm text-rose-600">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    @if (! $isEdit && ! $isTuEdit)
+                        <div>
+                            <label for="tax_format" class="block text-sm font-medium text-slate-700">Format Pajak</label>
+                            <select id="tax_format" name="tax_format" data-tax-format class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                <option value="gu_ls" @selected($currentTaxFormat === 'gu_ls')>GU / LS</option>
+                                <option value="tu" @selected($currentTaxFormat === 'tu')>TU</option>
+                            </select>
+                        </div>
+                    @elseif ($isTuEdit)
+                        <input type="hidden" name="tax_format" value="tu" />
+                    @endif
                 </section>
 
-                @if (! $isEdit)
-                    <section class="space-y-4">
+                @if (! $isTuEdit)
+                @if (! $isEdit && ! $isTuEdit)
+                    <section class="space-y-4" data-tax-format-panel="gu_ls">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-sm font-semibold text-emerald-700">02</div>
@@ -203,6 +253,39 @@
                             @endforeach
                         </div>
                     </section>
+                    <section class="space-y-4 hidden" data-tax-format-panel="tu">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-sm font-semibold text-emerald-700">02</div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-slate-900">Data Pajak TU</h3>
+                                    <p class="text-sm text-slate-500">Isi data TU. PPN, PPh 21, PPh 22, dan PPh 23 boleh dikosongkan.</p>
+                                </div>
+                            </div>
+                            <button type="button" data-add-tu-row class="inline-flex items-center justify-center rounded-2xl border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white hover:text-emerald-700">
+                                Tambah Data TU
+                            </button>
+                        </div>
+
+                        @error('tu_items')
+                            <p class="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{{ $message }}</p>
+                        @enderror
+
+                        <div class="space-y-5" data-tu-items-wrapper>
+                            @foreach ($tuItemRows as $index => $item)
+                                <article class="rounded-[24px] border border-emerald-200 bg-emerald-50/40 p-5" data-tu-row>
+                                    <div class="mb-5 flex items-center justify-between gap-3 border-b border-emerald-100 pb-4">
+                                        <h4 class="text-base font-semibold text-slate-900" data-tu-row-title>Data TU {{ $loop->iteration }}</h4>
+                                        <button type="button" data-remove-tu-row class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50">
+                                            Hapus
+                                        </button>
+                                    </div>
+
+                                    @include('tax-entries.partials.tu-fields', ['prefix' => "tu_items[$index]", 'idPrefix' => "tu_items_{$index}", 'item' => $item, 'moneyValue' => $moneyValue])
+                                </article>
+                            @endforeach
+                        </div>
+                    </section>
                 @else
                     <section class="space-y-4">
                         <div class="flex items-center gap-3">
@@ -275,6 +358,52 @@
                         </div>
                     </section>
                 @endif
+                @endif
+
+                @if ($isTuEdit)
+                    <section class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-sm font-semibold text-emerald-700">02</div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900">Rincian Pajak TU</h3>
+                                <p class="text-sm text-slate-500">Edit satu data TU yang dipilih.</p>
+                            </div>
+                        </div>
+
+                        @include('tax-entries.partials.tu-fields', ['prefix' => '', 'idPrefix' => 'tu_entry', 'item' => [
+                            'kode_kegiatan' => old('kode_kegiatan', $tuEntry->kode_kegiatan),
+                            'nama_belanja' => old('nama_belanja', $tuEntry->nama_belanja),
+                            'sp2d_number' => old('sp2d_number', $tuEntry->sp2d_number),
+                            'sp2d_date' => old('sp2d_date', optional($tuEntry->sp2d_date)->format('Y-m-d')),
+                            'pagu_amount' => old('pagu_amount', $tuEntry->pagu_amount),
+                            'requested_amount' => old('requested_amount', $tuEntry->requested_amount),
+                            'realization_1_amount' => old('realization_1_amount', $tuEntry->realization_1_amount),
+                            'realization_1_date' => old('realization_1_date', optional($tuEntry->realization_1_date)->format('Y-m-d')),
+                            'realization_2_amount' => old('realization_2_amount', $tuEntry->realization_2_amount),
+                            'realization_2_date' => old('realization_2_date', optional($tuEntry->realization_2_date)->format('Y-m-d')),
+                            'realization_3_amount' => old('realization_3_amount', $tuEntry->realization_3_amount),
+                            'realization_3_date' => old('realization_3_date', optional($tuEntry->realization_3_date)->format('Y-m-d')),
+                            'realization_4_amount' => old('realization_4_amount', $tuEntry->realization_4_amount),
+                            'realization_4_date' => old('realization_4_date', optional($tuEntry->realization_4_date)->format('Y-m-d')),
+                            'deposit_letter_number' => old('deposit_letter_number', $tuEntry->deposit_letter_number),
+                            'deposit_amount' => old('deposit_amount', $tuEntry->deposit_amount),
+                            'deposit_date' => old('deposit_date', optional($tuEntry->deposit_date)->format('Y-m-d')),
+                            'ppn_amount' => old('ppn_amount', $tuEntry->ppn_amount),
+                            'ppn_billing_id' => old('ppn_billing_id', $tuEntry->ppn_billing_id),
+                            'ppn_ntpn' => old('ppn_ntpn', $tuEntry->ppn_ntpn),
+                            'pph21_amount' => old('pph21_amount', $tuEntry->pph21_amount),
+                            'pph21_billing_id' => old('pph21_billing_id', $tuEntry->pph21_billing_id),
+                            'pph21_ntpn' => old('pph21_ntpn', $tuEntry->pph21_ntpn),
+                            'pph22_amount' => old('pph22_amount', $tuEntry->pph22_amount),
+                            'pph22_billing_id' => old('pph22_billing_id', $tuEntry->pph22_billing_id),
+                            'pph22_ntpn' => old('pph22_ntpn', $tuEntry->pph22_ntpn),
+                            'pph23_amount' => old('pph23_amount', $tuEntry->pph23_amount),
+                            'pph23_billing_id' => old('pph23_billing_id', $tuEntry->pph23_billing_id),
+                            'pph23_ntpn' => old('pph23_ntpn', $tuEntry->pph23_ntpn),
+                            'notes' => old('notes', $tuEntry->notes),
+                        ], 'moneyValue' => $moneyValue])
+                    </section>
+                @endif
 
                 <div class="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-6">
                     <a href="{{ route('pajak.index') }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
@@ -296,7 +425,12 @@
             const wrapper = document.querySelector('[data-tax-items-wrapper]');
             const addButton = document.querySelector('[data-add-tax-row]');
             const dateFollowFirst = document.querySelector('[data-tax-date-follow-first]');
+            const taxFormat = document.querySelector('[data-tax-format]');
+            const taxFormatPanels = document.querySelectorAll('[data-tax-format-panel]');
+            const tuWrapper = document.querySelector('[data-tu-items-wrapper]');
+            const addTuButton = document.querySelector('[data-add-tu-row]');
             let nextIndex = wrapper ? wrapper.querySelectorAll('[data-tax-row]').length : 0;
+            let nextTuIndex = tuWrapper ? tuWrapper.querySelectorAll('[data-tu-row]').length : 0;
 
             const toNumber = (value) => Number((value || '').toString().replace(/\D/g, '')) || 0;
             const formatNumber = (value) => Number(value || 0).toLocaleString('id-ID');
@@ -337,6 +471,30 @@
                 });
             };
 
+            const bindTuTaxToggles = (row) => {
+                row.querySelectorAll('[data-tu-tax-toggle]').forEach((toggle) => {
+                    const syncTaxPanel = () => {
+                        const panel = row.querySelector(`[data-tu-tax-panel="${toggle.dataset.tuTaxToggle}"]`);
+                        panel?.classList.toggle('hidden', !toggle.checked);
+                    };
+
+                    toggle.addEventListener('change', syncTaxPanel);
+                    syncTaxPanel();
+                });
+            };
+
+            const syncTaxFormat = () => {
+                const selectedFormat = taxFormat?.value || 'gu_ls';
+
+                taxFormatPanels.forEach((panel) => {
+                    const isActive = panel.dataset.taxFormatPanel === selectedFormat;
+                    panel.classList.toggle('hidden', !isActive);
+                    panel.querySelectorAll('input, textarea, select').forEach((field) => {
+                        field.disabled = !isActive;
+                    });
+                });
+            };
+
             const updateRowControls = () => {
                 if (!wrapper) {
                     return;
@@ -346,6 +504,18 @@
                 rows.forEach((row, index) => {
                     row.querySelector('[data-tax-row-title]').textContent = `Data Pajak ${index + 1}`;
                     row.querySelector('[data-remove-tax-row]').classList.toggle('hidden', rows.length === 1);
+                });
+            };
+
+            const updateTuRowControls = () => {
+                if (!tuWrapper) {
+                    return;
+                }
+
+                const rows = Array.from(tuWrapper.querySelectorAll('[data-tu-row]'));
+                rows.forEach((row, index) => {
+                    row.querySelector('[data-tu-row-title]').textContent = `Data TU ${index + 1}`;
+                    row.querySelector('[data-remove-tu-row]').classList.toggle('hidden', rows.length === 1);
                 });
             };
 
@@ -408,13 +578,44 @@
                 });
             };
 
+            const resetClonedTuRow = (row, index) => {
+                row.querySelectorAll('input, textarea, select').forEach((field) => {
+                    if (field.name) {
+                        field.name = field.name.replace(/tu_items\[\d+\]/, `tu_items[${index}]`);
+                    }
+
+                    if (field.id) {
+                        field.id = field.id.replace(/tu_items_\d+_/, `tu_items_${index}_`);
+                    }
+
+                    if (field.type === 'checkbox') {
+                        field.checked = false;
+                    } else {
+                        field.value = '';
+                    }
+                });
+
+                row.querySelectorAll('label[for]').forEach((label) => {
+                    label.htmlFor = label.htmlFor.replace(/tu_items_\d+_/, `tu_items_${index}_`);
+                });
+
+                row.querySelectorAll('[data-tu-tax-panel]').forEach((panel) => {
+                    panel.classList.add('hidden');
+                });
+            };
+
             if (wrapper) {
                 wrapper.querySelectorAll('[data-tax-row]').forEach(bindMoneyInputs);
+                tuWrapper?.querySelectorAll('[data-tu-row]').forEach((row) => {
+                    bindMoneyInputs(row);
+                    bindTuTaxToggles(row);
+                });
             } else {
                 const form = document.querySelector('form');
 
                 if (form) {
                     bindMoneyInputs(form);
+                    bindTuTaxToggles(form);
                 }
             }
             wrapper?.addEventListener('click', (event) => {
@@ -445,6 +646,33 @@
                 syncDateRows();
             });
 
+            tuWrapper?.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('[data-remove-tu-row]');
+
+                if (!removeButton) {
+                    return;
+                }
+
+                removeButton.closest('[data-tu-row]').remove();
+                updateTuRowControls();
+            });
+
+            addTuButton?.addEventListener('click', () => {
+                const firstRow = tuWrapper?.querySelector('[data-tu-row]');
+
+                if (!firstRow || !tuWrapper) {
+                    return;
+                }
+
+                const row = firstRow.cloneNode(true);
+                resetClonedTuRow(row, nextTuIndex);
+                nextTuIndex += 1;
+                bindMoneyInputs(row);
+                bindTuTaxToggles(row);
+                tuWrapper.appendChild(row);
+                updateTuRowControls();
+            });
+
             wrapper?.addEventListener('input', (event) => {
                 if (event.target.matches('[data-tax-row]:first-child input[type="date"], [data-tax-row]:first-of-type input[type="date"]')) {
                     syncDateRows();
@@ -455,8 +683,11 @@
             dateFollowFirst?.addEventListener('change', syncDateRows);
 
             categoryMode?.addEventListener('change', syncCategoryMode);
+            taxFormat?.addEventListener('change', syncTaxFormat);
             syncCategoryMode();
+            syncTaxFormat();
             updateRowControls();
+            updateTuRowControls();
             syncDateRows();
         });
     </script>

@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call(NationalLodgingSbuSeeder::class);
         $this->call(RepresentationSbuSeeder::class);
         $this->call(DailyAllowanceSbuSeeder::class);
+        $this->call(LrfkEntrySeeder::class);
         User::updateOrCreate(
             ['email' => 'admin@kontrol-app.test'],
             [

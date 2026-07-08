@@ -5,9 +5,9 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ControlEntryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocalTransportSbuController;
+use App\Http\Controllers\LrfkController;
 use App\Http\Controllers\PerjadinController;
 use App\Http\Controllers\PerjadinPaymentController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SavingAllocationController;
 use App\Http\Controllers\TaxEntryController;
 use Illuminate\Support\Facades\Route;
@@ -56,6 +56,9 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
     Route::get('/pajak/export/excel', [TaxEntryController::class, 'exportExcel'])->name('pajak.export.xlsx');
     Route::get('/pajak/tambah', [TaxEntryController::class, 'create'])->name('pajak.create');
     Route::post('/pajak', [TaxEntryController::class, 'store'])->name('pajak.store');
+    Route::get('/pajak/tu/{taxTuEntry}/edit', [TaxEntryController::class, 'editTu'])->name('pajak.tu.edit');
+    Route::put('/pajak/tu/{taxTuEntry}', [TaxEntryController::class, 'updateTu'])->name('pajak.tu.update');
+    Route::delete('/pajak/tu/{taxTuEntry}', [TaxEntryController::class, 'destroyTu'])->name('pajak.tu.destroy');
     Route::get('/pajak/{taxEntry}/edit', [TaxEntryController::class, 'edit'])->name('pajak.edit');
     Route::put('/pajak/{taxEntry}', [TaxEntryController::class, 'update'])->name('pajak.update');
     Route::delete('/pajak/{taxEntry}', [TaxEntryController::class, 'destroy'])->name('pajak.destroy');
@@ -82,7 +85,12 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
 });
 
 Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {
-    Route::get('/report', [ReportController::class, 'index'])->name('report');
+    Route::get('/lrfk', [LrfkController::class, 'index'])->name('lrfk.index');
+    Route::get('/lrfk/tambah', [LrfkController::class, 'create'])->name('lrfk.create');
+    Route::post('/lrfk', [LrfkController::class, 'store'])->name('lrfk.store');
+    Route::get('/lrfk/{lrfkEntry}/edit', [LrfkController::class, 'edit'])->name('lrfk.edit');
+    Route::put('/lrfk/{lrfkEntry}', [LrfkController::class, 'update'])->name('lrfk.update');
+    Route::delete('/lrfk/{lrfkEntry}', [LrfkController::class, 'destroy'])->name('lrfk.destroy');
 });
 
 Route::middleware(['auth', 'role:admin,bendahara'])->group(function () {

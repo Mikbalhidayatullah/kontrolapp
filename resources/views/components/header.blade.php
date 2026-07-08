@@ -11,7 +11,7 @@
         request()->routeIs('add-perjadin') => 'Form input perjadin.',
         request()->routeIs('perjadin.show') => 'Detail data perjadin.',
         request()->routeIs('perjadin.edit') => 'Edit data perjadin.',
-        request()->routeIs('report') => 'Ringkasan laporan.',
+        request()->routeIs('lrfk.*') => 'Laporan realisasi fisik dan keuangan.',
         request()->routeIs('users.index') => 'Kelola data user.',
         request()->routeIs('users.create') => 'Tambah user baru.',
         request()->routeIs('users.edit') => 'Edit data user.',

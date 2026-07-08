@@ -48,8 +48,8 @@
                             <a href="{{ route('lembar-kontrol', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year']]) }}" class="inline-flex items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-100">
                                 Lihat Lembar Kontrol
                             </a>
-                            <a href="{{ route('report') }}" class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
-                                Buka Report
+                            <a href="{{ route('lrfk.index') }}" class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+                                Buka LRFK
                             </a>
                             @if (auth()->user()->isAdmin())
                                 <a href="{{ route('users.index') }}" class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
