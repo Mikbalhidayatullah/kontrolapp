@@ -516,11 +516,11 @@ class TaxEntryController extends Controller
 
     private function printEntries(Collection $entries, Collection $tuEntries): array
     {
-        $standardRows = $entries->map(fn (TaxEntry $entry): array => [
+        $standardRows = collect($entries->map(fn (TaxEntry $entry): array => [
             'category' => $entry->category,
             'billing_id' => $entry->billing_id ?: '-',
             'amount' => (int) ($entry->expense_amount ?: $entry->receipt_amount),
-        ]);
+        ])->all());
 
         $tuRows = $tuEntries->flatMap(function (TaxTuEntry $entry): array {
             return collect([
