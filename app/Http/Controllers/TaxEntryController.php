@@ -120,6 +120,70 @@ class TaxEntryController extends Controller
         return response()->download($path, 'data-pajak-'.now()->format('Ymd-His').'.xlsx')->deleteFileAfterSend(true);
     }
 
+    public function renameCategory(Request $request): RedirectResponse
+    {
+        $categories = $this->categoryOptions();
+        $currentCategory = trim((string) $request->input('current_category'));
+        $newCategory = trim((string) $request->input('new_category'));
+
+        $request->merge([
+            'current_category' => $currentCategory,
+            'new_category' => $newCategory,
+        ]);
+
+        $validated = $request->validate([
+            'current_category' => ['required', 'string', Rule::in($categories)],
+            'new_category' => ['required', 'string', 'max:255'],
+        ], [
+            'current_category.required' => 'Pilih kategori yang ingin diedit.',
+            'current_category.in' => 'Kategori yang dipilih tidak ditemukan.',
+            'new_category.required' => 'Nama kategori baru wajib diisi.',
+        ]);
+
+        $currentCategory = $validated['current_category'];
+        $newCategory = $validated['new_category'];
+
+        if ($newCategory === $currentCategory) {
+            return redirect()
+                ->route('pajak.index', ['category' => $currentCategory])
+                ->with('status', 'Nama kategori pajak tidak berubah.');
+        }
+
+        $duplicateCategory = collect($categories)
+            ->reject(fn (string $category): bool => $category === $currentCategory)
+            ->first(fn (string $category): bool => strcasecmp($category, $newCategory) === 0);
+
+        if ($duplicateCategory !== null) {
+            return back()
+                ->withErrors(['new_category' => 'Nama kategori tersebut sudah ada. Gunakan nama lain agar data tidak tercampur.'])
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($request, $currentCategory, $newCategory): void {
+            $updatedBy = $request->user()?->id;
+            $payload = [
+                'category' => $newCategory,
+                'updated_at' => now(),
+            ];
+
+            if ($updatedBy !== null) {
+                $payload['updated_by'] = $updatedBy;
+            }
+
+            TaxEntry::query()
+                ->where('category', $currentCategory)
+                ->update($payload);
+
+            TaxTuEntry::query()
+                ->where('category', $currentCategory)
+                ->update($payload);
+        });
+
+        return redirect()
+            ->route('pajak.index', ['category' => $newCategory])
+            ->with('status', 'Nama kategori pajak berhasil diperbarui.');
+    }
+
     public function create(): View
     {
         return $this->formView('Tambah Pajak');

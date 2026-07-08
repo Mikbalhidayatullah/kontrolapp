@@ -56,6 +56,7 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
     Route::get('/pajak/export/excel', [TaxEntryController::class, 'exportExcel'])->name('pajak.export.xlsx');
     Route::get('/pajak/tambah', [TaxEntryController::class, 'create'])->name('pajak.create');
     Route::post('/pajak', [TaxEntryController::class, 'store'])->name('pajak.store');
+    Route::patch('/pajak/kategori/rename', [TaxEntryController::class, 'renameCategory'])->name('pajak.categories.rename');
     Route::get('/pajak/tu/{taxTuEntry}/edit', [TaxEntryController::class, 'editTu'])->name('pajak.tu.edit');
     Route::put('/pajak/tu/{taxTuEntry}', [TaxEntryController::class, 'updateTu'])->name('pajak.tu.update');
     Route::delete('/pajak/tu/{taxTuEntry}', [TaxEntryController::class, 'destroyTu'])->name('pajak.tu.destroy');

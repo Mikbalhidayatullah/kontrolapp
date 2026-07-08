@@ -53,6 +53,11 @@
                         <a href="{{ route('pajak.export.xlsx') }}" class="inline-flex items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
                             Download Excel
                         </a>
+                        @if (count($categories) > 0)
+                            <button type="button" data-open-tax-category class="inline-flex items-center justify-center rounded-2xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-100">
+                                Edit Kategori
+                            </button>
+                        @endif
                         <button type="button" data-open-tax-print class="inline-flex items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
                             Print
                         </button>
@@ -219,6 +224,48 @@
         </section>
     </div>
 
+    <dialog data-tax-category-dialog class="w-full max-w-lg rounded-[28px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/50">
+        <form action="{{ route('pajak.categories.rename') }}" method="POST" class="space-y-5 p-6">
+            @csrf
+            @method('PATCH')
+            <div>
+                <p class="text-sm font-medium text-sky-600">Edit Kategori Pajak</p>
+                <h3 class="mt-1 text-xl font-semibold text-slate-900">Ubah nama periode/kategori</h3>
+                <p class="mt-2 text-sm text-slate-500">Perubahan ini berlaku untuk data GU/LS dan TU dengan kategori yang sama.</p>
+            </div>
+
+            @php($renameCategoryValue = old('current_category', $selectedCategory ?: ($categories[0] ?? '')))
+            <div>
+                <label for="current_category" class="block text-sm font-medium text-slate-700">Kategori saat ini</label>
+                <select id="current_category" name="current_category" data-tax-category-current class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                    @foreach ($categories as $category)
+                        <option value="{{ $category }}" @selected($renameCategoryValue === $category)>{{ $category }}</option>
+                    @endforeach
+                </select>
+                @error('current_category')
+                    <p class="mt-2 text-sm text-rose-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="new_category" class="block text-sm font-medium text-slate-700">Nama kategori baru</label>
+                <input id="new_category" name="new_category" type="text" value="{{ old('new_category') }}" placeholder="Contoh: GU 6" data-tax-category-new class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                @error('new_category')
+                    <p class="mt-2 text-sm text-rose-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="flex flex-wrap justify-end gap-3 pt-2">
+                <button type="button" data-close-tax-category class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                    Tutup
+                </button>
+                <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    Simpan Kategori
+                </button>
+            </div>
+        </form>
+    </dialog>
+
     <dialog data-tax-print-dialog class="w-full max-w-5xl rounded-[28px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/50">
         <div class="grid max-h-[92vh] overflow-hidden lg:grid-cols-[360px_minmax(0,1fr)]">
             <form method="dialog" class="space-y-5 overflow-y-auto border-b border-slate-200 p-6 lg:border-b-0 lg:border-r">
@@ -290,6 +337,33 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const entries = @json($printEntries);
+
+            const categoryRenameDialog = document.querySelector('[data-tax-category-dialog]');
+            const openCategoryRenameButton = document.querySelector('[data-open-tax-category]');
+            const closeCategoryRenameButton = document.querySelector('[data-close-tax-category]');
+            const currentCategorySelect = document.querySelector('[data-tax-category-current]');
+            const newCategoryInput = document.querySelector('[data-tax-category-new]');
+            let previousRenameCategory = currentCategorySelect?.value || '';
+
+            openCategoryRenameButton?.addEventListener('click', () => {
+                if (newCategoryInput && !newCategoryInput.value) {
+                    newCategoryInput.value = currentCategorySelect?.value || '';
+                }
+
+                categoryRenameDialog?.showModal();
+            });
+            closeCategoryRenameButton?.addEventListener('click', () => categoryRenameDialog?.close());
+            currentCategorySelect?.addEventListener('change', () => {
+                if (newCategoryInput && (!newCategoryInput.value || newCategoryInput.value === previousRenameCategory)) {
+                    newCategoryInput.value = currentCategorySelect.value;
+                }
+
+                previousRenameCategory = currentCategorySelect.value;
+            });
+
+            @if ($errors->has('current_category') || $errors->has('new_category'))
+                categoryRenameDialog?.showModal();
+            @endif
 
             const moneyLabel = (value) => Number(value || 0).toLocaleString('id-ID');
             const dateLabel = (value) => {
