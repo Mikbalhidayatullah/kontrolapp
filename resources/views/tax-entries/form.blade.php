@@ -24,7 +24,15 @@
         $currentCategory = old('category', $isEdit ? $entry->category : ($isTuEdit ? $tuEntry->category : ''));
         $currentCategoryMode = old('category_mode', $categories === [] ? 'new' : 'existing');
         $currentTaxFormat = old('tax_format', $isTuEdit ? 'tu' : 'gu_ls');
-        $moneyValue = fn ($value) => is_numeric($value) ? number_format((int) $value, 0, ',', '.') : $value;
+        $moneyValue = function ($value) {
+            if ($value === null || $value === '') {
+                return '';
+            }
+
+            $digits = preg_replace('/\D/', '', (string) $value);
+
+            return $digits !== '' ? number_format((int) $digits, 0, ',', '.') : $value;
+        };
         $itemRows = old('items', [[
             'entry_date' => $defaultEntryDate,
             'proof_number' => '',
