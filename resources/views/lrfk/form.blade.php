@@ -38,12 +38,27 @@
                     <div class="grid gap-5 md:grid-cols-2">
                         <div>
                             <label for="level" class="block text-sm font-medium text-slate-700">Jenis Baris</label>
-                            <select id="level" name="level" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                            <select id="level" name="level" data-lrfk-level class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
                                 @foreach ($levelOptions as $value => $label)
                                     <option value="{{ $value }}" @selected(old('level', $entry->level ?? 'rekening') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('level')
+                                <p class="mt-2 text-sm text-rose-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div data-lrfk-parent-wrapper>
+                            <label for="parent_id" class="block text-sm font-medium text-slate-700">Sub Kegiatan Induk</label>
+                            <select id="parent_id" name="parent_id" data-lrfk-parent class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                <option value="">Pilih sub kegiatan</option>
+                                @foreach ($subKegiatanOptions as $subKegiatan)
+                                    <option value="{{ $subKegiatan->id }}" @selected((string) old('parent_id', $entry->parent_id ?? '') === (string) $subKegiatan->id)>
+                                        {{ $subKegiatan->kode_rekening ?: '-' }} - {{ $subKegiatan->program_kegiatan }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-2 text-xs text-slate-500">Wajib untuk rekening agar masuk tepat di bawah sub kegiatan yang benar.</p>
+                            @error('parent_id')
                                 <p class="mt-2 text-sm text-rose-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -163,10 +178,30 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const levelInput = document.querySelector('[data-lrfk-level]');
+            const parentWrapper = document.querySelector('[data-lrfk-parent-wrapper]');
+            const parentInput = document.querySelector('[data-lrfk-parent]');
             const formatNumber = (value) => {
                 const digits = String(value || '').replace(/\D/g, '');
                 return digits ? new Intl.NumberFormat('id-ID').format(Number(digits)) : '';
             };
+
+            const syncParentField = () => {
+                const isRekening = levelInput?.value === 'rekening';
+
+                parentWrapper?.classList.toggle('hidden', !isRekening);
+
+                if (parentInput) {
+                    parentInput.required = isRekening;
+
+                    if (!isRekening) {
+                        parentInput.value = '';
+                    }
+                }
+            };
+
+            levelInput?.addEventListener('change', syncParentField);
+            syncParentField();
 
             document.querySelectorAll('[data-lrfk-money]').forEach((input) => {
                 input.value = formatNumber(input.value);

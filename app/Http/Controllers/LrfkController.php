@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LrfkEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -70,13 +71,16 @@ class LrfkController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatedData($request);
-        $nextSortOrder = ((int) LrfkEntry::query()->max('sort_order')) + 1;
 
-        LrfkEntry::query()->create([
-            ...$data,
-            'sort_order' => $nextSortOrder,
-            'created_by' => $request->user()->id,
-        ]);
+        DB::transaction(function () use ($data, $request): void {
+            $sortOrder = $this->nextSortOrderFor($data);
+
+            LrfkEntry::query()->create([
+                ...$data,
+                'sort_order' => $sortOrder,
+                'created_by' => $request->user()->id,
+            ]);
+        });
 
         return redirect()->route('lrfk.index')->with('status', 'Data LRFK berhasil ditambahkan.');
     }
@@ -90,16 +94,37 @@ class LrfkController extends Controller
     {
         $data = $this->validatedData($request);
 
-        $lrfkEntry->update([
-            ...$data,
-            'updated_by' => $request->user()->id,
-        ]);
+        if ($lrfkEntry->children()->exists() && $data['level'] !== 'sub_kegiatan') {
+            return back()
+                ->withErrors(['level' => 'Sub kegiatan ini masih memiliki rekening. Pindahkan rekeningnya sebelum mengubah jenis baris.'])
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($data, $request, $lrfkEntry): void {
+            $shouldMove = $data['level'] === 'rekening'
+                && ((int) $lrfkEntry->parent_id !== (int) $data['parent_id'] || $lrfkEntry->level !== 'rekening');
+
+            if ($shouldMove) {
+                $data['sort_order'] = $this->nextSortOrderFor($data, $lrfkEntry->id);
+            }
+
+            $lrfkEntry->update([
+                ...$data,
+                'updated_by' => $request->user()->id,
+            ]);
+        });
 
         return redirect()->route('lrfk.index')->with('status', 'Data LRFK berhasil diperbarui.');
     }
 
     public function destroy(LrfkEntry $lrfkEntry): RedirectResponse
     {
+        if ($lrfkEntry->children()->exists()) {
+            return back()->withErrors([
+                'lrfk' => 'Sub kegiatan ini masih memiliki rekening. Pindahkan atau hapus rekeningnya terlebih dahulu.',
+            ]);
+        }
+
         $lrfkEntry->delete();
 
         return redirect()->route('lrfk.index')->with('status', 'Data LRFK berhasil dihapus.');
@@ -111,6 +136,12 @@ class LrfkController extends Controller
             'title' => $title,
             'entry' => $entry,
             'levelOptions' => self::LEVEL_OPTIONS,
+            'subKegiatanOptions' => LrfkEntry::query()
+                ->where('level', 'sub_kegiatan')
+                ->when($entry !== null, fn ($query) => $query->whereKeyNot($entry->id))
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get(['id', 'kode_rekening', 'program_kegiatan']),
         ]);
     }
 
@@ -131,6 +162,7 @@ class LrfkController extends Controller
     {
         $validated = $request->validate([
             'level' => ['required', 'string', Rule::in(array_keys(self::LEVEL_OPTIONS))],
+            'parent_id' => ['nullable', 'required_if:level,rekening', 'integer', Rule::exists('lrfk_entries', 'id')->where('level', 'sub_kegiatan')],
             'kode' => ['nullable', 'string', 'max:255'],
             'kode_rekening' => ['nullable', 'string', 'max:255'],
             'program_kegiatan' => ['required', 'string'],
@@ -144,6 +176,9 @@ class LrfkController extends Controller
             'financial_realization' => ['nullable', 'string'],
             'location' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
+        ], [
+            'parent_id.required_if' => 'Pilih sub kegiatan induk untuk rekening.',
+            'parent_id.exists' => 'Sub kegiatan induk yang dipilih tidak ditemukan.',
         ]);
 
         $pagu = $this->moneyToInt($validated['pagu_anggaran'] ?? null);
@@ -152,6 +187,7 @@ class LrfkController extends Controller
 
         return [
             'level' => $validated['level'],
+            'parent_id' => $validated['level'] === 'rekening' ? (int) $validated['parent_id'] : null,
             'kode' => $validated['kode'] ?: null,
             'kode_rekening' => $validated['kode_rekening'] ?: null,
             'program_kegiatan' => $validated['program_kegiatan'],
@@ -177,5 +213,28 @@ class LrfkController extends Controller
         }
 
         return (int) preg_replace('/\D/', '', (string) $value);
+    }
+
+    private function nextSortOrderFor(array $data, ?int $ignoreId = null): int
+    {
+        if (($data['level'] ?? null) !== 'rekening' || empty($data['parent_id'])) {
+            return ((int) LrfkEntry::query()->max('sort_order')) + 1;
+        }
+
+        $parent = LrfkEntry::query()->find((int) $data['parent_id']);
+        $lastChildSortOrder = LrfkEntry::query()
+            ->where('parent_id', $parent?->id)
+            ->when($ignoreId !== null, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->max('sort_order');
+
+        $insertAfter = $lastChildSortOrder !== null ? (int) $lastChildSortOrder : (int) $parent->sort_order;
+        $sortOrder = $insertAfter + 1;
+
+        LrfkEntry::query()
+            ->when($ignoreId !== null, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->where('sort_order', '>=', $sortOrder)
+            ->increment('sort_order');
+
+        return $sortOrder;
     }
 }
