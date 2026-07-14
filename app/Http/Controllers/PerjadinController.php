@@ -100,7 +100,8 @@ class PerjadinController extends Controller
                         ->orWhere('destination_regency', 'like', '%'.$selectedKeyword.'%')
                         ->orWhere('destination_district', 'like', '%'.$selectedKeyword.'%')
                         ->orWhere('skpd_name', 'like', '%'.$selectedKeyword.'%')
-                        ->orWhere('position_name', 'like', '%'.$selectedKeyword.'%');
+                        ->orWhere('position_name', 'like', '%'.$selectedKeyword.'%')
+                        ->orWhere('funding_category', 'like', '%'.$selectedKeyword.'%');
                 });
             })
             ->latest('assignment_date')
@@ -544,6 +545,9 @@ class PerjadinController extends Controller
             'echelon_level' => ['required', 'string', Rule::in(self::ECHELON_OPTIONS)],
             'grade_number' => ['nullable', 'string', Rule::in($this->allGradeNumberOptions())],
             'grade_letter' => ['nullable', 'string', Rule::in(self::GRADE_LETTER_OPTIONS)],
+            'funding_category_mode' => ['nullable', 'string', Rule::in(['existing', 'new'])],
+            'funding_category' => ['nullable', 'string', 'max:255'],
+            'new_funding_category' => ['nullable', 'string', 'max:255'],
             'origin_regency' => ['nullable', 'string'],
             'origin_district' => ['nullable', 'string', 'max:255'],
             'destination_regency' => ['nullable', 'string'],
@@ -606,6 +610,11 @@ class PerjadinController extends Controller
         ]);
 
         $validator->after(function ($validator) use ($request) {
+            if ($this->fundingCategoryFromRequest($request) === '') {
+                $mode = $request->string('funding_category_mode')->toString();
+                $validator->errors()->add($mode === 'new' ? 'new_funding_category' : 'funding_category', 'Kategori pendanaan wajib diisi.');
+            }
+
             $checks = [
                 'daily_allowance_enabled' => [
                     'daily_allowance_days' => 'Jumlah hari uang harian wajib diisi.',
@@ -771,6 +780,7 @@ class PerjadinController extends Controller
 
         return [
             'category' => $validated['category'],
+            'funding_category' => $this->fundingCategoryFromRequest($request),
             'skpd_name' => $validated['skpd_name'],
             'executor_name' => $validated['executor_name'],
             'employee_status' => $validated['employee_status'],
@@ -905,6 +915,7 @@ class PerjadinController extends Controller
             'activeCategory' => in_array($activeCategory, self::CATEGORY_OPTIONS, true) ? $activeCategory : '',
             'activeKeyword' => $activeKeyword,
             'categories' => self::CATEGORY_OPTIONS,
+            'fundingCategoryOptions' => $this->fundingCategoryOptions(),
             'employeeStatusOptions' => self::EMPLOYEE_STATUS_OPTIONS,
             'echelonOptions' => self::ECHELON_OPTIONS,
             'gradeNumberOptions' => $this->allGradeNumberOptions(),
@@ -967,6 +978,30 @@ class PerjadinController extends Controller
             'Disetarakan' => '-',
             default => '-',
         };
+    }
+
+    private function fundingCategoryFromRequest(Request $request): string
+    {
+        $options = $this->fundingCategoryOptions();
+        $mode = $options === [] ? 'new' : $request->string('funding_category_mode')->toString();
+
+        return $mode === 'new'
+            ? trim($request->string('new_funding_category')->toString())
+            : trim($request->string('funding_category')->toString());
+    }
+
+    private function fundingCategoryOptions(): array
+    {
+        return PerjadinEntry::query()
+            ->select('funding_category')
+            ->whereNotNull('funding_category')
+            ->distinct()
+            ->pluck('funding_category')
+            ->filter()
+            ->unique()
+            ->sort(fn (string $left, string $right): int => strnatcasecmp($left, $right))
+            ->values()
+            ->all();
     }
 
     private function selectedPeriod(Request $request): array

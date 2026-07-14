@@ -26,8 +26,12 @@
             'Disetarakan' => '',
             default => $selectedGradeNumber && $selectedGradeLetter ? $selectedGradeNumber.$selectedGradeLetter : (string) $storedGrade,
         };
+        $selectedFundingCategory = old('funding_category', $isEdit ? ($entry->funding_category ?? '') : '');
+        $currentFundingCategoryMode = old('funding_category_mode', $fundingCategoryOptions === [] ? 'new' : 'existing');
         $inlineFieldLabels = [
             'category' => 'kategori perjadin',
+            'funding_category' => 'kategori pendanaan',
+            'new_funding_category' => 'kategori pendanaan baru',
             'origin_regency' => 'kabupaten asal',
             'origin_district' => 'kecamatan asal',
             'destination_regency' => 'kabupaten tujuan',
@@ -120,6 +124,32 @@
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @endif
                             <p class="mt-3 text-xs text-slate-500">Saat memilih <span class="font-semibold text-slate-700">Perjadin Dalam Daerah</span>, form asal dan tujuan akan muncul otomatis di bawah ini.</p>
+                        </div>
+
+                        <div class="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-5">
+                            <label class="block text-sm font-medium text-slate-700">Kategori Pendanaan</label>
+                            @if ($fundingCategoryOptions === [])
+                                <input type="hidden" name="funding_category_mode" value="new" />
+                                <input id="new_funding_category" name="new_funding_category" type="text" value="{{ old('new_funding_category', $selectedFundingCategory) }}" placeholder="Contoh: GU 4 / LS / TU" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100" />
+                            @else
+                                <div class="mt-2 grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
+                                    <select id="funding_category_mode" name="funding_category_mode" data-funding-category-mode class="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100">
+                                        <option value="existing" @selected($currentFundingCategoryMode === 'existing')>Pilih kategori</option>
+                                        <option value="new" @selected($currentFundingCategoryMode === 'new')>Tambah kategori baru</option>
+                                    </select>
+                                    <select id="funding_category" name="funding_category" data-funding-category-existing class="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100">
+                                        <option value="">Pilih kategori pendanaan</option>
+                                        @foreach ($fundingCategoryOptions as $fundingCategory)
+                                            <option value="{{ $fundingCategory }}" @selected($selectedFundingCategory === $fundingCategory)>{{ $fundingCategory }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input id="new_funding_category" name="new_funding_category" type="text" value="{{ old('new_funding_category') }}" data-funding-category-new placeholder="Nama kategori pendanaan baru" class="hidden rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 md:col-start-2" />
+                                </div>
+                            @endif
+                            @if($message = $inlineError('funding_category', 'new_funding_category'))
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @endif
+                            <p class="mt-3 text-xs text-slate-500">Hanya sebagai penanda sumber pendanaan perjadin, tidak terhubung otomatis ke data Pajak.</p>
                         </div>
 
                         <div id="destination-city-sbu-wrapper" class="{{ $showRegionalRouteFields ? 'hidden' : '' }} rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -831,6 +861,9 @@
             const operatorInputs = document.querySelectorAll('[data-operator-input]');
             const groupToggles = document.querySelectorAll('[data-group-toggle]');
             const categoryInput = document.getElementById('category');
+            const fundingCategoryMode = document.querySelector('[data-funding-category-mode]');
+            const existingFundingCategory = document.querySelector('[data-funding-category-existing]');
+            const newFundingCategory = document.querySelector('[data-funding-category-new]');
             const regionalRouteFields = document.getElementById('regional-route-fields');
             const destinationCityManualWrapper = document.getElementById('destination-city-manual-wrapper');
             const destinationCityManualInput = document.getElementById('destination_city_manual');
@@ -2172,6 +2205,16 @@
                 }
             };
 
+            const syncFundingCategoryMode = () => {
+                if (!fundingCategoryMode || !existingFundingCategory || !newFundingCategory) {
+                    return;
+                }
+
+                const isNew = fundingCategoryMode.value === 'new';
+                existingFundingCategory.classList.toggle('hidden', isNew);
+                newFundingCategory.classList.toggle('hidden', !isNew);
+            };
+
             document.querySelectorAll('input, select').forEach((field) => {
                 field.addEventListener('input', () => {
                     syncDestinationCityValue();
@@ -2211,6 +2254,8 @@
                 updateOutsideRegionSbuSummary();
                 recalculateTotalsOnly();
             });
+
+            fundingCategoryMode?.addEventListener('change', syncFundingCategoryMode);
 
             destinationCitySelect?.addEventListener('change', () => {
                 syncDestinationCityValue();
@@ -2330,6 +2375,7 @@
             updateOutsideRegionSbuSummary();
             recalculateTotalsOnly();
             syncCurrentFileState();
+            syncFundingCategoryMode();
 
             window.requestAnimationFrame(() => {
                 recalculateTotalsOnly();

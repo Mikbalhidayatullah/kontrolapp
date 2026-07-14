@@ -82,10 +82,14 @@
                 </div>
             </div>
 
-            <div class="mt-6 grid gap-4 lg:grid-cols-4">
+            <div class="mt-6 grid gap-4 lg:grid-cols-5">
                 <article class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
                     <p class="text-sm font-medium text-slate-500">Grand Total</p>
                     <p class="mt-2 text-2xl font-semibold text-slate-900">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</p>
+                </article>
+                <article class="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5">
+                    <p class="text-sm font-medium text-emerald-700">Pendanaan</p>
+                    <p class="mt-2 text-lg font-semibold text-slate-900">{{ $entry->funding_category ?: '-' }}</p>
                 </article>
                 <article class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
                     <p class="text-sm font-medium text-slate-500">No Surat Tugas</p>
@@ -108,6 +112,10 @@
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Kategori</p>
                     <p class="mt-1 text-lg font-semibold text-slate-900">{{ $entry->category }}</p>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Pendanaan</p>
+                    <p class="mt-1 text-lg font-semibold text-slate-900">{{ $entry->funding_category ?: '-' }}</p>
                 </div>
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Nama Pelaksana</p>
@@ -142,6 +150,10 @@
                     <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Golongan</p>
                         <p class="mt-2 font-semibold text-slate-900">{{ $entry->grade }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-emerald-600">Kategori Pendanaan</p>
+                        <p class="mt-2 font-semibold text-slate-900">{{ $entry->funding_category ?: '-' }}</p>
                     </div>
                 </div>
             </article>

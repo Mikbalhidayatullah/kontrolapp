@@ -75,6 +75,7 @@ class PerjadinExcelExporter
         'Diedit Oleh',
         'Tanggal Input',
         'Terakhir Update',
+        'Kategori Pendanaan',
         'Keterangan',
     ];
 
@@ -254,6 +255,7 @@ class PerjadinExcelExporter
             $entry->updater?->name ?: '-',
             optional($entry->created_at)->format('Y-m-d H:i') ?: '-',
             optional($entry->updated_at)->format('Y-m-d H:i') ?: '-',
+            $entry->funding_category ?: '-',
             $this->paymentStatusLabel($entry),
         ];
 

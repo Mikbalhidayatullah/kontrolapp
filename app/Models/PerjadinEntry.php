@@ -12,6 +12,7 @@ class PerjadinEntry extends Model
 
     protected $fillable = [
         'category',
+        'funding_category',
         'skpd_name',
         'executor_name',
         'employee_status',

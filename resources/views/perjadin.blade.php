@@ -134,6 +134,7 @@
                                     <tr>
                                         <th class="px-4 py-3 font-medium">Pelaksana</th>
                                         <th class="px-4 py-3 font-medium">Surat Tugas</th>
+                                        <th class="px-4 py-3 font-medium">Pendanaan</th>
                                         <th class="px-4 py-3 font-medium">Periode</th>
                                         <th class="px-4 py-3 font-medium">Rincian Aktif</th>
                                         <th class="px-4 py-3 font-medium">Grand Total</th>
@@ -164,6 +165,11 @@
                                                 <p class="font-medium text-slate-900">{{ $entry->assignment_number }}</p>
                                                 <p class="mt-1">{{ optional($entry->assignment_date)->translatedFormat('d M Y') }}</p>
                                                 <p class="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">{{ $entry->destination_city }}</p>
+                                            </td>
+                                            <td class="px-4 py-4 align-top">
+                                                <span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                                    {{ $entry->funding_category ?: '-' }}
+                                                </span>
                                             </td>
                                             <td class="px-4 py-4 align-top text-slate-600">
                                                 {{ optional($entry->start_date)->translatedFormat('d M Y') }}<br>
