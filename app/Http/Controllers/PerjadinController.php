@@ -54,7 +54,7 @@ class PerjadinController extends Controller
     ];
 
     private const PPPK_GRADE_NUMBER_OPTIONS = [
-        '6', '7', '8', '9', '10', '11', '12', '13',
+        '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13',
     ];
 
     private const GRADE_LETTER_OPTIONS = [
