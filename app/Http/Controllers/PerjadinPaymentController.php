@@ -36,26 +36,55 @@ class PerjadinPaymentController extends Controller
     {
         $period = $this->selectedPeriod($request);
         $selectedKeyword = trim($request->string('keyword')->toString());
-        $entries = $this->paidEntries($period, $selectedKeyword);
+        $entries = $this->paymentEntries($period, $selectedKeyword);
         $groups = $this->paymentGroups($entries);
-        $exportGroups = $this->paymentGroups($this->paidEntries());
+        $pendingGroups = $groups->filter(fn (array $group): bool => ! $group['isPrinted'])->values();
+        $printedGroups = $groups->filter(fn (array $group): bool => $group['isPrinted'])->values();
+        $exportGroups = $this->paymentGroups($this->paymentEntries(null, '', true))
+            ->filter(fn (array $group): bool => ! $group['isPrinted'])
+            ->values();
 
         return view('perjadin-payments.index', [
             'title' => 'Halaman Bayar',
             'currentPeriod' => $period,
-            'periodLabel' => $period['label'].' '.$period['year'],
+            'periodLabel' => $this->periodLabel($period),
             'monthOptions' => $this->monthOptions(),
             'yearOptions' => $this->yearOptions(),
             'selectedKeyword' => $selectedKeyword,
-            'groups' => $groups,
+            'pendingGroups' => $pendingGroups,
+            'printedGroups' => $printedGroups,
+            'pendingMonthGroups' => $this->groupsByMonth($pendingGroups),
+            'printedMonthGroups' => $this->groupsByMonth($printedGroups),
             'exportGroups' => $exportGroups,
             'summary' => [
-                'groupCount' => $groups->count(),
-                'entryCount' => $entries->count(),
-                'grandTotal' => (int) $entries->sum('grand_total'),
-                'incompletePurposeCount' => $groups->filter(fn (array $group): bool => blank($group['paymentGroup']->purpose))->count(),
+                'groupCount' => $pendingGroups->count(),
+                'entryCount' => (int) $pendingGroups->sum(fn (array $group): int => $group['entries']->count()),
+                'grandTotal' => (int) $pendingGroups->sum('total'),
+                'printedGroupCount' => $printedGroups->count(),
+                'printedGrandTotal' => (int) $printedGroups->sum('total'),
+                'incompletePurposeCount' => $pendingGroups->filter(fn (array $group): bool => blank($group['paymentGroup']->purpose))->count(),
             ],
         ]);
+    }
+
+    public function markPrinted(Request $request, PerjadinPaymentGroup $paymentGroup): RedirectResponse
+    {
+        $updated = PerjadinEntry::query()
+            ->whereNotNull('paid_at')
+            ->whereNull('payment_printed_at')
+            ->where('assignment_number', $paymentGroup->assignment_number)
+            ->whereDate('assignment_date', $paymentGroup->assignment_date)
+            ->update([
+                'payment_printed_at' => now(),
+                'payment_printed_by' => $request->user()->id,
+                'updated_at' => now(),
+            ]);
+
+        return redirect()->route('perjadin-payments.index', [
+            'month' => $request->string('month')->toString(),
+            'year' => $request->string('year')->toString(),
+            'keyword' => trim($request->string('keyword')->toString()),
+        ])->with('status', $updated > 0 ? 'Surat tugas berhasil ditandai sudah dicetak.' : 'Surat tugas ini sudah dicetak sebelumnya.');
     }
 
     public function exportExcel(Request $request, PerjadinPaymentExcelExporter $exporter): BinaryFileResponse|RedirectResponse
@@ -77,6 +106,12 @@ class PerjadinPaymentController extends Controller
         $groups = $this->paymentGroups($entries);
         $missingPurposes = $groups->filter(fn (array $group): bool => blank($group['paymentGroup']->purpose));
 
+        if ($groups->isEmpty()) {
+            return redirect()->route('perjadin-payments.index')->withErrors([
+                'payment_group_ids' => 'Data yang dipilih sudah dicetak atau tidak tersedia untuk export.',
+            ]);
+        }
+
         if ($missingPurposes->isNotEmpty()) {
             return redirect()->route('perjadin-payments.index')->withErrors([
                 'purpose' => 'Lengkapi tujuan/kegiatan pada setiap surat tugas sebelum download Excel.',
@@ -96,19 +131,22 @@ class PerjadinPaymentController extends Controller
             ->deleteFileAfterSend(true);
     }
 
-    private function paidEntries(?array $period = null, string $keyword = ''): Collection
+    private function paymentEntries(?array $period = null, string $keyword = '', bool $onlyPendingPrint = false): Collection
     {
         $query = PerjadinEntry::query()
             ->whereNotNull('paid_at')
+            ->when($onlyPendingPrint, fn ($query) => $query->whereNull('payment_printed_at'))
+            ->orderBy('start_date')
             ->orderBy('assignment_date')
             ->orderBy('assignment_number')
-            ->orderBy('start_date')
             ->orderBy('id');
 
-        if ($period !== null) {
-            $query
-                ->whereYear('start_date', $period['year'])
-                ->whereMonth('start_date', $period['month']);
+        if (($period['year'] ?? null) !== null) {
+            $query->whereYear('start_date', $period['year']);
+        }
+
+        if (($period['month'] ?? null) !== null) {
+            $query->whereMonth('start_date', $period['month']);
         }
 
         if ($keyword !== '') {
@@ -145,6 +183,7 @@ class PerjadinPaymentController extends Controller
 
         return PerjadinEntry::query()
             ->whereNotNull('paid_at')
+            ->whereNull('payment_printed_at')
             ->where(function ($query) use ($paymentGroups): void {
                 foreach ($paymentGroups as $paymentGroup) {
                     $query->orWhere(function ($assignmentQuery) use ($paymentGroup): void {
@@ -154,9 +193,9 @@ class PerjadinPaymentController extends Controller
                     });
                 }
             })
+            ->orderBy('start_date')
             ->orderBy('assignment_date')
             ->orderBy('assignment_number')
-            ->orderBy('start_date')
             ->orderBy('id')
             ->get();
     }
@@ -179,8 +218,25 @@ class PerjadinPaymentController extends Controller
                     'destination' => $firstEntry->destination_city ?: $firstEntry->destination_regency ?: '-',
                     'periodLabel' => $this->travelPeriodLabel($groupEntries),
                     'total' => (int) $groupEntries->sum('grand_total'),
+                    'monthKey' => optional($groupEntries->sortBy('start_date')->first()?->start_date)->format('Y-m') ?: 'tanpa-tanggal',
+                    'monthLabel' => optional($groupEntries->sortBy('start_date')->first()?->start_date)->translatedFormat('F Y') ?: 'Tanpa Tanggal',
+                    'isPrinted' => $groupEntries->every(fn (PerjadinEntry $entry): bool => filled($entry->payment_printed_at)),
+                    'printedAt' => $groupEntries->max('payment_printed_at'),
                 ];
             })
+            ->values();
+    }
+
+    private function groupsByMonth(Collection $groups): Collection
+    {
+        return $groups
+            ->groupBy('monthKey')
+            ->map(fn (Collection $monthGroups): array => [
+                'label' => $monthGroups->first()['monthLabel'],
+                'groups' => $monthGroups->values(),
+                'total' => (int) $monthGroups->sum('total'),
+                'entryCount' => (int) $monthGroups->sum(fn (array $group): int => $group['entries']->count()),
+            ])
             ->values();
     }
 
@@ -212,18 +268,37 @@ class PerjadinPaymentController extends Controller
 
     private function selectedPeriod(Request $request): array
     {
-        $month = (int) $request->integer('month', now()->month);
-        $year = (int) $request->integer('year', now()->year);
+        $monthValue = $request->string('month')->toString();
+        $yearValue = $request->string('year')->toString();
+        $month = $monthValue !== '' ? (int) $monthValue : null;
+        $year = ctype_digit($yearValue) ? (int) $yearValue : null;
 
-        if (! array_key_exists($month, self::PERIOD_MONTHS)) {
-            $month = now()->month;
+        if ($month !== null && ! array_key_exists($month, self::PERIOD_MONTHS)) {
+            $month = null;
         }
 
         return [
             'month' => $month,
             'year' => $year,
-            'label' => self::PERIOD_MONTHS[$month],
+            'label' => $month !== null ? self::PERIOD_MONTHS[$month] : 'Semua Bulan',
         ];
+    }
+
+    private function periodLabel(array $period): string
+    {
+        if (($period['month'] ?? null) !== null && ($period['year'] ?? null) !== null) {
+            return $period['label'].' '.$period['year'];
+        }
+
+        if (($period['month'] ?? null) !== null) {
+            return $period['label'];
+        }
+
+        if (($period['year'] ?? null) !== null) {
+            return 'Tahun '.$period['year'];
+        }
+
+        return 'Semua Bulan';
     }
 
     private function monthOptions(): array

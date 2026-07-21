@@ -328,6 +328,8 @@ class PerjadinController extends Controller
             'report_file_original_name',
             'paid_at',
             'paid_by',
+            'payment_printed_at',
+            'payment_printed_by',
             'created_at',
             'updated_at',
         ]);
@@ -341,6 +343,8 @@ class PerjadinController extends Controller
             'report_file_original_name' => $perjadinEntry->report_file_original_name,
             'paid_at' => null,
             'paid_by' => null,
+            'payment_printed_at' => null,
+            'payment_printed_by' => null,
             'created_by' => $request->user()->id,
         ]);
 
@@ -361,6 +365,8 @@ class PerjadinController extends Controller
             $perjadinEntry->forceFill([
                 'paid_at' => null,
                 'paid_by' => null,
+                'payment_printed_at' => null,
+                'payment_printed_by' => null,
             ])->save();
 
             $message = 'Status pembayaran perjadin dibatalkan.';
@@ -368,6 +374,8 @@ class PerjadinController extends Controller
             $perjadinEntry->forceFill([
                 'paid_at' => now(),
                 'paid_by' => $request->user()->id,
+                'payment_printed_at' => null,
+                'payment_printed_by' => null,
             ])->save();
 
             $message = 'Perjadin berhasil ditandai sudah dibayar.';

@@ -234,7 +234,14 @@
                                                     <a href="{{ route('perjadin.show', ['perjadinEntry' => $entry, 'month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-sky-300 hover:text-sky-700">
                                                         Detail
                                                     </a>
-                                                    <form action="{{ route('perjadin.payment.toggle', $entry) }}?month={{ $currentPeriod['month'] }}&year={{ $currentPeriod['year'] }}&category={{ urlencode($selectedCategory) }}&keyword={{ urlencode($selectedKeyword) }}" method="POST" onsubmit="return confirm('{{ $entry->paid_at ? 'Batalkan status pembayaran perjadin ini?' : 'Tandai perjadin ini sudah dibayar?' }}');">
+                                                    @php
+                                                        $paymentToggleConfirm = $entry->paid_at
+                                                            ? ($entry->payment_printed_at
+                                                                ? 'Data ini sudah dicetak di Halaman Bayar. Jika Batalkan Bayar dilanjutkan, status cetak juga akan dibatalkan dan data keluar dari arsip Sudah Dicetak. Lanjutkan?'
+                                                                : 'Batalkan status pembayaran perjadin ini?')
+                                                            : 'Tandai perjadin ini sudah dibayar?';
+                                                    @endphp
+                                                    <form action="{{ route('perjadin.payment.toggle', $entry) }}?month={{ $currentPeriod['month'] }}&year={{ $currentPeriod['year'] }}&category={{ urlencode($selectedCategory) }}&keyword={{ urlencode($selectedKeyword) }}" method="POST" onsubmit="return confirm(@js($paymentToggleConfirm));">
                                                         @csrf
                                                         <button type="submit" class="inline-flex items-center justify-center rounded-full border {{ $entry->paid_at ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }} px-3 py-1.5 text-xs font-semibold transition">
                                                             {{ $entry->paid_at ? 'Batalkan Bayar' : 'Bayar' }}
