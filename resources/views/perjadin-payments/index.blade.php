@@ -176,15 +176,21 @@
                                         <div class="shrink-0 text-left lg:text-right">
                                             <p class="text-xs uppercase tracking-[0.18em] text-emerald-600">{{ $group['entries']->count() }} penerima</p>
                                             <p class="mt-1 text-2xl font-semibold leading-none text-slate-900">Rp {{ number_format($group['total'], 0, ',', '.') }}</p>
-                                            <form action="{{ route('perjadin-payments.mark-printed', $paymentGroup) }}" method="POST" class="mt-3" onsubmit="return confirm('Tandai surat tugas ini sudah dicetak? Setelah itu checklist export akan hilang.');">
-                                                @csrf
-                                                <input type="hidden" name="month" value="{{ $currentPeriod['month'] }}">
-                                                <input type="hidden" name="year" value="{{ $currentPeriod['year'] }}">
-                                                <input type="hidden" name="keyword" value="{{ $selectedKeyword }}">
-                                                <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-100">
+                                            @if (blank($paymentGroup->purpose))
+                                                <button type="button" disabled title="Isi tujuan/kegiatan terlebih dahulu" class="mt-3 inline-flex cursor-not-allowed items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-400">
                                                     Sudah Dicetak
                                                 </button>
-                                            </form>
+                                            @else
+                                                <form action="{{ route('perjadin-payments.mark-printed', $paymentGroup) }}" method="POST" class="mt-3" onsubmit="return confirm('Tandai surat tugas ini sudah dicetak? Setelah itu checklist export akan hilang.');">
+                                                    @csrf
+                                                    <input type="hidden" name="month" value="{{ $currentPeriod['month'] }}">
+                                                    <input type="hidden" name="year" value="{{ $currentPeriod['year'] }}">
+                                                    <input type="hidden" name="keyword" value="{{ $selectedKeyword }}">
+                                                    <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-100">
+                                                        Sudah Dicetak
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

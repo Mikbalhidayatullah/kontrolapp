@@ -69,6 +69,16 @@ class PerjadinPaymentController extends Controller
 
     public function markPrinted(Request $request, PerjadinPaymentGroup $paymentGroup): RedirectResponse
     {
+        if (blank($paymentGroup->purpose)) {
+            return redirect()->route('perjadin-payments.index', [
+                'month' => $request->string('month')->toString(),
+                'year' => $request->string('year')->toString(),
+                'keyword' => trim($request->string('keyword')->toString()),
+            ])->withErrors([
+                'purpose' => 'Tujuan/kegiatan wajib diisi sebelum menandai surat tugas sudah dicetak.',
+            ]);
+        }
+
         $updated = PerjadinEntry::query()
             ->whereNotNull('paid_at')
             ->whereNull('payment_printed_at')
