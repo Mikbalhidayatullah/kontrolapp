@@ -37,12 +37,13 @@ class PerjadinPaymentController extends Controller
         $period = $this->selectedPeriod($request);
         $selectedKeyword = trim($request->string('keyword')->toString());
         $entries = $this->paymentEntries($period, $selectedKeyword);
-        $groups = $this->paymentGroups($entries);
-        $pendingGroups = $groups->filter(fn (array $group): bool => ! $group['isPrinted'])->values();
-        $printedGroups = $groups->filter(fn (array $group): bool => $group['isPrinted'])->values();
-        $exportGroups = $this->paymentGroups($this->paymentEntries(null, '', true))
-            ->filter(fn (array $group): bool => ! $group['isPrinted'])
-            ->values();
+        $pendingEntries = $entries->filter(fn (PerjadinEntry $entry): bool => blank($entry->paid_at))->values();
+        $printedEntries = $entries->filter(fn (PerjadinEntry $entry): bool => filled($entry->paid_at))->values();
+        $pendingGroups = $this->paymentGroups($pendingEntries);
+        $printedGroups = $this->paymentGroups($printedEntries);
+        $exportGroups = $this->paymentGroups(
+            $this->paymentEntries()->filter(fn (PerjadinEntry $entry): bool => blank($entry->paid_at))->values()
+        );
 
         return view('perjadin-payments.index', [
             'title' => 'Halaman Bayar',
@@ -80,11 +81,12 @@ class PerjadinPaymentController extends Controller
         }
 
         $updated = PerjadinEntry::query()
-            ->whereNotNull('paid_at')
-            ->whereNull('payment_printed_at')
+            ->whereNull('paid_at')
             ->where('assignment_number', $paymentGroup->assignment_number)
             ->whereDate('assignment_date', $paymentGroup->assignment_date)
             ->update([
+                'paid_at' => now(),
+                'paid_by' => $request->user()->id,
                 'payment_printed_at' => now(),
                 'payment_printed_by' => $request->user()->id,
                 'updated_at' => now(),
@@ -95,6 +97,27 @@ class PerjadinPaymentController extends Controller
             'year' => $request->string('year')->toString(),
             'keyword' => trim($request->string('keyword')->toString()),
         ])->with('status', $updated > 0 ? 'Surat tugas berhasil ditandai sudah dicetak.' : 'Surat tugas ini sudah dicetak sebelumnya.');
+    }
+
+    public function cancelPrinted(Request $request, PerjadinPaymentGroup $paymentGroup): RedirectResponse
+    {
+        $updated = PerjadinEntry::query()
+            ->whereNotNull('paid_at')
+            ->where('assignment_number', $paymentGroup->assignment_number)
+            ->whereDate('assignment_date', $paymentGroup->assignment_date)
+            ->update([
+                'paid_at' => null,
+                'paid_by' => null,
+                'payment_printed_at' => null,
+                'payment_printed_by' => null,
+                'updated_at' => now(),
+            ]);
+
+        return redirect()->route('perjadin-payments.index', [
+            'month' => $request->string('month')->toString(),
+            'year' => $request->string('year')->toString(),
+            'keyword' => trim($request->string('keyword')->toString()),
+        ])->with('status', $updated > 0 ? 'Status cetak surat tugas berhasil dibatalkan.' : 'Tidak ada status cetak yang perlu dibatalkan.');
     }
 
     public function exportExcel(Request $request, PerjadinPaymentExcelExporter $exporter): BinaryFileResponse|RedirectResponse
@@ -141,11 +164,9 @@ class PerjadinPaymentController extends Controller
             ->deleteFileAfterSend(true);
     }
 
-    private function paymentEntries(?array $period = null, string $keyword = '', bool $onlyPendingPrint = false): Collection
+    private function paymentEntries(?array $period = null, string $keyword = ''): Collection
     {
         $query = PerjadinEntry::query()
-            ->whereNotNull('paid_at')
-            ->when($onlyPendingPrint, fn ($query) => $query->whereNull('payment_printed_at'))
             ->orderBy('start_date')
             ->orderBy('assignment_date')
             ->orderBy('assignment_number')
@@ -192,8 +213,7 @@ class PerjadinPaymentController extends Controller
         }
 
         return PerjadinEntry::query()
-            ->whereNotNull('paid_at')
-            ->whereNull('payment_printed_at')
+            ->whereNull('paid_at')
             ->where(function ($query) use ($paymentGroups): void {
                 foreach ($paymentGroups as $paymentGroup) {
                     $query->orWhere(function ($assignmentQuery) use ($paymentGroup): void {
@@ -230,8 +250,8 @@ class PerjadinPaymentController extends Controller
                     'total' => (int) $groupEntries->sum('grand_total'),
                     'monthKey' => optional($groupEntries->sortBy('start_date')->first()?->start_date)->format('Y-m') ?: 'tanpa-tanggal',
                     'monthLabel' => optional($groupEntries->sortBy('start_date')->first()?->start_date)->translatedFormat('F Y') ?: 'Tanpa Tanggal',
-                    'isPrinted' => $groupEntries->every(fn (PerjadinEntry $entry): bool => filled($entry->payment_printed_at)),
-                    'printedAt' => $groupEntries->max('payment_printed_at'),
+                    'isPrinted' => $groupEntries->every(fn (PerjadinEntry $entry): bool => filled($entry->paid_at)),
+                    'printedAt' => $groupEntries->max(fn (PerjadinEntry $entry) => $entry->payment_printed_at ?: $entry->paid_at),
                 ];
             })
             ->values();

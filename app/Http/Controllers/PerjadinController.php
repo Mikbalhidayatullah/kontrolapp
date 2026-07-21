@@ -374,8 +374,8 @@ class PerjadinController extends Controller
             $perjadinEntry->forceFill([
                 'paid_at' => now(),
                 'paid_by' => $request->user()->id,
-                'payment_printed_at' => null,
-                'payment_printed_by' => null,
+                'payment_printed_at' => now(),
+                'payment_printed_by' => $request->user()->id,
             ])->save();
 
             $message = 'Perjadin berhasil ditandai sudah dibayar.';
