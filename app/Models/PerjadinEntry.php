@@ -10,6 +10,29 @@ class PerjadinEntry extends Model
 {
     use HasFactory;
 
+    public const MISSING_PROOF_OPTIONS = [
+        'surat_tugas' => 'Surat Tugas',
+        'spd' => 'SPD',
+        'lembar_visum' => 'Lembar Visum',
+        'kuitansi_besar' => 'Kuitansi Besar',
+        'tiket_pesawat_pergi' => 'Tiket Pesawat Pergi',
+        'tiket_pesawat_pulang' => 'Tiket Pesawat Pulang',
+        'boarding_pass_pergi' => 'Boarding pass Pergi',
+        'boarding_pass_pulang' => 'Boarding pass Pulang',
+        'tiket_kapal_pas_masuk' => 'Tiket Kapal (Pas masuk)',
+        'tiket_speed_boat' => 'Tiket Spead Boat',
+        'bill_hotel' => 'Bill Hotel',
+        'transport_lokal_sim' => 'Foto Transportasi Lokal - SIM',
+        'transport_lokal_stnk' => 'Foto Transportasi Lokal - STNK',
+        'transport_lokal_foto_mobil' => 'Foto Transportasi Lokal - Foto mobil',
+        'transport_lokal_kuitansi_proyek' => 'Foto Transportasi Lokal - Kuitansi Proyek',
+        'taxi_bandara' => 'Taxi Bandara',
+        'laporan_perjadin' => 'Laporan perjadin',
+        'surat_pengantar' => 'Surat pengantar',
+        'absensi_kegiatan' => 'Absensi Kegiatan',
+        'foto_kegiatan' => 'Foto kegiatan',
+    ];
+
     protected $fillable = [
         'category',
         'funding_category',
@@ -79,6 +102,7 @@ class PerjadinEntry extends Model
         'receipt_file_original_name',
         'report_file_path',
         'report_file_original_name',
+        'missing_proofs',
         'created_by',
         'updated_by',
     ];
@@ -111,6 +135,7 @@ class PerjadinEntry extends Model
             'lodging_total' => 'integer',
             'lodging_has_receipt' => 'boolean',
             'local_transport_segment_ids' => 'array',
+            'missing_proofs' => 'array',
             'local_transport_domicile_to_airport' => 'integer',
             'local_transport_airport_to_domicile' => 'integer',
             'local_transport_airport_to_hotel' => 'integer',
@@ -135,6 +160,21 @@ class PerjadinEntry extends Model
     public function payer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    public function missingProofLabels(): array
+    {
+        return collect($this->missing_proofs ?? [])
+            ->filter(fn ($key): bool => is_string($key) && array_key_exists($key, self::MISSING_PROOF_OPTIONS))
+            ->unique()
+            ->map(fn (string $key): string => self::MISSING_PROOF_OPTIONS[$key])
+            ->values()
+            ->all();
+    }
+
+    public function missingProofCount(): int
+    {
+        return count($this->missingProofLabels());
     }
 }
 

@@ -27,6 +27,11 @@
             default => $selectedGradeNumber && $selectedGradeLetter ? $selectedGradeNumber.$selectedGradeLetter : (string) $storedGrade,
         };
         $selectedFundingCategory = old('funding_category', $isEdit ? ($entry->funding_category ?? '') : '');
+        $selectedMissingProofs = collect(old('missing_proofs', $isEdit ? ($entry->missing_proofs ?? []) : []))
+            ->filter()
+            ->map(fn ($value) => (string) $value)
+            ->values()
+            ->all();
         $currentFundingCategoryMode = old('funding_category_mode', $fundingCategoryOptions === [] ? 'new' : 'existing');
         $inlineFieldLabels = [
             'category' => 'kategori perjadin',
@@ -63,6 +68,7 @@
             'ticket_return_price' => 'harga tiket kembali',
             'lodging_nights' => 'jumlah malam penginapan',
             'lodging_rate' => 'nominal penginapan',
+            'missing_proofs' => 'bukti belum lengkap',
         ];
         $inlineError = function (string ...$names) use ($errors, $inlineFieldLabels) {
             foreach ($names as $name) {
@@ -817,6 +823,31 @@
                                 </div>
                             @endif
                         </div>
+                    </div>
+
+                    <div class="rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-amber-700">Checklist Bukti Belum Lengkap</p>
+                                <p class="mt-1 text-sm text-slate-500">Centang hanya bukti yang masih kurang. Jika semua lengkap, biarkan kosong.</p>
+                            </div>
+                            <span class="rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-semibold text-amber-700">
+                                {{ count($selectedMissingProofs) }} bukti kurang
+                            </span>
+                        </div>
+
+                        <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            @foreach ($missingProofOptions as $proofKey => $proofLabel)
+                                <label class="flex min-h-[56px] items-start gap-3 rounded-2xl border border-amber-100 bg-white px-4 py-3 text-sm text-slate-700 transition hover:border-amber-300 hover:bg-amber-50">
+                                    <input type="checkbox" name="missing_proofs[]" value="{{ $proofKey }}" @checked(in_array($proofKey, $selectedMissingProofs, true)) class="mt-0.5 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
+                                    <span class="leading-5">{{ $proofLabel }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+
+                        @if($message = $inlineError('missing_proofs'))
+                            <p class="mt-3 text-xs text-rose-600">{{ $message }}</p>
+                        @endif
                     </div>
                 </section>
 

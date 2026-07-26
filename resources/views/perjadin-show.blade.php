@@ -82,7 +82,7 @@
                 </div>
             </div>
 
-            <div class="mt-6 grid gap-4 lg:grid-cols-5">
+            <div class="mt-6 grid gap-4 lg:grid-cols-6">
                 <article class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
                     <p class="text-sm font-medium text-slate-500">Grand Total</p>
                     <p class="mt-2 text-2xl font-semibold text-slate-900">Rp {{ number_format($entry->grand_total, 0, ',', '.') }}</p>
@@ -102,6 +102,10 @@
                 <article class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
                     <p class="text-sm font-medium text-slate-500">Tujuan</p>
                     <p class="mt-2 text-lg font-semibold text-slate-900">{{ $entry->destination_city }}</p>
+                </article>
+                <article class="rounded-3xl border {{ $entry->missingProofCount() > 0 ? 'border-amber-200 bg-amber-50/70' : 'border-emerald-200 bg-emerald-50/70' }} p-5">
+                    <p class="text-sm font-medium {{ $entry->missingProofCount() > 0 ? 'text-amber-700' : 'text-emerald-700' }}">Bukti Kurang</p>
+                    <p class="mt-2 text-2xl font-semibold text-slate-900">{{ $entry->missingProofCount() }}</p>
                 </article>
             </div>
         </section>
@@ -270,6 +274,27 @@
                         <p class="mt-3 text-sm text-slate-400">Belum ada file laporan perjadin.</p>
                     @endif
                 </article>
+            </div>
+            <div class="mt-5 rounded-3xl border {{ $entry->missingProofCount() > 0 ? 'border-amber-200 bg-amber-50/70' : 'border-emerald-200 bg-emerald-50/70' }} p-5">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm font-semibold {{ $entry->missingProofCount() > 0 ? 'text-amber-700' : 'text-emerald-700' }}">Checklist Bukti Belum Lengkap</p>
+                        <p class="mt-1 text-sm text-slate-500">{{ $entry->missingProofCount() > 0 ? 'Bukti berikut masih perlu dilengkapi.' : 'Tidak ada bukti yang ditandai kurang.' }}</p>
+                    </div>
+                    <span class="rounded-full border {{ $entry->missingProofCount() > 0 ? 'border-amber-200 bg-white text-amber-700' : 'border-emerald-200 bg-white text-emerald-700' }} px-3 py-1 text-xs font-semibold">
+                        {{ $entry->missingProofCount() }} bukti kurang
+                    </span>
+                </div>
+
+                @if ($entry->missingProofCount() > 0)
+                    <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($entry->missingProofLabels() as $proofLabel)
+                            <div class="rounded-2xl border border-amber-100 bg-white px-4 py-3 text-sm font-medium text-slate-700">
+                                {{ $proofLabel }}
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </section>
         </div>

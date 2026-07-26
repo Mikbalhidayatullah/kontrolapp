@@ -16,7 +16,7 @@
             <article class="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
                 <p class="text-sm font-medium text-emerald-700">Dokumen Lengkap</p>
                 <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $summary['completeDocuments'] }}</p>
-                <p class="mt-2 text-sm text-slate-500">Sudah ada PDF kegiatan dan bukti nota</p>
+                <p class="mt-2 text-sm text-slate-500">Tidak ada checklist bukti kurang</p>
             </article>
             <article class="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
                 <p class="text-sm font-medium text-amber-700">Perjadin Terbayarkan</p>
@@ -98,7 +98,7 @@
                     <p class="text-sm font-medium {{ $selectedCategory === $item['label'] ? 'text-sky-700' : 'text-slate-500' }}">{{ $item['label'] }}</p>
                     <p class="mt-3 text-2xl font-semibold text-slate-900">{{ $item['count'] }} data</p>
                     <p class="mt-2 text-sm font-medium text-slate-700">Rp {{ number_format($item['grand_total'], 0, ',', '.') }}</p>
-                    <p class="mt-2 text-sm text-slate-500">{{ $item['complete_count'] }} dokumen lengkap pada periode aktif</p>
+                    <p class="mt-2 text-sm text-slate-500">{{ $item['complete_count'] }} data tanpa bukti kurang</p>
                 </article>
             @endforeach
         </section>
@@ -139,6 +139,7 @@
                                         <th class="px-4 py-3 font-medium">Rincian Aktif</th>
                                         <th class="px-4 py-3 font-medium">Grand Total</th>
                                         <th class="px-4 py-3 font-medium">Pembayaran</th>
+                                        <th class="px-4 py-3 font-medium">Bukti Kurang</th>
                                         <th class="px-4 py-3 font-medium">Lampiran</th>
                                         <th class="px-4 py-3 font-medium">Aksi</th>
                                     </tr>
@@ -209,6 +210,30 @@
                                                 @else
                                                     <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
                                                         Belum dibayar
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-4 align-top">
+                                                @php
+                                                    $missingProofLabels = $entry->missingProofLabels();
+                                                    $missingProofCount = count($missingProofLabels);
+                                                @endphp
+                                                @if ($missingProofCount > 0)
+                                                    <details class="group min-w-40">
+                                                        <summary class="inline-flex cursor-pointer list-none items-center justify-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 [&::-webkit-details-marker]:hidden">
+                                                            {{ $missingProofCount }} bukti kurang
+                                                        </summary>
+                                                        <div class="mt-2 w-64 rounded-2xl border border-amber-100 bg-white p-3 shadow-sm">
+                                                            <ul class="space-y-1 text-xs leading-5 text-slate-600">
+                                                                @foreach ($missingProofLabels as $proofLabel)
+                                                                    <li>{{ $proofLabel }}</li>
+                                                                @endforeach
+                                                            </ul>
+                                                        </div>
+                                                    </details>
+                                                @else
+                                                    <span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                                        Lengkap
                                                     </span>
                                                 @endif
                                             </td>

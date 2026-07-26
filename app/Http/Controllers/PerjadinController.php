@@ -142,7 +142,7 @@ class PerjadinController extends Controller
                 'label' => $category,
                 'count' => $items->count(),
                 'grand_total' => (int) $items->sum('grand_total'),
-                'complete_count' => $items->filter(fn (PerjadinEntry $entry) => $entry->activity_file_path && $entry->receipt_file_path && $entry->report_file_path)->count(),
+                'complete_count' => $items->filter(fn (PerjadinEntry $entry) => $entry->missingProofCount() === 0)->count(),
             ];
         })->all();
 
@@ -160,7 +160,7 @@ class PerjadinController extends Controller
             'summary' => [
                 'totalCount' => $entries->count(),
                 'totalGrandTotal' => (int) $entries->sum('grand_total'),
-                'completeDocuments' => $entries->filter(fn (PerjadinEntry $entry) => $entry->activity_file_path && $entry->receipt_file_path && $entry->report_file_path)->count(),
+                'completeDocuments' => $entries->filter(fn (PerjadinEntry $entry) => $entry->missingProofCount() === 0)->count(),
                 'paidCount' => $entries->filter(fn (PerjadinEntry $entry) => filled($entry->paid_at))->count(),
                 'paidGrandTotal' => (int) $entries->filter(fn (PerjadinEntry $entry) => filled($entry->paid_at))->sum('grand_total'),
                 'activeCategories' => $entries->pluck('category')->unique()->count(),
@@ -609,6 +609,9 @@ class PerjadinController extends Controller
             'other_cost_enabled' => ['nullable', 'boolean'],
             'other_cost_amount' => ['nullable', 'string'],
 
+            'missing_proofs' => ['nullable', 'array'],
+            'missing_proofs.*' => ['string', Rule::in(array_keys(PerjadinEntry::MISSING_PROOF_OPTIONS))],
+
             'activity_file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
             'receipt_file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
             'report_file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
@@ -785,6 +788,11 @@ class PerjadinController extends Controller
 
         $otherCostAmount = $otherCostEnabled ? $this->parseMoney($validated['other_cost_amount'] ?? null) : null;
         $grandTotal = $dailyAllowanceTotal + $representationTotal + $ticketTotal + $lodgingTotal + $localTransportTotal + ($otherCostAmount ?? 0);
+        $missingProofs = collect($validated['missing_proofs'] ?? [])
+            ->filter(fn ($key): bool => is_string($key) && array_key_exists($key, PerjadinEntry::MISSING_PROOF_OPTIONS))
+            ->unique()
+            ->values()
+            ->all();
 
         return [
             'category' => $validated['category'],
@@ -851,6 +859,7 @@ class PerjadinController extends Controller
             'other_cost_enabled' => $otherCostEnabled,
             'other_cost_amount' => $otherCostAmount,
             'grand_total' => $grandTotal,
+            'missing_proofs' => $missingProofs,
         ];
     }
 
@@ -946,6 +955,7 @@ class PerjadinController extends Controller
             'representationReferences' => $this->representationReferences(),
             'dailyAllowanceReferences' => $this->dailyAllowanceReferences(),
             'assignmentPurpose' => $entry ? $this->paymentGroupPurpose($entry) : '',
+            'missingProofOptions' => PerjadinEntry::MISSING_PROOF_OPTIONS,
         ]);
     }
 
