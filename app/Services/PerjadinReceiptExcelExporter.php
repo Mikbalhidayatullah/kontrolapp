@@ -71,6 +71,7 @@ class PerjadinReceiptExcelExporter
         $receipt = $this->receiptData($entry, $receiptOverrides);
         $breakdown = $this->receiptBreakdown($entry);
         $receiptHeadValueInColumnB = (bool) ($options['receipt_head_value_in_column_b'] ?? false);
+        $paymentPurposeLines = $this->splitPaymentPurpose($receipt['payment_purpose']);
 
         for ($row = 1; $row <= 46; $row++) {
             $cells = [];
@@ -96,10 +97,8 @@ class PerjadinReceiptExcelExporter
                 13 => $cells = $this->metaCells('Sudah terima dari', $receipt['received_from']),
                 15 => $cells = $this->metaCells('Sebesar', $receipt['grand_total_label'], 9),
                 17 => $cells = $this->metaCells('Terbilang', $receipt['grand_total_words'], 10),
-                19 => $cells = $this->metaCells('Untuk pengeluaran', $receipt['payment_purpose'], 11),
-                20, 21, 22 => $cells = [
-                    ...$this->emptyCells(range(4, 21), 18),
-                ],
+                19 => $cells = $this->metaCells('Untuk pengeluaran', $paymentPurposeLines[0] ?? '', 11),
+                20, 21, 22 => $cells = $this->paymentPurposeContinuationCells($paymentPurposeLines[$row - 19] ?? ''),
                 23 => $cells[] = $this->stringCell(4, 'dengan rincian :', 7),
                 24, 25, 26, 27, 28 => $cells = $this->breakdownCells($row - 24, $breakdown[$row - 24]),
                 30 => $cells[] = $this->stringCell(7, $receipt['receipt_place'].', '.$receipt['receipt_date'], 13),
@@ -131,6 +130,7 @@ class PerjadinReceiptExcelExporter
             'A11:U11',
             'D13:U13',
             'D19:U19',
+            'D20:U20', 'D21:U21', 'D22:U22',
             'A23:C23',
             'G30:U30', 'G31:U31', 'G32:U32', 'G34:U34', 'G35:U35', 'G36:U36',
             'A38:E38', 'G38:U38',
@@ -287,6 +287,46 @@ class PerjadinReceiptExcelExporter
             $this->stringCell(4, $value, $valueStyle),
             ...$this->emptyCells(range(5, 21), $valueStyle),
         ];
+    }
+
+    private function paymentPurposeContinuationCells(string $value): array
+    {
+        return [
+            $this->stringCell(4, $value, 18),
+            ...$this->emptyCells(range(5, 21), 18),
+        ];
+    }
+
+    private function splitPaymentPurpose(string $value): array
+    {
+        $text = trim(preg_replace('/\s+/', ' ', $value) ?? '');
+        if ($text === '') {
+            return [''];
+        }
+
+        $words = preg_split('/\s+/', $text) ?: [];
+        $lines = [];
+        $current = '';
+        $maxLength = 92;
+        $maxLines = 4;
+
+        foreach ($words as $word) {
+            $candidate = $current === '' ? $word : $current.' '.$word;
+
+            if (mb_strlen($candidate) <= $maxLength || count($lines) >= $maxLines - 1) {
+                $current = $candidate;
+                continue;
+            }
+
+            $lines[] = $current;
+            $current = $word;
+        }
+
+        if ($current !== '') {
+            $lines[] = $current;
+        }
+
+        return array_pad(array_slice($lines, 0, $maxLines), $maxLines, '');
     }
 
     private function effectiveLodgingRate(PerjadinEntry $entry): int
@@ -631,14 +671,14 @@ class PerjadinReceiptExcelExporter
 <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
 <xf numFmtId="0" fontId="5" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1"/>
 <xf numFmtId="0" fontId="7" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1"/>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="5" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="5" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="top"/></xf>
 <xf numFmtId="0" fontId="8" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
 <xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="6" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="justify" vertical="top" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="6" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
 </cellXfs>
 <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>';
