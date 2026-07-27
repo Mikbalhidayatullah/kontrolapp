@@ -314,6 +314,7 @@ class PerjadinController extends Controller
             'receiptYearOptions' => $this->yearOptions(),
             'activeCategory' => $request->string('category')->toString(),
             'activeKeyword' => trim($request->string('keyword')->toString()),
+            'assignmentPurpose' => $this->paymentGroupPurpose($perjadinEntry),
             'costGroups' => $this->costGroups($perjadinEntry),
             'receiptBreakdown' => $this->receiptBreakdown($perjadinEntry),
             'receiptDefaults' => [

@@ -43,6 +43,16 @@
         }
     </style>
 
+    @php
+        $assignmentPurpose = trim((string) ($assignmentPurpose ?? ''));
+        $tripScopeLabels = [
+            'dalam_kota_sofifi' => 'Dalam Kota Sofifi',
+            'luar_kota_sofifi' => 'Luar Kota Sofifi',
+        ];
+        $tripScopeLabel = $tripScopeLabels[$entry->regional_trip_scope] ?? '-';
+        $destinationLabel = $entry->destination_city ?: $entry->destination_regency ?: '-';
+    @endphp
+
     <div class="space-y-6">
         <section data-no-print class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
             <div class="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
@@ -101,7 +111,11 @@
                 </article>
                 <article class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
                     <p class="text-sm font-medium text-slate-500">Tujuan</p>
-                    <p class="mt-2 text-lg font-semibold text-slate-900">{{ $entry->destination_city }}</p>
+                    <p class="mt-2 text-lg font-semibold text-slate-900">{{ $destinationLabel }}</p>
+                </article>
+                <article class="rounded-3xl border border-sky-200 bg-sky-50/70 p-5 lg:col-span-2">
+                    <p class="text-sm font-medium text-sky-700">Tujuan / Kegiatan Surat Tugas</p>
+                    <p class="mt-2 text-sm font-semibold leading-6 text-slate-900">{{ $assignmentPurpose ?: '-' }}</p>
                 </article>
                 <article class="rounded-3xl border {{ $entry->missingProofCount() > 0 ? 'border-amber-200 bg-amber-50/70' : 'border-emerald-200 bg-emerald-50/70' }} p-5">
                     <p class="text-sm font-medium {{ $entry->missingProofCount() > 0 ? 'text-amber-700' : 'text-emerald-700' }}">Bukti Kurang</p>
@@ -144,6 +158,10 @@
                         <p class="mt-2 font-semibold text-slate-900">{{ $entry->executor_name }}</p>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Status Pegawai</p>
+                        <p class="mt-2 font-semibold text-slate-900">{{ $entry->employee_status ?: '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Jabatan</p>
                         <p class="mt-2 font-semibold text-slate-900">{{ $entry->position_name }}</p>
                     </div>
@@ -153,7 +171,7 @@
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Golongan</p>
-                        <p class="mt-2 font-semibold text-slate-900">{{ $entry->grade }}</p>
+                        <p class="mt-2 font-semibold text-slate-900">{{ $entry->grade ?: '-' }}</p>
                     </div>
                     <div class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
                         <p class="text-xs uppercase tracking-[0.18em] text-emerald-600">Kategori Pendanaan</p>
@@ -198,15 +216,31 @@
                             <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kecamatan Tujuan</p>
                             <p class="mt-2 font-semibold text-slate-900">{{ $entry->destination_district ?: '-' }}</p>
                         </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kota / Kab Tujuan</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->destination_city ?: '-' }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Jenis Perjalanan Sofifi</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $tripScopeLabel }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Lebih dari 8 Jam</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->sofifi_over_8_hours ? 'Ya' : 'Tidak' }}</p>
+                        </div>
                     @else
                         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
                             <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Kota / Kab Tujuan</p>
-                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->destination_city }}</p>
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->destination_city ?: '-' }}</p>
                         </div>
                     @endif
                     <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:col-span-2">
                         <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Lokasi TTD</p>
                         <p class="mt-2 font-semibold text-slate-900">{{ $entry->signature_location ?: '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 sm:col-span-2">
+                        <p class="text-xs uppercase tracking-[0.18em] text-sky-600">Tujuan / Kegiatan Surat Tugas</p>
+                        <p class="mt-2 whitespace-pre-line font-semibold leading-6 text-slate-900">{{ $assignmentPurpose ?: '-' }}</p>
                     </div>
                 </div>
             </article>
