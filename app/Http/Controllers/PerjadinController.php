@@ -321,7 +321,7 @@ class PerjadinController extends Controller
                 'sheet_title' => old('sheet_title', ''),
                 'budget_year' => (int) old('budget_year', optional($perjadinEntry->assignment_date)->year ?? now()->year),
                 'received_from' => old('received_from', $perjadinEntry->skpd_name),
-                'payment_purpose' => old('payment_purpose', 'Biaya perjalanan dinas '.$perjadinEntry->category.' tujuan '.$perjadinEntry->destination_city),
+                'payment_purpose' => old('payment_purpose', $this->receiptPaymentPurpose($perjadinEntry)),
                 'receipt_place' => old('receipt_place', $perjadinEntry->signature_location ?: $perjadinEntry->destination_city),
                 'receipt_date' => old('receipt_date', optional($perjadinEntry->assignment_date)->format('Y-m-d') ?: now()->format('Y-m-d')),
                 'recipient_name' => old('recipient_name', $perjadinEntry->executor_name),
@@ -1000,6 +1000,24 @@ class PerjadinController extends Controller
             ->where('assignment_number', $entry->assignment_number)
             ->whereDate('assignment_date', $entry->assignment_date)
             ->value('purpose') ?? '');
+    }
+
+    private function receiptPaymentPurpose(PerjadinEntry $entry): string
+    {
+        $destination = trim((string) ($entry->destination_city ?: $entry->destination_regency ?: $entry->signature_location));
+        $purpose = trim($this->paymentGroupPurpose($entry));
+
+        $text = 'Biaya Perjalanan Dinas';
+
+        if ($destination !== '') {
+            $text .= ' tujuan '.$destination;
+        }
+
+        if ($purpose !== '') {
+            $text .= ', Dalam Rangka '.$purpose;
+        }
+
+        return $text;
     }
 
     private function syncPaymentGroupPurpose(array $data, string $purpose): void

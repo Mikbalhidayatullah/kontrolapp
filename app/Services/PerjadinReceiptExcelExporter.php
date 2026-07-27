@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PerjadinEntry;
+use App\Models\PerjadinPaymentGroup;
 use Illuminate\Support\Collection;
 use RuntimeException;
 use ZipArchive;
@@ -175,7 +176,7 @@ class PerjadinReceiptExcelExporter
             'sheet_title' => '-',
             'budget_year' => (string) (optional($entry->assignment_date)->year ?? now()->year),
             'received_from' => 'Bendahara Pengeluaran Dinas Pendidikan dan Kebudayaan',
-            'payment_purpose' => 'Biaya Perjalanan Dinas '.$entry->category.' tujuan '.$entry->destination_city,
+            'payment_purpose' => $this->receiptPaymentPurpose($entry),
             'receipt_place' => $entry->signature_location ?: 'Sofifi',
             'receipt_date' => optional($entry->assignment_date)->translatedFormat('d F Y') ?: now()->translatedFormat('d F Y'),
             'recipient_name' => $entry->executor_name ?: '-',
@@ -187,6 +188,36 @@ class PerjadinReceiptExcelExporter
             'grand_total_label' => $this->receiptMoneyLabel($grandTotal),
             'grand_total_words' => ucfirst(trim($this->terbilang($grandTotal))).' rupiah',
         ], $overrides);
+    }
+
+    private function receiptPaymentPurpose(PerjadinEntry $entry): string
+    {
+        $destination = trim((string) ($entry->destination_city ?: $entry->destination_regency ?: $entry->signature_location));
+        $purpose = trim($this->paymentGroupPurpose($entry));
+
+        $text = 'Biaya Perjalanan Dinas';
+
+        if ($destination !== '') {
+            $text .= ' tujuan '.$destination;
+        }
+
+        if ($purpose !== '') {
+            $text .= ', Dalam Rangka '.$purpose;
+        }
+
+        return $text;
+    }
+
+    private function paymentGroupPurpose(PerjadinEntry $entry): string
+    {
+        if (! $entry->assignment_date) {
+            return '';
+        }
+
+        return (string) (PerjadinPaymentGroup::query()
+            ->where('assignment_number', $entry->assignment_number)
+            ->whereDate('assignment_date', $entry->assignment_date)
+            ->value('purpose') ?? '');
     }
 
     private function receiptBreakdown(PerjadinEntry $entry): array
