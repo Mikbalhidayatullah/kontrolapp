@@ -311,8 +311,7 @@
                     <button type="button" data-close-receipt class="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-500 transition hover:text-slate-700">Tutup</button>
                 </div>
 
-                <form id="receipt-download-form" action="{{ route('perjadin.receipt.pdf', $entry) }}" method="POST" class="mt-6 space-y-4">
-                    @csrf
+                <form id="receipt-download-form" action="{{ route('perjadin.receipt.export.xlsx', $entry) }}" method="GET" class="mt-6 space-y-4">
                     <input type="hidden" name="month" value="{{ $currentPeriod['month'] }}">
                     <input type="hidden" name="year" value="{{ $currentPeriod['year'] }}">
                     <input type="hidden" name="category" value="{{ $activeCategory }}">
@@ -392,8 +391,12 @@
                     </div>
 
                     <div class="flex flex-wrap gap-3 border-t border-slate-200 pt-4">
-                        <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                            Download PDF
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
+                                <path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M5 19h14" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Download Excel
                         </button>
                         <button type="button" data-print-receipt class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
                             Print
@@ -712,7 +715,7 @@
                             <td>
                                 <div class="approval-block approval-block-left">
                                     <div class="approval-title">Mengetahui dan Menyetujui :</div>
-                                    <div class="approval-subtitle">Kepala Dinas Pendidikan Dan Kebudayaan</div>
+                                    <div class="approval-subtitle approval-subtitle-nowrap">Kepala Dinas Pendidikan Dan Kebudayaan</div>
                                     <div>Provinsi Maluku Utara</div>
                                     <div class="approval-space"></div>
                                     <div class="approval-name">${escapeHtml(state.approverName)}</div>
@@ -733,23 +736,23 @@
             `;
 
             const receiptPrintStyles = `
-                @page { size: A4 portrait; margin: 16mm 18mm 18mm; }
+                @page { size: A4 portrait; margin: 16mm 10mm 18mm; }
                 * { box-sizing: border-box; }
                 html, body { margin: 0; padding: 0; background: #ffffff; }
-                body { font-family: "DejaVu Sans", Arial, sans-serif; color: #111827; font-size: 11px; line-height: 1.18; }
-                .sheet { min-height: 257mm; width: 100%; max-width: 174mm; margin: 0 auto; }
+                body { font-family: "DejaVu Sans", Arial, sans-serif; color: #111827; font-size: 12.5px; line-height: 1.16; }
+                .sheet { min-height: 257mm; width: 100%; max-width: 190mm; margin: 0 auto; }
                   .kop { margin-bottom: 6px; }
                   .kop-table { width: 100%; border-collapse: collapse; }
-                  .kop-logo-cell { width: 78px; vertical-align: middle; text-align: left; }
-                  .kop-text-cell { vertical-align: middle; text-align: center; padding-right: 32px; }
-                  .kop-logo { width: 56px; height: 56px; object-fit: contain; display: block; }
-                  .kop-line-1 { font-size: 16px; font-weight: 700; letter-spacing: .02em; line-height: 1.05; }
-                .kop-line-2 { font-size: 14px; font-weight: 700; line-height: 1.05; margin-top: 0; }
-                .kop-line-3 { font-size: 13px; line-height: 1.05; margin-top: 0; }
-                .kop-line-4 { font-size: 18px; font-weight: 700; letter-spacing: .38em; line-height: 1.05; margin-top: 1px; padding-left: .38em; }
-                .divider { border-top: 2px solid #111827; border-bottom: 1px solid #111827; height: 2px; margin: 6px 0 12px; }
+                  .kop-logo-cell { width: 72px; vertical-align: middle; text-align: left; }
+                  .kop-text-cell { vertical-align: middle; text-align: center; padding-right: 72px; }
+                  .kop-logo { width: auto; height: 56px; max-width: 52px; object-fit: contain; display: block; }
+                  .kop-line-1 { font-size: 17px; font-weight: 700; letter-spacing: .02em; line-height: 1.05; }
+                .kop-line-2 { font-size: 15px; font-weight: 700; line-height: 1.05; margin-top: 0; }
+                .kop-line-3 { font-size: 14px; line-height: 1.05; margin-top: 0; }
+                .kop-line-4 { font-size: 19px; font-weight: 700; letter-spacing: .38em; line-height: 1.05; margin-top: 1px; padding-left: .38em; }
+                .divider { border-top: 2px solid #111827; border-bottom: 1px solid #111827; height: 4px; margin: 6px 0 12px; }
                 .receipt-head-meta, .meta-table, .detail-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-                .receipt-head-meta { margin-bottom: 10px; font-size: 12px; }
+                .receipt-head-meta { margin-bottom: 10px; font-size: 13px; }
                 .receipt-head-left { width: 50%; vertical-align: top; }
                 .receipt-head-right { width: 50%; vertical-align: top; text-align: right; }
                 .receipt-head-inner { width: 100%; border-collapse: collapse; }
@@ -759,32 +762,34 @@
                 .receipt-head-inner-right { margin-left: auto; width: 220px; }
                 .receipt-head-inner-right td:first-child { width: 126px; }
                 .receipt-head-label, .receipt-head-label-year, .receipt-head-colon { white-space: nowrap; }
-                .title { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: .12em; text-decoration: underline; margin: 0 0 10px; }
+                .title { text-align: center; font-size: 24px; font-weight: 700; letter-spacing: .12em; text-decoration: underline; margin: 0 0 10px; }
                 .meta-table td { padding: 1px 0; vertical-align: top; word-break: break-word; }
-                .meta-table td:first-child { width: 130px; }
+                .meta-table td:first-child { width: 108px; }
                 .meta-table td:nth-child(2) { width: 14px; }
                 .meta-italic { font-style: italic; }
-                .meta-line { border-bottom: 1px solid #111827; line-height: 1.12; min-height: 13px; padding-left: 2px; }
-                .meta-line-multi { height: 65px; min-height: 65px; vertical-align: top; border-bottom: 0; line-height: 13px; background-image: linear-gradient(to bottom, transparent 12px, #111827 12px, #111827 13px); background-size: 100% 13px; background-repeat: repeat-y; }
-                .label-rincian { display: grid; grid-template-columns: 130px 14px minmax(0,1fr); gap: 0; margin-top: 8px; margin-bottom: 4px; font-weight: 400; }
-                .detail-list-wrap { margin-left: 144px; width: calc(100% - 144px); }
+                .meta-line { border-bottom: 1px solid #111827; line-height: 1.12; min-height: 14px; padding-left: 2px; }
+                .meta-line-multi { height: 70px; min-height: 70px; vertical-align: top; border-bottom: 0; line-height: 14px; background-image: linear-gradient(to bottom, transparent 13px, #111827 13px, #111827 14px); background-size: 100% 14px; background-repeat: repeat-y; }
+                .label-rincian { display: grid; grid-template-columns: 108px 14px minmax(0,1fr); gap: 0; margin-top: 8px; margin-bottom: 4px; font-weight: 400; }
+                .detail-list-wrap { margin-left: 122px; width: calc(100% - 122px); }
                 .detail-list { width: 100%; border-collapse: collapse; table-layout: fixed; }
-                .detail-list td { padding: 1px 0; vertical-align: top; line-height: 1.18; word-break: break-word; }
+                .detail-list td { padding: 1px 0; vertical-align: top; line-height: 1.18; }
                 .detail-list-no { width: 18px; }
-                .detail-list-title { width: 250px; }
+                .detail-list-title { width: 236px; white-space: nowrap; }
                 .detail-list-colon { width: 14px; text-align: center; }
+                .detail-list-colon + td { white-space: nowrap; }
                 .receipt-date { width: 160px; margin-top: 12px; margin-left: auto; margin-right: 8mm; text-align: center; }
                 .recipient-block { width: 160px; margin-left: auto; margin-right: 8mm; margin-top: 4px; text-align: center; }
-                .stamp { margin-top: 24px; font-size: 11px; }
+                .stamp { margin-top: 24px; font-size: 12px; }
                 .signature-name { margin-top: 16px; font-weight: 700; text-decoration: underline; white-space: nowrap; }
                 .signature-nip { margin-top: 4px; }
                 .approval-grid { width: 100%; border-collapse: collapse; margin-top: 18px; }
                 .approval-grid td { width: 50%; vertical-align: top; text-align: center; }
                 .approval-block { text-align: center; }
-                .approval-block-left { width: 230px; margin-left: 8mm; margin-right: auto; }
+                .approval-block-left { width: 300px; margin-left: 2mm; margin-right: auto; }
                 .approval-block-right { width: 160px; margin-left: auto; margin-right: 8mm; }
                 .approval-title { font-weight: 700; }
                 .approval-subtitle { margin-top: 2px; }
+                .approval-subtitle-nowrap { white-space: nowrap; }
                 .approval-subtitle-plain { margin-top: 29px; }
                 .approval-space { height: 52px; }
                 .approval-name { font-weight: 700; text-decoration: underline; white-space: nowrap; }

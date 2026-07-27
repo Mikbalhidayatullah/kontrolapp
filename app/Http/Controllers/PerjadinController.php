@@ -13,9 +13,12 @@ use App\Models\RepresentationSbu;
 use App\Models\TravelDestinationRegion;
 use App\Services\PerjadinBpkExcelExporter;
 use App\Services\PerjadinExcelExporter;
+use App\Services\PerjadinReceiptExcelExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -208,6 +211,80 @@ class PerjadinController extends Controller
             ->deleteFileAfterSend(true);
     }
 
+    public function exportReceiptExcel(PerjadinReceiptExcelExporter $exporter)
+    {
+        $entries = PerjadinEntry::query()
+            ->orderBy('start_date')
+            ->orderBy('assignment_date')
+            ->orderBy('id')
+            ->get();
+
+        $path = $exporter->export($entries);
+        $filename = 'kuitansi-perjadin-semua-data-'.now()->format('Ymd-His').'.xlsx';
+
+        return response()
+            ->download($path, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+            ->deleteFileAfterSend(true);
+    }
+
+    public function exportSingleReceiptExcel(Request $request, PerjadinEntry $perjadinEntry, PerjadinReceiptExcelExporter $exporter)
+    {
+        $path = $exporter->export(collect([$perjadinEntry]), $this->receiptExcelOverrides($request), [
+            'receipt_head_value_in_column_b' => true,
+        ]);
+        $executorName = Str::slug($perjadinEntry->executor_name ?: 'perjadin-'.$perjadinEntry->id);
+        $filename = 'kuitansi-perjadin-'.$executorName.'-'.now()->format('Ymd-His').'.xlsx';
+
+        return response()
+            ->download($path, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+            ->deleteFileAfterSend(true);
+    }
+
+    private function receiptExcelOverrides(Request $request): array
+    {
+        $textKeys = [
+            'receipt_number',
+            'sheet_title',
+            'received_from',
+            'payment_purpose',
+            'receipt_place',
+            'recipient_name',
+            'recipient_nip',
+            'approver_name',
+            'approver_nip',
+            'treasurer_name',
+            'treasurer_nip',
+        ];
+
+        $overrides = [];
+        foreach ($textKeys as $key) {
+            $value = trim($request->string($key)->toString());
+            if ($value !== '') {
+                $overrides[$key] = $value;
+            }
+        }
+
+        $budgetYear = $request->integer('budget_year');
+        if ($budgetYear > 0) {
+            $overrides['budget_year'] = (string) $budgetYear;
+        }
+
+        $receiptDate = trim($request->string('receipt_date')->toString());
+        if ($receiptDate !== '') {
+            try {
+                $overrides['receipt_date'] = Carbon::parse($receiptDate)->translatedFormat('d F Y');
+            } catch (\Throwable) {
+                $overrides['receipt_date'] = $receiptDate;
+            }
+        }
+
+        return $overrides;
+    }
+
     public function create(Request $request): View
     {
         return $this->formView(
@@ -249,58 +326,12 @@ class PerjadinController extends Controller
                 'receipt_date' => old('receipt_date', optional($perjadinEntry->assignment_date)->format('Y-m-d') ?: now()->format('Y-m-d')),
                 'recipient_name' => old('recipient_name', $perjadinEntry->executor_name),
                 'recipient_nip' => old('recipient_nip', ''),
-                'approver_name' => old('approver_name', ''),
-                'approver_nip' => old('approver_nip', ''),
-                'treasurer_name' => old('treasurer_name', ''),
-                'treasurer_nip' => old('treasurer_nip', ''),
+                'approver_name' => old('approver_name', 'DR. Abubakar Hi. Abdullah, S. Pd.,M. Si.'),
+                'approver_nip' => old('approver_nip', '1973052420012 1 002'),
+                'treasurer_name' => old('treasurer_name', 'Vivi Iriyanti, ST'),
+                'treasurer_nip' => old('treasurer_nip', '19810131201001 2 014'),
             ],
         ]);
-    }
-
-    public function downloadReceiptPdf(Request $request, PerjadinEntry $perjadinEntry)
-    {
-        $perjadinEntry->loadMissing(['creator:id,name', 'updater:id,name']);
-
-        $data = $request->validate([
-            'receipt_number' => ['required', 'string', 'max:255'],
-            'sheet_title' => ['nullable', 'string', 'max:255'],
-            'budget_year' => ['required', 'integer', 'digits:4'],
-            'received_from' => ['required', 'string', 'max:255'],
-            'payment_purpose' => ['required', 'string', 'max:1000'],
-            'receipt_place' => ['required', 'string', 'max:255'],
-            'receipt_date' => ['required', 'date'],
-            'recipient_name' => ['required', 'string', 'max:255'],
-            'recipient_nip' => ['nullable', 'string', 'max:255'],
-            'approver_name' => ['nullable', 'string', 'max:255'],
-            'approver_nip' => ['nullable', 'string', 'max:255'],
-            'treasurer_name' => ['nullable', 'string', 'max:255'],
-            'treasurer_nip' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $grandTotal = (int) $perjadinEntry->grand_total;
-
-        $pdf = Pdf::loadView('pdf.perjadin-receipt', [
-            'entry' => $perjadinEntry,
-            'receiptNumber' => $data['receipt_number'],
-            'sheetTitle' => $data['sheet_title'] ?: '-',
-            'budgetYear' => (string) $data['budget_year'],
-            'receivedFrom' => $data['received_from'],
-            'paymentPurpose' => $data['payment_purpose'],
-            'receiptPlace' => $data['receipt_place'],
-            'receiptDate' => $data['receipt_date'],
-            'recipientName' => $data['recipient_name'],
-            'recipientNip' => $data['recipient_nip'] ?: '-',
-            'approverName' => $data['approver_name'] ?: '........................................',
-            'approverNip' => $data['approver_nip'] ?: '........................................',
-            'treasurerName' => $data['treasurer_name'] ?: '........................................',
-            'treasurerNip' => $data['treasurer_nip'] ?: '........................................',
-            'grandTotal' => $grandTotal,
-            'grandTotalLabel' => $this->receiptMoneyLabel($grandTotal),
-            'grandTotalWords' => ucfirst(trim($this->terbilang($grandTotal))).' rupiah',
-            'receiptBreakdown' => $this->receiptBreakdown($perjadinEntry),
-        ])->setPaper('a4', 'portrait');
-
-        return $pdf->download('kwitansi-perjadin-'.$perjadinEntry->id.'.pdf');
     }
 
     public function downloadDetailPdf(Request $request, PerjadinEntry $perjadinEntry)

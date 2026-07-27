@@ -69,6 +69,7 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
     Route::get('/perjadin', [PerjadinController::class, 'index'])->name('perjadin');
     Route::get('/perjadin/export/excel', [PerjadinController::class, 'exportExcel'])->name('perjadin.export.xlsx');
     Route::get('/perjadin/export/bpk-excel', [PerjadinController::class, 'exportBpkExcel'])->middleware('role:admin,bendahara')->name('perjadin.export.bpk.xlsx');
+    Route::get('/perjadin/export/kuitansi-excel', [PerjadinController::class, 'exportReceiptExcel'])->name('perjadin.receipts.export.xlsx');
     Route::get('/perjadin/halaman-bayar', [PerjadinPaymentController::class, 'index'])->middleware('role:admin,bendahara')->name('perjadin-payments.index');
     Route::post('/perjadin/halaman-bayar/{paymentGroup}/sudah-dicetak', [PerjadinPaymentController::class, 'markPrinted'])->middleware('role:admin,bendahara')->name('perjadin-payments.mark-printed');
     Route::post('/perjadin/halaman-bayar/{paymentGroup}/batalkan-cetak', [PerjadinPaymentController::class, 'cancelPrinted'])->middleware('role:admin,bendahara')->name('perjadin-payments.cancel-printed');
@@ -76,10 +77,10 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
     Route::get('/add-perjadin', [PerjadinController::class, 'create'])->name('add-perjadin');
     Route::post('/add-perjadin', [PerjadinController::class, 'store'])->name('add-perjadin.store');
     Route::post('/perjadin/{perjadinEntry}/bayar', [PerjadinController::class, 'togglePayment'])->name('perjadin.payment.toggle');
+    Route::get('/perjadin/{perjadinEntry}/kuitansi-excel', [PerjadinController::class, 'exportSingleReceiptExcel'])->name('perjadin.receipt.export.xlsx');
     Route::get('/perjadin/{perjadinEntry}', [PerjadinController::class, 'show'])->name('perjadin.show');
     Route::post('/perjadin/{perjadinEntry}/duplicate', [PerjadinController::class, 'duplicate'])->name('perjadin.duplicate');
     Route::get('/perjadin/{perjadinEntry}/detail/pdf', [PerjadinController::class, 'downloadDetailPdf'])->name('perjadin.detail.pdf');
-    Route::post('/perjadin/{perjadinEntry}/kwitansi/pdf', [PerjadinController::class, 'downloadReceiptPdf'])->name('perjadin.receipt.pdf');
     Route::get('/perjadin/{perjadinEntry}/edit', [PerjadinController::class, 'edit'])->name('perjadin.edit');
     Route::put('/perjadin/{perjadinEntry}', [PerjadinController::class, 'update'])->name('perjadin.update');
     Route::delete('/perjadin/{perjadinEntry}', [PerjadinController::class, 'destroy'])->name('perjadin.destroy');
