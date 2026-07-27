@@ -15,7 +15,7 @@
         $selectedLocalTransportSegmentIds = old('local_transport_segment_ids', $isEdit ? ($entry->local_transport_segment_ids ?? []) : []);
         $storedGrade = old('grade', $isEdit ? $entry->grade : '');
         preg_match('/\d+/', (string) $storedGrade, $gradeNumberMatch);
-        preg_match('/[A-D]$/i', (string) $storedGrade, $gradeLetterMatch);
+        preg_match('/[A-E]$/i', (string) $storedGrade, $gradeLetterMatch);
         $inferredGradeNumber = isset($gradeNumberMatch[0]) ? (int) $gradeNumberMatch[0] : 0;
         $inferredEmployeeStatus = $inferredGradeNumber >= 6 ? 'PPPK' : 'PNS';
         $selectedEmployeeStatus = old('employee_status', $isEdit ? ($entry->employee_status ?: $inferredEmployeeStatus) : 'PNS');

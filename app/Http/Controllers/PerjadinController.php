@@ -58,7 +58,7 @@ class PerjadinController extends Controller
     ];
 
     private const GRADE_LETTER_OPTIONS = [
-        'A', 'B', 'C', 'D',
+        'A', 'B', 'C', 'D', 'E',
     ];
 
     private const ECHELON_OPTIONS = [
