@@ -362,8 +362,8 @@ class PerjadinReceiptExcelExporter
         $xml .= '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">';
         $xml .= '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>';
         $xml .= '<dimension ref="A1:U46"/>';
-        $xml .= '<sheetViews><sheetView zoomScale="85" zoomScaleNormal="85" workbookViewId="0"/></sheetViews>';
-        $xml .= '<sheetFormatPr defaultRowHeight="15"/>';
+        $xml .= '<sheetViews><sheetView zoomScale="85" zoomScaleNormal="85" zoomScaleSheetLayoutView="70" workbookViewId="0"/></sheetViews>';
+        $xml .= '<sheetFormatPr defaultColWidth="8.81640625" defaultRowHeight="15.5"/>';
         $xml .= $this->columnsXml();
         $xml .= '<sheetData>'.implode('', $rows).'</sheetData>';
 
@@ -375,8 +375,9 @@ class PerjadinReceiptExcelExporter
             $xml .= '</mergeCells>';
         }
 
+        $xml .= '<printOptions horizontalCentered="1"/>';
         $xml .= '<pageMargins left="0.3937007874015748" right="0.3937007874015748" top="0.3937007874015748" bottom="0.3937007874015748" header="0.31496062992125984" footer="0.31496062992125984"/>';
-        $xml .= '<pageSetup paperSize="9" orientation="portrait"/>';
+        $xml .= '<pageSetup paperSize="9" scale="77" orientation="portrait"/>';
         if ($hasLogo) {
             $xml .= '<drawing r:id="rId1"/>';
         }
@@ -453,7 +454,7 @@ class PerjadinReceiptExcelExporter
 
         $xml = '<cols>';
         foreach ($widths as $column => $width) {
-            $xml .= '<col min="'.$column.'" max="'.$column.'" width="'.$this->formatDimension($width).'" customWidth="1"/>';
+            $xml .= '<col min="'.$column.'" max="'.$column.'" width="'.$this->formatDimension($width).'" style="59" customWidth="1"/>';
         }
 
         return $xml.'</cols>';
@@ -464,7 +465,7 @@ class PerjadinReceiptExcelExporter
         $pixelHeights = [
             1 => 20,
             2 => 17.5,
-            3 => 15,
+            3 => null,
             4 => 22.5,
             5 => 2.25,
             6 => 6.75,
@@ -473,17 +474,17 @@ class PerjadinReceiptExcelExporter
             9 => 16,
             10 => 16,
             11 => 29,
-            12 => 15,
+            12 => null,
             13 => 15.5,
             14 => 6.75,
-            15 => 15,
+            15 => null,
             16 => 6.75,
-            17 => 15,
+            17 => null,
             18 => 5.25,
-            19 => 15,
-            20 => 15,
-            21 => 15,
-            22 => 15,
+            19 => 36,
+            20 => null,
+            21 => null,
+            22 => null,
             23 => 22.5,
             24 => 20,
             25 => 20,
@@ -499,14 +500,14 @@ class PerjadinReceiptExcelExporter
             35 => 15.75,
             36 => 15.75,
             37 => 20,
-            38 => 15,
+            38 => null,
             39 => 15.75,
-            40 => 15,
-            41 => 15,
-            42 => 15,
-            43 => 15,
-            44 => 15,
-            45 => 15,
+            40 => null,
+            41 => null,
+            42 => null,
+            43 => null,
+            44 => null,
+            45 => null,
             46 => 15.75,
         ];
 
@@ -537,16 +538,16 @@ class PerjadinReceiptExcelExporter
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
-<xdr:twoCellAnchor editAs="oneCell">
-<xdr:from><xdr:col>0</xdr:col><xdr:colOff>136071</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>60625</xdr:rowOff></xdr:from>
-<xdr:to><xdr:col>1</xdr:col><xdr:colOff>154214</xdr:colOff><xdr:row>3</xdr:row><xdr:rowOff>208643</xdr:rowOff></xdr:to>
+<xdr:oneCellAnchor>
+<xdr:from><xdr:col>0</xdr:col><xdr:colOff>104140</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>63500</xdr:rowOff></xdr:from>
+<xdr:ext cx="712000" cy="818800"/>
 <xdr:pic>
 <xdr:nvPicPr><xdr:cNvPr id="'.($sheetNumber + 1).'" name="Logo Provinsi Maluku Utara"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>
 <xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>
 <xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>
 </xdr:pic>
 <xdr:clientData/>
-</xdr:twoCellAnchor>
+</xdr:oneCellAnchor>
 </xdr:wsDr>';
     }
 
@@ -635,18 +636,21 @@ class PerjadinReceiptExcelExporter
 
     private function stylesXml(): string
     {
+        $columnStyleXfs = str_repeat('<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>', 41);
+
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<fonts count="9">
-<font><sz val="12"/><color rgb="FF000000"/><name val="Arial"/></font>
-<font><b/><sz val="16"/><color rgb="FF000000"/><name val="Times New Roman"/></font>
-<font><b/><sz val="14"/><color rgb="FF000000"/><name val="Tahoma"/></font>
-<font><sz val="12"/><color rgb="FF000000"/><name val="Tahoma"/></font>
-<font><b/><sz val="18"/><color rgb="FF000000"/><name val="Tahoma"/></font>
-<font><b/><sz val="12"/><color rgb="FF000000"/><name val="Arial"/></font>
-<font><b/><u/><sz val="22"/><color rgb="FF000000"/><name val="Arial"/></font>
-<font><sz val="12"/><color rgb="FF000000"/><name val="Arial"/></font>
-<font><b/><u/><sz val="12"/><color rgb="FF000000"/><name val="Arial"/></font>
+<fonts count="10">
+<font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/><family val="2"/><scheme val="minor"/></font>
+<font><sz val="12"/><color rgb="FF000000"/><name val="Arial"/><family val="2"/></font>
+<font><b/><sz val="16"/><color rgb="FF000000"/><name val="Times New Roman"/><family val="1"/></font>
+<font><b/><sz val="14"/><color rgb="FF000000"/><name val="Tahoma"/><family val="2"/></font>
+<font><sz val="12"/><color rgb="FF000000"/><name val="Tahoma"/><family val="2"/></font>
+<font><b/><sz val="18"/><color rgb="FF000000"/><name val="Tahoma"/><family val="2"/></font>
+<font><b/><sz val="12"/><color rgb="FF000000"/><name val="Arial"/><family val="2"/></font>
+<font><b/><u/><sz val="22"/><color rgb="FF000000"/><name val="Arial"/><family val="2"/></font>
+<font><sz val="12"/><color rgb="FF000000"/><name val="Arial"/><family val="2"/></font>
+<font><b/><u/><sz val="12"/><color rgb="FF000000"/><name val="Arial"/><family val="2"/></font>
 </fonts>
 <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
 <borders count="7">
@@ -659,26 +663,27 @@ class PerjadinReceiptExcelExporter
 <border><left/><right/><top style="hair"><color rgb="FF000000"/></top><bottom style="hair"><color rgb="FF000000"/></bottom><diagonal/></border>
 </borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="19">
+<cellXfs count="60">
 <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
-<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
 <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
 <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
 <xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="2" xfId="0" applyBorder="1"/>
-<xf numFmtId="0" fontId="6" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
-<xf numFmtId="0" fontId="5" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1"/>
-<xf numFmtId="0" fontId="7" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1"/>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="5" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="top"/></xf>
-<xf numFmtId="0" fontId="8" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
 <xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
-<xf numFmtId="0" fontId="0" fillId="0" borderId="6" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="2" xfId="0" applyFont="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="6" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="8" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="5" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="top"/></xf>
+<xf numFmtId="0" fontId="9" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="6" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="6" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
+'.$columnStyleXfs.'
 </cellXfs>
 <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>';
