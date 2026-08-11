@@ -603,6 +603,7 @@ class PerjadinController extends Controller
             'sofifi_over_8_hours' => ['nullable', 'boolean'],
 
             'daily_allowance_enabled' => ['nullable', 'boolean'],
+            'daily_allowance_mode' => ['nullable', 'string', Rule::in(['sbu', 'manual'])],
             'daily_allowance_days' => ['nullable', 'integer', 'min:1'],
             'daily_allowance_rate' => ['nullable', 'string'],
 
@@ -790,6 +791,7 @@ class PerjadinController extends Controller
             : [];
         $otherCostEnabled = (bool) ($validated['other_cost_enabled'] ?? false);
 
+        $dailyAllowanceMode = $dailyAllowanceEnabled ? ($validated['daily_allowance_mode'] ?? 'sbu') : 'sbu';
         $dailyAllowanceDays = $dailyAllowanceEnabled ? (int) ($validated['daily_allowance_days'] ?? 0) : null;
         $dailyAllowanceRate = $dailyAllowanceEnabled ? $this->parseMoney($validated['daily_allowance_rate'] ?? null) : null;
         $dailyAllowanceTotal = $dailyAllowanceEnabled ? $dailyAllowanceDays * $dailyAllowanceRate : 0;
@@ -849,6 +851,7 @@ class PerjadinController extends Controller
             'sofifi_over_8_hours' => $sofifiOver8Hours,
 
             'daily_allowance_enabled' => $dailyAllowanceEnabled,
+            'daily_allowance_mode' => $dailyAllowanceMode,
             'daily_allowance_days' => $dailyAllowanceDays,
             'daily_allowance_rate' => $dailyAllowanceRate,
             'daily_allowance_total' => $dailyAllowanceTotal,
@@ -1123,6 +1126,7 @@ class PerjadinController extends Controller
                 'title' => 'Uang Harian',
                 'enabled' => $entry->daily_allowance_enabled,
                 'rows' => [
+                    ['label' => 'Mode Input', 'value' => ($entry->daily_allowance_mode ?? 'sbu') === 'manual' ? 'Manual' : 'Sesuai SBU'],
                     ['label' => 'Jumlah Hari', 'value' => $entry->daily_allowance_days ?: '-'],
                     ['label' => 'Uang Harian', 'value' => $this->moneyLabel($entry->daily_allowance_rate)],
                     ['label' => 'Total', 'value' => $this->moneyLabel($entry->daily_allowance_total)],

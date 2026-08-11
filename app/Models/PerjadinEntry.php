@@ -55,6 +55,7 @@ class PerjadinEntry extends Model
         'regional_trip_scope',
         'sofifi_over_8_hours',
         'daily_allowance_enabled',
+        'daily_allowance_mode',
         'daily_allowance_days',
         'daily_allowance_rate',
         'daily_allowance_total',

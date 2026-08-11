@@ -27,6 +27,7 @@
             default => $selectedGradeNumber && $selectedGradeLetter ? $selectedGradeNumber.$selectedGradeLetter : (string) $storedGrade,
         };
         $selectedFundingCategory = old('funding_category', $isEdit ? ($entry->funding_category ?? '') : '');
+        $selectedDailyAllowanceMode = old('daily_allowance_mode', $isEdit ? ($entry->daily_allowance_mode ?? 'sbu') : 'sbu');
         $selectedMissingProofs = collect(old('missing_proofs', $isEdit ? ($entry->missing_proofs ?? []) : []))
             ->filter()
             ->map(fn ($value) => (string) $value)
@@ -57,6 +58,7 @@
             'assignment_date' => 'tanggal surat tugas',
             'assignment_purpose' => 'tujuan / kegiatan surat tugas',
             'signature_location' => 'lokasi tanda tangan',
+            'daily_allowance_mode' => 'mode input uang harian',
             'daily_allowance_days' => 'jumlah hari uang harian',
             'daily_allowance_rate' => 'nominal uang harian',
             'representation_days' => 'jumlah hari representasi',
@@ -467,6 +469,16 @@
                                 </label>
                             </div>
                             <div class="mt-5 grid gap-5 md:grid-cols-3" data-group-body>
+                                <div>
+                                    <label for="daily_allowance_mode" class="block text-sm font-medium text-slate-700">Mode Input</label>
+                                    <select id="daily_allowance_mode" name="daily_allowance_mode" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                        <option value="sbu" @selected($selectedDailyAllowanceMode === 'sbu')>Sesuai SBU</option>
+                                        <option value="manual" @selected($selectedDailyAllowanceMode === 'manual')>Manual</option>
+                                    </select>
+                                    @if($message = $inlineError('daily_allowance_mode'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
+                                </div>
                                 <div>
                                     <label for="daily_allowance_days" class="block text-sm font-medium text-slate-700">Jumlah Hari</label>
                                     <input id="daily_allowance_days" name="daily_allowance_days" type="number" min="1" value="{{ old('daily_allowance_days', $isEdit ? $entry->daily_allowance_days : '') }}" data-multiply-left="daily" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
@@ -936,6 +948,7 @@
             const nationalLodgingReferences = @json($nationalLodgingReferences);
             const representationReferences = @json($representationReferences);
             const dailyAllowanceReferences = @json($dailyAllowanceReferences);
+            const dailyAllowanceModeInput = document.getElementById('daily_allowance_mode');
             const dailyAllowanceRateInput = document.getElementById('daily_allowance_rate');
             const dailyAllowanceState = document.getElementById('daily-allowance-sbu-state');
             const representationRateInput = document.getElementById('representation_rate');
@@ -1549,6 +1562,8 @@
                 ? dailyAllowanceReferences.find((entry) => normalizeText(entry.province_name) === normalizeText('Maluku Utara'))
                 : findOutsideProvinceReference(dailyAllowanceReferences, 'province_name');
 
+            const isDailyAllowanceManual = () => (dailyAllowanceModeInput?.value || 'sbu') === 'manual';
+
             const dailyAllowanceApplicableRate = (row) => {
                 if (!row) {
                     return 0;
@@ -1813,6 +1828,15 @@
 
             const updateDailyAllowanceRateFromReference = () => {
                 if (!dailyAllowanceRateInput) {
+                    return;
+                }
+
+                if (isDailyAllowanceManual()) {
+                    dailyAllowanceRateInput.readOnly = false;
+                    if (dailyAllowanceState) {
+                        dailyAllowanceState.textContent = 'Mode manual aktif. Operator bisa mengisi nominal uang harian sendiri, dan total tetap dihitung dari jumlah hari x nominal manual.';
+                    }
+                    queueTotalsRefresh();
                     return;
                 }
 
