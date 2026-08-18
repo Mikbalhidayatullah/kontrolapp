@@ -60,6 +60,7 @@ class PerjadinEntry extends Model
         'daily_allowance_rate',
         'daily_allowance_total',
         'representation_enabled',
+        'representation_mode',
         'representation_days',
         'representation_rate',
         'representation_total',

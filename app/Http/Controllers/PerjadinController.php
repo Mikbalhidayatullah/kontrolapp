@@ -16,6 +16,7 @@ use App\Services\PerjadinExcelExporter;
 use App\Services\PerjadinReceiptExcelExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -171,6 +172,36 @@ class PerjadinController extends Controller
         ]);
     }
 
+    public function receiptFilterSuggestions(Request $request): JsonResponse
+    {
+        $filterType = $request->string('type')->toString();
+        $keyword = trim($request->string('q')->toString());
+
+        $column = match ($filterType) {
+            'executor' => 'executor_name',
+            'assignment' => 'assignment_number',
+            default => null,
+        };
+
+        if ($column === null) {
+            return response()->json([]);
+        }
+
+        $suggestions = PerjadinEntry::query()
+            ->whereNotNull($column)
+            ->where($column, '!=', '')
+            ->when($keyword !== '', fn ($query) => $query->where($column, 'like', '%'.$keyword.'%'))
+            ->select($column)
+            ->distinct()
+            ->orderBy($column)
+            ->limit(12)
+            ->pluck($column)
+            ->values()
+            ->all();
+
+        return response()->json($suggestions);
+    }
+
     public function exportExcel(PerjadinExcelExporter $exporter)
     {
         $entries = PerjadinEntry::query()
@@ -211,16 +242,28 @@ class PerjadinController extends Controller
             ->deleteFileAfterSend(true);
     }
 
-    public function exportReceiptExcel(PerjadinReceiptExcelExporter $exporter)
+    public function exportReceiptExcel(Request $request, PerjadinReceiptExcelExporter $exporter)
     {
+        $filterType = $request->string('receipt_filter_type')->toString();
+        $filterValue = trim($request->string('receipt_filter_value')->toString());
+
+        if (! in_array($filterType, ['executor', 'assignment'], true)) {
+            $filterType = '';
+        }
+
         $entries = PerjadinEntry::query()
+            ->when($filterType === 'executor' && $filterValue !== '', fn ($query) => $query->where('executor_name', 'like', '%'.$filterValue.'%'))
+            ->when($filterType === 'assignment' && $filterValue !== '', fn ($query) => $query->where('assignment_number', 'like', '%'.$filterValue.'%'))
             ->orderBy('start_date')
             ->orderBy('assignment_date')
             ->orderBy('id')
             ->get();
 
         $path = $exporter->export($entries);
-        $filename = 'kuitansi-perjadin-semua-data-'.now()->format('Ymd-His').'.xlsx';
+        $filenameSuffix = $filterType !== '' && $filterValue !== ''
+            ? '-'.Str::slug($filterValue)
+            : '-semua-data';
+        $filename = 'kuitansi-perjadin'.$filenameSuffix.'-'.now()->format('Ymd-His').'.xlsx';
 
         return response()
             ->download($path, $filename, [
@@ -608,6 +651,7 @@ class PerjadinController extends Controller
             'daily_allowance_rate' => ['nullable', 'string'],
 
             'representation_enabled' => ['nullable', 'boolean'],
+            'representation_mode' => ['nullable', 'string', Rule::in(['sbu', 'manual'])],
             'representation_days' => ['nullable', 'integer', 'min:1'],
             'representation_rate' => ['nullable', 'string'],
 
@@ -796,6 +840,7 @@ class PerjadinController extends Controller
         $dailyAllowanceRate = $dailyAllowanceEnabled ? $this->parseMoney($validated['daily_allowance_rate'] ?? null) : null;
         $dailyAllowanceTotal = $dailyAllowanceEnabled ? $dailyAllowanceDays * $dailyAllowanceRate : 0;
 
+        $representationMode = $representationEnabled ? ($validated['representation_mode'] ?? 'sbu') : 'sbu';
         $representationDays = $representationEnabled ? (int) ($validated['representation_days'] ?? 0) : null;
         $representationRate = $representationEnabled ? $this->parseMoney($validated['representation_rate'] ?? null) : null;
         $representationTotal = $representationEnabled ? $representationDays * $representationRate : 0;
@@ -857,6 +902,7 @@ class PerjadinController extends Controller
             'daily_allowance_total' => $dailyAllowanceTotal,
 
             'representation_enabled' => $representationEnabled,
+            'representation_mode' => $representationMode,
             'representation_days' => $representationDays,
             'representation_rate' => $representationRate,
             'representation_total' => $representationTotal,
@@ -1136,8 +1182,9 @@ class PerjadinController extends Controller
                 'title' => 'Representasi',
                 'enabled' => $entry->representation_enabled,
                 'rows' => [
+                    ['label' => 'Mode Input', 'value' => ($entry->representation_mode ?? 'sbu') === 'manual' ? 'Manual' : 'Sesuai SBU'],
                     ['label' => 'Jumlah Hari', 'value' => $entry->representation_days ?: '-'],
-                    ['label' => 'Nominal Sesuai SPPD', 'value' => $this->moneyLabel($entry->representation_rate)],
+                    ['label' => 'Nominal Representasi', 'value' => $this->moneyLabel($entry->representation_rate)],
                     ['label' => 'Total', 'value' => $this->moneyLabel($entry->representation_total)],
                 ],
             ],

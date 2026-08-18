@@ -72,13 +72,28 @@
                                         <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                 </summary>
-                                <div class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
+                                <div class="absolute right-0 z-30 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
                                     <a href="{{ route('perjadin.export.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
                                         Custom (Format Lama)
                                     </a>
-                                    <a href="{{ route('perjadin.receipts.export.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
-                                        Kuitansi
-                                    </a>
+                                    <div class="border-t border-slate-100 px-4 py-3">
+                                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Kuitansi</p>
+                                        <form action="{{ route('perjadin.receipts.export.xlsx') }}" method="GET" class="mt-3 space-y-3">
+                                            <select name="receipt_filter_type" data-receipt-filter-type class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100">
+                                                <option value="">Semua kuitansi</option>
+                                                <option value="executor">Pilih berdasarkan nama</option>
+                                                <option value="assignment">Pilih berdasarkan surat tugas</option>
+                                            </select>
+                                            <div class="relative">
+                                                <input type="text" name="receipt_filter_value" data-receipt-filter-value autocomplete="off" disabled placeholder="Semua data" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:text-slate-400" />
+                                                <div data-receipt-filter-suggestions class="absolute left-0 right-0 z-40 mt-1 hidden max-h-52 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-xl"></div>
+                                            </div>
+                                            <p data-receipt-filter-help class="text-xs leading-5 text-slate-400">Pilih jenis filter, lalu ketik nama atau nomor surat tugas.</p>
+                                            <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                                                Download Kuitansi
+                                            </button>
+                                        </form>
+                                    </div>
                                     @if (auth()->user()->hasAnyRole(['admin', 'bendahara']))
                                         <a href="{{ route('perjadin.export.bpk.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
                                             Versi BPK
@@ -307,4 +322,122 @@
             @endforeach
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterType = document.querySelector('[data-receipt-filter-type]');
+            const filterValue = document.querySelector('[data-receipt-filter-value]');
+            const suggestionsBox = document.querySelector('[data-receipt-filter-suggestions]');
+            const filterHelp = document.querySelector('[data-receipt-filter-help]');
+
+            if (!filterType || !filterValue || !suggestionsBox) {
+                return;
+            }
+
+            const placeholders = {
+                executor: 'Ketik nama pelaksana',
+                assignment: 'Ketik nomor surat tugas',
+            };
+
+            let searchTimeout = null;
+            let abortController = null;
+
+            const hideSuggestions = () => {
+                suggestionsBox.classList.add('hidden');
+                suggestionsBox.replaceChildren();
+            };
+
+            const setInputState = () => {
+                const selectedType = filterType.value;
+                const isDisabled = selectedType === '';
+
+                filterValue.value = '';
+                filterValue.disabled = isDisabled;
+                filterValue.required = !isDisabled;
+                filterValue.placeholder = selectedType ? (placeholders[selectedType] || 'Ketik data') : 'Semua data';
+                filterValue.classList.toggle('bg-slate-50', isDisabled);
+                filterValue.classList.toggle('bg-white', !isDisabled);
+                if (filterHelp) {
+                    filterHelp.textContent = selectedType
+                        ? 'Ketik sebagian data, lalu pilih dari saran yang muncul.'
+                        : 'Biarkan semua kuitansi untuk download tanpa filter.';
+                }
+                hideSuggestions();
+            };
+
+            const renderSuggestions = (items) => {
+                suggestionsBox.replaceChildren();
+
+                if (!items.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'px-3 py-2 text-sm text-slate-400';
+                    empty.textContent = 'Tidak ada data yang cocok.';
+                    suggestionsBox.appendChild(empty);
+                    suggestionsBox.classList.remove('hidden');
+                    return;
+                }
+
+                items.forEach((item) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700';
+                    button.textContent = item;
+                    button.addEventListener('click', () => {
+                        filterValue.value = item;
+                        hideSuggestions();
+                    });
+                    suggestionsBox.appendChild(button);
+                });
+
+                suggestionsBox.classList.remove('hidden');
+            };
+
+            const loadSuggestions = () => {
+                const selectedType = filterType.value;
+
+                if (!selectedType || filterValue.disabled) {
+                    hideSuggestions();
+                    return;
+                }
+
+                if (abortController) {
+                    abortController.abort();
+                }
+
+                abortController = new AbortController();
+                const params = new URLSearchParams({
+                    type: selectedType,
+                    q: filterValue.value.trim(),
+                });
+
+                fetch(`{{ route('perjadin.receipts.suggestions') }}?${params.toString()}`, {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                    signal: abortController.signal,
+                })
+                    .then((response) => response.ok ? response.json() : [])
+                    .then((items) => renderSuggestions(Array.isArray(items) ? items : []))
+                    .catch((error) => {
+                        if (error.name !== 'AbortError') {
+                            hideSuggestions();
+                        }
+                    });
+            };
+
+            filterType.addEventListener('change', setInputState);
+            filterValue.addEventListener('input', () => {
+                window.clearTimeout(searchTimeout);
+                searchTimeout = window.setTimeout(loadSuggestions, 250);
+            });
+            filterValue.addEventListener('focus', loadSuggestions);
+            document.addEventListener('click', (event) => {
+                if (!filterValue.contains(event.target) && !suggestionsBox.contains(event.target)) {
+                    hideSuggestions();
+                }
+            });
+
+            setInputState();
+        });
+    </script>
 </x-layout>

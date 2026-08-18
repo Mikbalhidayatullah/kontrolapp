@@ -28,6 +28,7 @@
         };
         $selectedFundingCategory = old('funding_category', $isEdit ? ($entry->funding_category ?? '') : '');
         $selectedDailyAllowanceMode = old('daily_allowance_mode', $isEdit ? ($entry->daily_allowance_mode ?? 'sbu') : 'sbu');
+        $selectedRepresentationMode = old('representation_mode', $isEdit ? ($entry->representation_mode ?? 'sbu') : 'sbu');
         $selectedMissingProofs = collect(old('missing_proofs', $isEdit ? ($entry->missing_proofs ?? []) : []))
             ->filter()
             ->map(fn ($value) => (string) $value)
@@ -61,6 +62,7 @@
             'daily_allowance_mode' => 'mode input uang harian',
             'daily_allowance_days' => 'jumlah hari uang harian',
             'daily_allowance_rate' => 'nominal uang harian',
+            'representation_mode' => 'mode input representasi',
             'representation_days' => 'jumlah hari representasi',
             'representation_rate' => 'nominal representasi',
             'ticket_transport_type' => 'jenis transport tiket',
@@ -514,6 +516,16 @@
                             </div>
                             <div class="mt-5 grid gap-5 md:grid-cols-3" data-group-body>
                                 <div>
+                                    <label for="representation_mode" class="block text-sm font-medium text-slate-700">Mode Input</label>
+                                    <select id="representation_mode" name="representation_mode" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                        <option value="sbu" @selected($selectedRepresentationMode === 'sbu')>Sesuai SBU</option>
+                                        <option value="manual" @selected($selectedRepresentationMode === 'manual')>Manual</option>
+                                    </select>
+                                    @if($message = $inlineError('representation_mode'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
+                                </div>
+                                <div>
                                     <label for="representation_days" class="block text-sm font-medium text-slate-700">Jumlah Hari</label>
                                     <input id="representation_days" name="representation_days" type="number" min="1" value="{{ old('representation_days', $isEdit ? $entry->representation_days : '') }}" data-multiply-left="representation" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
                                     @if($message = $inlineError('representation_days'))
@@ -521,11 +533,14 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <label for="representation_rate" class="block text-sm font-medium text-slate-700">Nominal Sesuai SPPD</label>
+                                    <label for="representation_rate" class="block text-sm font-medium text-slate-700">Nominal Representasi</label>
                                     <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
                                         <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
                                         <input id="representation_rate" name="representation_rate" type="text" value="{{ old('representation_rate', $isEdit ? $entry->representation_rate : '') }}" data-nominal-input data-multiply-right="representation" class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
                                     </div>
+                                    @if($message = $inlineError('representation_rate'))
+                                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                    @endif
                                     <p id="representation-sbu-state" class="mt-2 text-xs leading-5 text-slate-500">Nominal representasi akan mengikuti acuan SBU berdasarkan tujuan dan jabatan yang diisi.</p>
                                 </div>
                                 <div>
@@ -951,6 +966,7 @@
             const dailyAllowanceModeInput = document.getElementById('daily_allowance_mode');
             const dailyAllowanceRateInput = document.getElementById('daily_allowance_rate');
             const dailyAllowanceState = document.getElementById('daily-allowance-sbu-state');
+            const representationModeInput = document.getElementById('representation_mode');
             const representationRateInput = document.getElementById('representation_rate');
             const representationState = document.getElementById('representation-sbu-state');
             const ticketSbuState = document.getElementById('ticket-sbu-state');
@@ -1563,6 +1579,7 @@
                 : findOutsideProvinceReference(dailyAllowanceReferences, 'province_name');
 
             const isDailyAllowanceManual = () => (dailyAllowanceModeInput?.value || 'sbu') === 'manual';
+            const isRepresentationManual = () => (representationModeInput?.value || 'sbu') === 'manual';
 
             const dailyAllowanceApplicableRate = (row) => {
                 if (!row) {
@@ -1883,6 +1900,15 @@
 
             const updateRepresentationRateFromReference = () => {
                 if (!representationRateInput) {
+                    return;
+                }
+
+                if (isRepresentationManual()) {
+                    representationRateInput.readOnly = false;
+                    if (representationState) {
+                        representationState.textContent = 'Mode manual aktif. Operator bisa mengisi nominal representasi sendiri, dan total tetap dihitung dari jumlah hari x nominal manual.';
+                    }
+                    queueTotalsRefresh();
                     return;
                 }
 
