@@ -76,6 +76,11 @@
                                     <a href="{{ route('perjadin.export.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
                                         Custom (Format Lama)
                                     </a>
+                                    @if (auth()->user()->hasAnyRole(['admin', 'bendahara']))
+                                        <a href="{{ route('perjadin.export.bpk.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
+                                            Versi BPK
+                                        </a>
+                                    @endif
                                     <div class="border-t border-slate-100 px-4 py-3">
                                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Kuitansi</p>
                                         <form action="{{ route('perjadin.receipts.export.xlsx') }}" method="GET" class="mt-3 space-y-3">
@@ -94,11 +99,6 @@
                                             </button>
                                         </form>
                                     </div>
-                                    @if (auth()->user()->hasAnyRole(['admin', 'bendahara']))
-                                        <a href="{{ route('perjadin.export.bpk.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
-                                            Versi BPK
-                                        </a>
-                                    @endif
                                 </div>
                             </details>
                             <a href="{{ route('add-perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -360,7 +360,7 @@
                 if (filterHelp) {
                     filterHelp.textContent = selectedType
                         ? 'Ketik sebagian data, lalu pilih dari saran yang muncul.'
-                        : 'Biarkan semua kuitansi untuk download tanpa filter.';
+                        : '';
                 }
                 hideSuggestions();
             };
