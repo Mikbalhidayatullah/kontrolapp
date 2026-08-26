@@ -363,12 +363,12 @@ class PerjadinBpkExcelExporter
             return 0;
         }
 
-        if ($entry->lodging_has_receipt) {
-            return (int) $entry->lodging_rate;
-        }
-
         if ((int) $entry->lodging_nights > 0 && (int) $entry->lodging_total > 0) {
             return (int) round((int) $entry->lodging_total / (int) $entry->lodging_nights);
+        }
+
+        if ($entry->lodging_has_receipt) {
+            return (int) $entry->lodging_rate;
         }
 
         return (int) round(max((int) $entry->lodging_rate, 0) * 0.3);

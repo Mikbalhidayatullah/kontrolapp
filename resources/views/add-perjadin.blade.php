@@ -29,6 +29,15 @@
         $selectedFundingCategory = old('funding_category', $isEdit ? ($entry->funding_category ?? '') : '');
         $selectedDailyAllowanceMode = old('daily_allowance_mode', $isEdit ? ($entry->daily_allowance_mode ?? 'sbu') : 'sbu');
         $selectedRepresentationMode = old('representation_mode', $isEdit ? ($entry->representation_mode ?? 'sbu') : 'sbu');
+        $storedLodgingSegments = $isEdit ? collect($entry->lodging_segments ?? [])->filter(fn ($segment) => is_array($segment))->values() : collect();
+        $storedPrimaryLodgingSegment = $storedLodgingSegments->first();
+        $additionalLodgingSegments = old(
+            'lodging_segments',
+            $storedLodgingSegments->count() > 1 ? $storedLodgingSegments->skip(1)->values()->all() : []
+        );
+        $primaryLodgingNights = old('lodging_nights', $storedPrimaryLodgingSegment['nights'] ?? ($isEdit ? $entry->lodging_nights : ''));
+        $primaryLodgingRate = old('lodging_rate', $storedPrimaryLodgingSegment['rate'] ?? ($isEdit ? $entry->lodging_rate : ''));
+        $primaryLodgingHotelName = old('lodging_hotel_name', $storedPrimaryLodgingSegment['hotel_name'] ?? ($isEdit ? $entry->lodging_hotel_name : ''));
         $selectedMissingProofs = collect(old('missing_proofs', $isEdit ? ($entry->missing_proofs ?? []) : []))
             ->filter()
             ->map(fn ($value) => (string) $value)
@@ -662,9 +671,20 @@
                                 </label>
                             </div>
                             <div class="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4" data-group-body>
-                                <div>
+                                <div class="md:col-span-2 xl:col-span-4">
+                                    <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                                        <div>
+                                            <p class="text-sm font-semibold text-slate-900">Hotel 1</p>
+                                            <p class="mt-1 text-xs text-slate-500">Baris utama penginapan.</p>
+                                        </div>
+                                        <button type="button" data-add-lodging-segment class="inline-flex items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                                            + Tambah Hotel
+                                        </button>
+                                    </div>
+                                </div>
+                                <div data-lodging-row>
                                     <label for="lodging_nights" class="block text-sm font-medium text-slate-700">Jumlah Malam</label>
-                                    <input id="lodging_nights" name="lodging_nights" type="number" min="1" value="{{ old('lodging_nights', $isEdit ? $entry->lodging_nights : '') }}" data-multiply-left="lodging" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="lodging_nights" name="lodging_nights" type="number" min="1" value="{{ $primaryLodgingNights }}" data-multiply-left="lodging" data-lodging-nights class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
                                     @if($message = $inlineError('lodging_nights'))
                                         <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                                     @endif
@@ -683,7 +703,7 @@
                                     <label for="lodging_rate" class="block text-sm font-medium text-slate-700">Nominal Penginapan Berlaku</label>
                                     <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
                                         <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
-                                        <input id="lodging_rate" name="lodging_rate" type="text" value="{{ old('lodging_rate', $isEdit ? $entry->lodging_rate : '') }}" data-nominal-input data-multiply-right="lodging" class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
+                                        <input id="lodging_rate" name="lodging_rate" type="text" value="{{ $primaryLodgingRate }}" data-nominal-input data-multiply-right="lodging" data-lodging-rate class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
                                     </div>
                                     @if($message = $inlineError('lodging_rate'))
                                         <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
@@ -692,12 +712,49 @@
                                 </div>
                                 <div class="xl:col-span-2">
                                     <label for="lodging_hotel_name" class="block text-sm font-medium text-slate-700">Nama Hotel</label>
-                                    <input id="lodging_hotel_name" name="lodging_hotel_name" type="text" value="{{ old('lodging_hotel_name', $isEdit ? $entry->lodging_hotel_name : '') }}" data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                    <input id="lodging_hotel_name" name="lodging_hotel_name" type="text" value="{{ $primaryLodgingHotelName }}" data-lodging-hotel-name data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
                                     <p class="mt-2 text-xs text-slate-500">Jika belum ada datanya, boleh dikosongkan. Sistem akan mengisi <span class="font-medium text-slate-700">-</span> otomatis saat disimpan.</p>
                                 </div>
                                 <div>
                                     <label for="lodging_total" class="block text-sm font-medium text-slate-700">Total</label>
                                     <input id="lodging_total" type="text" value="" readonly data-total-output="lodging" class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-900 outline-none" />
+                                </div>
+                                <div class="md:col-span-2 xl:col-span-4">
+                                    <div data-lodging-segments class="{{ count($additionalLodgingSegments) > 0 ? 'space-y-4' : 'hidden space-y-4' }}">
+                                        @foreach ($additionalLodgingSegments as $segmentIndex => $segment)
+                                            <div data-lodging-extra-row data-lodging-row class="rounded-3xl border border-slate-200 bg-white p-4">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <p class="text-sm font-semibold text-slate-900" data-lodging-row-title>Hotel {{ $segmentIndex + 2 }}</p>
+                                                        <p class="mt-1 text-xs text-slate-500">Rincian penginapan tambahan.</p>
+                                                    </div>
+                                                    <button type="button" data-remove-lodging-segment class="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
+                                                        Hapus
+                                                    </button>
+                                                </div>
+                                                <div class="mt-4 grid gap-4 md:grid-cols-3">
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-slate-700">Jumlah Malam</label>
+                                                        <input name="lodging_segments[{{ $segmentIndex }}][nights]" type="number" min="1" value="{{ $segment['nights'] ?? '' }}" data-lodging-nights class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-slate-700">Nominal Penginapan Berlaku</label>
+                                                        <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+                                                            <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
+                                                            <input name="lodging_segments[{{ $segmentIndex }}][rate]" type="text" value="{{ $segment['rate'] ?? '' }}" data-nominal-input data-lodging-rate class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-slate-700">Nama Hotel</label>
+                                                        <input name="lodging_segments[{{ $segmentIndex }}][hotel_name]" type="text" value="{{ $segment['hotel_name'] ?? '' }}" data-lodging-hotel-name data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    @if ($errors->has('lodging_segments') || $errors->has('lodging_segments.*.nights') || $errors->has('lodging_segments.*.rate'))
+                                        <p class="mt-2 text-xs text-rose-600">Rincian penginapan tambahan masih perlu dilengkapi jumlah malam dan nominalnya.</p>
+                                    @endif
                                 </div>
                             </div>
                         </article>
@@ -907,7 +964,6 @@
             const multiplyPairs = [
                 ['daily', '[data-multiply-left="daily"]', '[data-multiply-right="daily"]', 'daily_allowance_enabled'],
                 ['representation', '[data-multiply-left="representation"]', '[data-multiply-right="representation"]', 'representation_enabled'],
-                ['lodging', '[data-multiply-left="lodging"]', '[data-multiply-right="lodging"]', 'lodging_enabled'],
             ];
 
             const ticketDeparture = document.querySelector('[data-sum-ticket="departure"]');
@@ -973,6 +1029,8 @@
             const lodgingRateInput = document.getElementById('lodging_rate');
             const lodgingReceiptInput = document.getElementById('lodging_has_receipt');
             const lodgingState = document.getElementById('lodging-sbu-state');
+            const addLodgingSegmentButton = document.querySelector('[data-add-lodging-segment]');
+            const lodgingSegmentsWrapper = document.querySelector('[data-lodging-segments]');
             const localTransportSbuState = document.getElementById('local-transport-sbu-state');
             const localTransportFieldWrappers = document.querySelectorAll('[data-local-transport-field-wrapper]');
             const localTransportLabels = document.querySelectorAll('[data-local-transport-label]');
@@ -991,6 +1049,104 @@
             const reportCurrentWrapper = document.getElementById('report-current-wrapper');
 
             const output = (key) => document.querySelector(`[data-total-output="${key}"]`);
+
+            const lodgingNightsInputs = () => Array.from(document.querySelectorAll('[data-lodging-nights]'));
+            const lodgingRateInputs = () => Array.from(document.querySelectorAll('[data-lodging-rate]'));
+            const lodgingExtraRows = () => Array.from(document.querySelectorAll('[data-lodging-extra-row]'));
+
+            const effectiveLodgingInputRate = (rate) => lodgingReceiptInput?.checked
+                ? rate
+                : Math.round(rate * 0.3);
+
+            const lodgingTotalNights = () => lodgingNightsInputs()
+                .reduce((carry, input) => carry + Number(input.value || 0), 0);
+
+            const lodgingInputTotal = () => {
+                if (!isEnabled('lodging_enabled')) {
+                    return 0;
+                }
+
+                const rates = lodgingRateInputs();
+
+                return lodgingNightsInputs().reduce((carry, nightsInput, index) => {
+                    const nights = Number(nightsInput.value || 0);
+                    const rate = toNumber(rates[index]?.value || 0);
+
+                    return carry + (nights * effectiveLodgingInputRate(rate));
+                }, 0);
+            };
+
+            const refreshLodgingSegmentIndexes = () => {
+                const rows = lodgingExtraRows();
+
+                if (lodgingSegmentsWrapper) {
+                    lodgingSegmentsWrapper.classList.toggle('hidden', rows.length === 0);
+                }
+
+                rows.forEach((row, index) => {
+                    const title = row.querySelector('[data-lodging-row-title]');
+                    const nights = row.querySelector('[data-lodging-nights]');
+                    const rate = row.querySelector('[data-lodging-rate]');
+                    const hotel = row.querySelector('[data-lodging-hotel-name]');
+
+                    if (title) {
+                        title.textContent = `Hotel ${index + 2}`;
+                    }
+
+                    if (nights) {
+                        nights.name = `lodging_segments[${index}][nights]`;
+                    }
+
+                    if (rate) {
+                        rate.name = `lodging_segments[${index}][rate]`;
+                    }
+
+                    if (hotel) {
+                        hotel.name = `lodging_segments[${index}][hotel_name]`;
+                    }
+                });
+            };
+
+            const createLodgingSegmentRow = () => {
+                if (!lodgingSegmentsWrapper) {
+                    return;
+                }
+
+                const index = lodgingExtraRows().length;
+                lodgingSegmentsWrapper.insertAdjacentHTML('beforeend', `
+                    <div data-lodging-extra-row class="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900" data-lodging-row-title>Hotel ${index + 2}</p>
+                                <p class="mt-1 text-xs text-slate-500">Rincian penginapan tambahan.</p>
+                            </div>
+                            <button type="button" data-remove-lodging-segment class="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
+                                Hapus
+                            </button>
+                        </div>
+                        <div class="mt-4 grid gap-4 md:grid-cols-3">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700">Jumlah Malam</label>
+                                <input name="lodging_segments[${index}][nights]" type="number" min="1" data-lodging-nights class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700">Nominal Penginapan Berlaku</label>
+                                <div class="mt-2 flex overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+                                    <span class="inline-flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm text-slate-500">Rp</span>
+                                    <input name="lodging_segments[${index}][rate]" type="text" data-lodging-rate class="block w-full px-4 py-3 text-sm text-slate-900 outline-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700">Nama Hotel</label>
+                                <input name="lodging_segments[${index}][hotel_name]" type="text" data-lodging-hotel-name data-auto-dash-if-empty placeholder="Jika kosong, otomatis -" class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100" />
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                refreshLodgingSegmentIndexes();
+                recalculateTotalsOnly();
+            };
 
             const updateGradeNumberOptions = () => {
                 if (!gradeNumberInput) {
@@ -1201,8 +1357,8 @@
                     {
                         name: 'lodging_enabled',
                         fields: [
-                            document.querySelector('[data-multiply-left="lodging"]'),
-                            document.querySelector('[data-multiply-right="lodging"]'),
+                            ...lodgingNightsInputs(),
+                            ...lodgingRateInputs(),
                             document.getElementById('lodging_hotel_name'),
                         ],
                     },
@@ -2095,7 +2251,7 @@
 
                 if (isEnabled('lodging_enabled')) {
                     const row = lodgingReferenceEntry();
-                    const nights = Number(document.querySelector('[data-multiply-left="lodging"]')?.value || 0);
+                    const nights = lodgingTotalNights();
                     const lodgingProfile = lodgingComparisonByEchelon(row);
                     const rate = lodgingAppliedRate(lodgingProfile.amount);
                     if (rate > 0 && nights > 0) {
@@ -2197,10 +2353,7 @@
                 multiplyPairs.forEach(([key, leftSelector, rightSelector, enabledName]) => {
                     const left = Number(document.querySelector(leftSelector)?.value || 0);
                     const right = toNumber(document.querySelector(rightSelector)?.value || 0);
-                    const effectiveRight = key === 'lodging' && !lodgingReceiptInput?.checked
-                        ? Math.round(right * 0.3)
-                        : right;
-                    const total = isEnabled(enabledName) ? left * effectiveRight : 0;
+                    const total = isEnabled(enabledName) ? left * right : 0;
                     grandTotal += total;
                     actuals[key] = total;
 
@@ -2209,6 +2362,13 @@
                         target.value = total > 0 ? `Rp ${formatNominal(total)}` : '';
                     }
                 });
+
+                const lodgingTotal = lodgingInputTotal();
+                grandTotal += lodgingTotal;
+                actuals.lodging = lodgingTotal;
+                if (output('lodging')) {
+                    output('lodging').value = lodgingTotal > 0 ? `Rp ${formatNominal(lodgingTotal)}` : '';
+                }
 
                 const ticketTotal = isEnabled('ticket_enabled')
                     ? toNumber(ticketDeparture?.value) + toNumber(ticketReturn?.value)
@@ -2385,6 +2545,36 @@
                 updateLocalTransportReferences();
             });
 
+            addLodgingSegmentButton?.addEventListener('click', createLodgingSegmentRow);
+
+            lodgingSegmentsWrapper?.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('[data-remove-lodging-segment]');
+
+                if (!removeButton) {
+                    return;
+                }
+
+                removeButton.closest('[data-lodging-extra-row]')?.remove();
+                refreshLodgingSegmentIndexes();
+                recalculateTotalsOnly();
+            });
+
+            document.addEventListener('input', (event) => {
+                const field = event.target;
+
+                if (!(field instanceof HTMLInputElement)) {
+                    return;
+                }
+
+                if (field.matches('[data-lodging-rate]')) {
+                    field.value = field.value ? formatNominal(toNumber(field.value)) : '';
+                }
+
+                if (field.matches('[data-lodging-nights], [data-lodging-rate]')) {
+                    recalculateTotalsOnly();
+                }
+            });
+
             bindDirectRecalculation('[data-multiply-left]');
             bindDirectRecalculation('[data-multiply-right]');
             bindDirectRecalculation('[data-sum-ticket]');
@@ -2434,6 +2624,7 @@
 
             updateGroupPanels();
             updateOperatorLabels();
+            refreshLodgingSegmentIndexes();
             updateRouteFieldsVisibility();
             updateRegionalTripScopeVisibility();
             syncDestinationCityValue();

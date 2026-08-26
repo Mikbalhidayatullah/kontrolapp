@@ -673,6 +673,10 @@ class PerjadinController extends Controller
             'lodging_nights' => ['nullable', 'integer', 'min:1'],
             'lodging_rate' => ['nullable', 'string'],
             'lodging_hotel_name' => ['nullable', 'string', 'max:255'],
+            'lodging_segments' => ['nullable', 'array'],
+            'lodging_segments.*.nights' => ['nullable', 'integer', 'min:1'],
+            'lodging_segments.*.rate' => ['nullable', 'string'],
+            'lodging_segments.*.hotel_name' => ['nullable', 'string', 'max:255'],
 
             'local_transport_enabled' => ['nullable', 'boolean'],
             'local_transport_segment_ids' => ['nullable', 'array'],
@@ -805,6 +809,30 @@ class PerjadinController extends Controller
             if ($request->filled('grade_number') && $request->input('employee_status') !== 'Disetarakan' && ! in_array($request->input('grade_number'), $allowedGradeNumbers, true)) {
                 $validator->errors()->add('grade_number', 'Angka golongan tidak sesuai dengan status pegawai yang dipilih.');
             }
+
+            if ($request->boolean('lodging_enabled')) {
+                foreach ($request->input('lodging_segments', []) as $index => $segment) {
+                    if (! is_array($segment)) {
+                        continue;
+                    }
+
+                    $hasAnyValue = filled($segment['nights'] ?? null)
+                        || filled($segment['rate'] ?? null)
+                        || filled($segment['hotel_name'] ?? null);
+
+                    if (! $hasAnyValue) {
+                        continue;
+                    }
+
+                    if (blank($segment['nights'] ?? null)) {
+                        $validator->errors()->add("lodging_segments.$index.nights", 'Jumlah malam penginapan tambahan wajib diisi.');
+                    }
+
+                    if (blank($segment['rate'] ?? null)) {
+                        $validator->errors()->add("lodging_segments.$index.rate", 'Nominal penginapan tambahan wajib diisi.');
+                    }
+                }
+            }
         });
 
         $validated = $validator->validate();
@@ -849,12 +877,11 @@ class PerjadinController extends Controller
         $ticketReturnPrice = $ticketEnabled ? $this->parseMoney($validated['ticket_return_price'] ?? null) : null;
         $ticketTotal = $ticketEnabled ? $ticketDeparturePrice + $ticketReturnPrice : 0;
 
-        $lodgingNights = $lodgingEnabled ? (int) ($validated['lodging_nights'] ?? 0) : null;
-        $lodgingBaseRate = $lodgingEnabled ? $this->parseMoney($validated['lodging_rate'] ?? null) : null;
-        $lodgingEffectiveRate = $lodgingEnabled
-            ? ($lodgingHasReceipt ? $lodgingBaseRate : $this->lumpsumLodgingRate($lodgingBaseRate))
-            : null;
-        $lodgingTotal = $lodgingEnabled ? $lodgingNights * $lodgingEffectiveRate : 0;
+        $lodgingSegments = $this->lodgingSegmentsFromValidatedData($validated, $lodgingEnabled, $lodgingHasReceipt);
+        $primaryLodgingSegment = $lodgingSegments[0] ?? null;
+        $lodgingNights = $lodgingEnabled ? (int) collect($lodgingSegments)->sum('nights') : null;
+        $lodgingBaseRate = $lodgingEnabled ? ($primaryLodgingSegment['rate'] ?? null) : null;
+        $lodgingTotal = $lodgingEnabled ? (int) collect($lodgingSegments)->sum('total') : 0;
 
         $localTransportDomicileToAirport = $localTransportEnabled ? $this->parseMoney($validated['local_transport_domicile_to_airport'] ?? null) : null;
         $localTransportAirportToDomicile = $localTransportEnabled ? $this->parseMoney($validated['local_transport_airport_to_domicile'] ?? null) : null;
@@ -926,7 +953,8 @@ class PerjadinController extends Controller
             'lodging_nights' => $lodgingNights,
             'lodging_rate' => $lodgingBaseRate,
             'lodging_total' => $lodgingTotal,
-            'lodging_hotel_name' => $lodgingEnabled ? ($validated['lodging_hotel_name'] ?? null) : null,
+            'lodging_hotel_name' => $lodgingEnabled ? ($primaryLodgingSegment['hotel_name'] ?? null) : null,
+            'lodging_segments' => $lodgingEnabled ? $lodgingSegments : [],
 
             'local_transport_enabled' => $localTransportEnabled,
             'local_transport_segment_ids' => $localTransportSegmentIds,
@@ -942,6 +970,50 @@ class PerjadinController extends Controller
             'grand_total' => $grandTotal,
             'missing_proofs' => $missingProofs,
         ];
+    }
+
+    private function lodgingSegmentsFromValidatedData(array $validated, bool $lodgingEnabled, bool $lodgingHasReceipt): array
+    {
+        if (! $lodgingEnabled) {
+            return [];
+        }
+
+        $rows = [[
+            'nights' => $validated['lodging_nights'] ?? null,
+            'rate' => $validated['lodging_rate'] ?? null,
+            'hotel_name' => $validated['lodging_hotel_name'] ?? null,
+        ]];
+
+        foreach ($validated['lodging_segments'] ?? [] as $segment) {
+            if (! is_array($segment)) {
+                continue;
+            }
+
+            $rows[] = [
+                'nights' => $segment['nights'] ?? null,
+                'rate' => $segment['rate'] ?? null,
+                'hotel_name' => $segment['hotel_name'] ?? null,
+            ];
+        }
+
+        return collect($rows)
+            ->filter(fn (array $row): bool => filled($row['nights'] ?? null) || filled($row['rate'] ?? null) || filled($row['hotel_name'] ?? null))
+            ->map(function (array $row) use ($lodgingHasReceipt): array {
+                $nights = (int) ($row['nights'] ?? 0);
+                $rate = $this->parseMoney($row['rate'] ?? null);
+                $effectiveRate = $lodgingHasReceipt ? $rate : $this->lumpsumLodgingRate($rate);
+
+                return [
+                    'nights' => $nights,
+                    'rate' => $rate,
+                    'effective_rate' => $effectiveRate,
+                    'hotel_name' => filled($row['hotel_name'] ?? null) ? trim((string) $row['hotel_name']) : '-',
+                    'total' => $nights * $effectiveRate,
+                ];
+            })
+            ->filter(fn (array $row): bool => $row['nights'] > 0 && $row['rate'] > 0)
+            ->values()
+            ->all();
     }
 
     private function storePdf(Request $request, string $field, string $directory): array
@@ -1209,13 +1281,13 @@ class PerjadinController extends Controller
             [
                 'title' => 'Penginapan',
                 'enabled' => $entry->lodging_enabled,
-                'rows' => [
+                'rows' => array_merge([
                     ['label' => 'Jumlah Malam', 'value' => $entry->lodging_nights ?: '-'],
                     ['label' => 'Ada Nota', 'value' => $entry->lodging_has_receipt ? 'Ya, full SBU' : 'Tidak, lumpsum 30% dari SBU'],
                     ['label' => 'Nominal Dipakai', 'value' => $this->moneyLabel($this->effectiveLodgingRate($entry))],
                     ['label' => 'Nama Hotel', 'value' => $entry->lodging_hotel_name ?: '-'],
                     ['label' => 'Total', 'value' => $this->moneyLabel($entry->lodging_total)],
-                ],
+                ], $this->lodgingSegmentDetailRows($entry)),
             ],
             [
                 'title' => 'Transportasi Lokal',
@@ -1237,6 +1309,31 @@ class PerjadinController extends Controller
                 ],
             ],
         ];
+    }
+
+    private function lodgingSegmentDetailRows(PerjadinEntry $entry): array
+    {
+        $segments = collect($entry->lodging_segments ?? [])
+            ->filter(fn ($segment): bool => is_array($segment))
+            ->values();
+
+        if ($segments->count() <= 1) {
+            return [];
+        }
+
+        return $segments
+            ->map(function (array $segment, int $index): array {
+                $nights = (int) ($segment['nights'] ?? 0);
+                $rate = (int) ($segment['effective_rate'] ?? $segment['rate'] ?? 0);
+                $total = (int) ($segment['total'] ?? ($nights * $rate));
+                $hotelName = filled($segment['hotel_name'] ?? null) ? $segment['hotel_name'] : '-';
+
+                return [
+                    'label' => 'Hotel '.($index + 1),
+                    'value' => $hotelName.' | '.$nights.' malam x '.$this->moneyLabel($rate).' = '.$this->moneyLabel($total),
+                ];
+            })
+            ->all();
     }
 
     private function receiptBreakdown(PerjadinEntry $entry): array
@@ -1303,12 +1400,12 @@ class PerjadinController extends Controller
             return 0;
         }
 
-        if ($entry->lodging_has_receipt) {
-            return (int) $entry->lodging_rate;
-        }
-
         if ((int) $entry->lodging_nights > 0 && (int) $entry->lodging_total > 0) {
             return (int) round((int) $entry->lodging_total / (int) $entry->lodging_nights);
+        }
+
+        if ($entry->lodging_has_receipt) {
+            return (int) $entry->lodging_rate;
         }
 
         return $this->lumpsumLodgingRate((int) $entry->lodging_rate);
