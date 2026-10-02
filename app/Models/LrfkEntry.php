@@ -65,4 +65,9 @@ class LrfkEntry extends Model
     {
         return $this->hasMany(self::class, 'parent_id');
     }
+
+    public function perjadinEntries(): HasMany
+    {
+        return $this->hasMany(PerjadinEntry::class);
+    }
 }

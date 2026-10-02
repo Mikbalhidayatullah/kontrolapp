@@ -121,6 +121,19 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach ($entries as $entry)
+                                    @php
+                                        $rowMetrics = $metrics[$entry->id] ?? [
+                                            'contract' => (int) $entry->contract_value,
+                                            'realization' => (int) $entry->financial_realization,
+                                            'linked' => 0,
+                                        ];
+                                        $effectiveContract = (int) $rowMetrics['contract'];
+                                        $effectiveRealization = (int) $rowMetrics['realization'];
+                                        $effectivePercent = $entry->pagu_anggaran > 0
+                                            ? round(($effectiveRealization / $entry->pagu_anggaran) * 100, 2)
+                                            : 0;
+                                        $linkedUsages = $linkedUsageByEntry[$entry->id] ?? [];
+                                    @endphp
                                     <tr data-lrfk-level="{{ $entry->level }}">
                                         <td class="px-4 py-4 align-top font-semibold">{{ $entry->kode ?: '-' }}</td>
                                         <td class="px-4 py-4 align-top font-medium">{{ $entry->kode_rekening ?: '-' }}</td>
@@ -131,15 +144,45 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-4 text-right align-top font-semibold">Rp {{ number_format($entry->pagu_anggaran, 0, ',', '.') }}</td>
-                                        <td class="px-4 py-4 text-right align-top">Rp {{ number_format($entry->contract_value, 0, ',', '.') }}</td>
-                                        <td class="px-4 py-4 align-top whitespace-pre-line">{{ $entry->contract_number_date ?: '-' }}</td>
-                                        <td class="px-4 py-4 align-top whitespace-pre-line">{{ $entry->implementer ?: '-' }}</td>
-                                        <td class="max-w-sm px-4 py-4 align-top whitespace-pre-line">{{ $entry->output ?: '-' }}</td>
+                                        <td class="px-4 py-4 text-right align-top">Rp {{ number_format($effectiveContract, 0, ',', '.') }}</td>
+                                        <td class="px-4 py-4 align-top">
+                                            @if ($entry->contract_number_date)
+                                                <p class="whitespace-pre-line">{{ $entry->contract_number_date }}</p>
+                                            @endif
+                                            @foreach ($linkedUsages as $usage)
+                                                <p class="{{ $entry->contract_number_date || ! $loop->first ? 'mt-2 border-t border-current/10 pt-2' : '' }}">{{ $usage['assignment_number_date'] ?: '-' }}</p>
+                                            @endforeach
+                                            @if (! $entry->contract_number_date && $linkedUsages === [])
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-4 align-top">
+                                            @if ($entry->implementer)
+                                                <p class="whitespace-pre-line">{{ $entry->implementer }}</p>
+                                            @endif
+                                            @foreach ($linkedUsages as $usage)
+                                                <p class="{{ $entry->implementer || ! $loop->first ? 'mt-2 border-t border-current/10 pt-2' : '' }}">{{ $usage['implementer'] ?: '-' }}</p>
+                                            @endforeach
+                                            @if (! $entry->implementer && $linkedUsages === [])
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="max-w-sm px-4 py-4 align-top">
+                                            @if ($entry->output)
+                                                <p class="whitespace-pre-line">{{ $entry->output }}</p>
+                                            @endif
+                                            @foreach ($linkedUsages as $usage)
+                                                <p class="{{ $entry->output || ! $loop->first ? 'mt-2 border-t border-current/10 pt-2' : '' }} whitespace-pre-line">{{ $usage['purpose'] ?: '-' }}</p>
+                                            @endforeach
+                                            @if (! $entry->output && $linkedUsages === [])
+                                                -
+                                            @endif
+                                        </td>
                                         <td class="px-4 py-4 align-top">{{ $entry->volume ?: '-' }}</td>
                                         <td class="px-4 py-4 align-top">{{ $entry->unit ?: '-' }}</td>
-                                        <td class="px-4 py-4 text-right align-top font-semibold">Rp {{ number_format($entry->financial_realization, 0, ',', '.') }}</td>
-                                        <td class="px-4 py-4 text-right align-top">{{ number_format((float) $entry->financial_percent, 2, ',', '.') }}%</td>
-                                        <td class="px-4 py-4 text-right align-top">{{ number_format((float) $entry->physical_percent, 2, ',', '.') }}%</td>
+                                        <td class="px-4 py-4 text-right align-top font-semibold">Rp {{ number_format($effectiveRealization, 0, ',', '.') }}</td>
+                                        <td class="px-4 py-4 text-right align-top">{{ number_format($effectivePercent, 2, ',', '.') }}%</td>
+                                        <td class="px-4 py-4 text-right align-top">{{ number_format($effectivePercent, 2, ',', '.') }}%</td>
                                         <td class="px-4 py-4 align-top">{{ $entry->location ?: '-' }}</td>
                                         <td class="max-w-xs px-4 py-4 align-top">{{ $entry->notes ?: '-' }}</td>
                                         <td class="px-4 py-4 align-top">

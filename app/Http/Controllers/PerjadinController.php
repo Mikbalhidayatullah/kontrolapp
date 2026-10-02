@@ -14,6 +14,7 @@ use App\Models\TravelDestinationRegion;
 use App\Services\PerjadinBpkExcelExporter;
 use App\Services\PerjadinExcelExporter;
 use App\Services\PerjadinReceiptExcelExporter;
+use App\Services\LrfkPerjadinService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -77,6 +78,10 @@ class PerjadinController extends Controller
         'Bus',
         'Lainnya',
     ];
+
+    public function __construct(private readonly LrfkPerjadinService $lrfkPerjadinService)
+    {
+    }
 
     public function index(Request $request): View
     {
@@ -341,7 +346,7 @@ class PerjadinController extends Controller
 
     public function show(Request $request, PerjadinEntry $perjadinEntry): View
     {
-        $perjadinEntry->loadMissing(['creator:id,name', 'updater:id,name']);
+        $perjadinEntry->loadMissing(['creator:id,name', 'updater:id,name', 'lrfkEntry:id,kode_rekening,program_kegiatan']);
 
         $period = [
             'month' => optional($perjadinEntry->start_date)->month ?? now()->month,
@@ -631,6 +636,18 @@ class PerjadinController extends Controller
             'funding_category_mode' => ['nullable', 'string', Rule::in(['existing', 'new'])],
             'funding_category' => ['nullable', 'string', 'max:255'],
             'new_funding_category' => ['nullable', 'string', 'max:255'],
+            'lrfk_link_enabled' => ['nullable', 'boolean'],
+            'lrfk_entry_id' => [
+                'nullable',
+                'required_if:lrfk_link_enabled,1',
+                'integer',
+                Rule::exists('lrfk_entries', 'id')->where(function ($query): void {
+                    $query
+                        ->where('level', 'rekening')
+                        ->whereNotNull('kode_rekening')
+                        ->where('kode_rekening', '<>', '');
+                }),
+            ],
             'origin_regency' => ['nullable', 'string'],
             'origin_district' => ['nullable', 'string', 'max:255'],
             'destination_regency' => ['nullable', 'string'],
@@ -903,6 +920,7 @@ class PerjadinController extends Controller
         return [
             'category' => $validated['category'],
             'funding_category' => $this->fundingCategoryFromRequest($request),
+            'lrfk_entry_id' => $request->boolean('lrfk_link_enabled') ? (int) $validated['lrfk_entry_id'] : null,
             'skpd_name' => $validated['skpd_name'],
             'executor_name' => $validated['executor_name'],
             'employee_status' => $validated['employee_status'],
@@ -1086,6 +1104,7 @@ class PerjadinController extends Controller
             'activeKeyword' => $activeKeyword,
             'categories' => self::CATEGORY_OPTIONS,
             'fundingCategoryOptions' => $this->fundingCategoryOptions(),
+            'lrfkHierarchy' => $this->lrfkPerjadinService->hierarchy(),
             'employeeStatusOptions' => self::EMPLOYEE_STATUS_OPTIONS,
             'echelonOptions' => self::ECHELON_OPTIONS,
             'gradeNumberOptions' => $this->allGradeNumberOptions(),

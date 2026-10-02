@@ -27,6 +27,8 @@
             default => $selectedGradeNumber && $selectedGradeLetter ? $selectedGradeNumber.$selectedGradeLetter : (string) $storedGrade,
         };
         $selectedFundingCategory = old('funding_category', $isEdit ? ($entry->funding_category ?? '') : '');
+        $selectedLrfkEntryId = (int) old('lrfk_entry_id', $isEdit ? ($entry->lrfk_entry_id ?? 0) : 0);
+        $lrfkLinkEnabled = (bool) old('lrfk_link_enabled', $selectedLrfkEntryId > 0 ? 1 : 0);
         $selectedDailyAllowanceMode = old('daily_allowance_mode', $isEdit ? ($entry->daily_allowance_mode ?? 'sbu') : 'sbu');
         $selectedRepresentationMode = old('representation_mode', $isEdit ? ($entry->representation_mode ?? 'sbu') : 'sbu');
         $storedLodgingSegments = $isEdit ? collect($entry->lodging_segments ?? [])->filter(fn ($segment) => is_array($segment))->values() : collect();
@@ -48,6 +50,7 @@
             'category' => 'kategori perjadin',
             'funding_category' => 'kategori pendanaan',
             'new_funding_category' => 'kategori pendanaan baru',
+            'lrfk_entry_id' => 'kode rekening LRFK',
             'origin_regency' => 'kabupaten asal',
             'origin_district' => 'kecamatan asal',
             'destination_regency' => 'kabupaten tujuan',
@@ -169,6 +172,82 @@
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @endif
                             <p class="mt-3 text-xs text-slate-500">Hanya sebagai penanda sumber pendanaan perjadin, tidak terhubung otomatis ke data Pajak.</p>
+                        </div>
+
+                        <div class="rounded-3xl border border-sky-200 bg-sky-50/60 p-5" data-lrfk-link-card>
+                            <input type="hidden" name="lrfk_link_enabled" value="0" />
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-900">Hubungkan ke LRFK</p>
+                                    <p class="mt-1 text-xs leading-5 text-slate-500">Pilih rekening anggaran agar nominal Perjadin yang sudah dibayar masuk ke realisasi LRFK.</p>
+                                </div>
+                                <label class="inline-flex items-center gap-2 text-sm font-medium text-sky-800">
+                                    <input id="lrfk_link_enabled" name="lrfk_link_enabled" type="checkbox" value="1" data-lrfk-link-toggle @checked($lrfkLinkEnabled) @disabled($lrfkHierarchy === []) class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+                                    Aktifkan
+                                </label>
+                            </div>
+
+                            @if ($lrfkHierarchy === [])
+                                <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                                    Belum ada susunan Program, Kegiatan, Sub Kegiatan, dan Rekening yang dapat dipilih pada LRFK.
+                                </div>
+                            @else
+                                <div class="mt-4 {{ $lrfkLinkEnabled ? '' : 'hidden' }}" data-lrfk-link-fields>
+                                    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                        <div>
+                                            <label for="lrfk_program" class="block text-sm font-medium text-slate-700">Program</label>
+                                            <select id="lrfk_program" data-lrfk-program class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                                <option value="">Pilih program</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="lrfk_kegiatan" class="block text-sm font-medium text-slate-700">Kegiatan</label>
+                                            <select id="lrfk_kegiatan" data-lrfk-kegiatan disabled class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition disabled:bg-slate-100 disabled:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                                <option value="">Pilih kegiatan</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="lrfk_sub_kegiatan" class="block text-sm font-medium text-slate-700">Sub Kegiatan</label>
+                                            <select id="lrfk_sub_kegiatan" data-lrfk-sub-kegiatan disabled class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition disabled:bg-slate-100 disabled:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                                <option value="">Pilih sub kegiatan</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="lrfk_entry_id" class="block text-sm font-medium text-slate-700">Kode Rekening</label>
+                                            <select id="lrfk_entry_id" name="lrfk_entry_id" data-lrfk-rekening disabled class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition disabled:bg-slate-100 disabled:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
+                                                <option value="">Pilih kode rekening</option>
+                                            </select>
+                                            @if($message = $inlineError('lrfk_entry_id'))
+                                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 hidden grid gap-3 rounded-2xl border border-sky-200 bg-white p-4 sm:grid-cols-2 xl:grid-cols-5" data-lrfk-preview>
+                                        <div>
+                                            <p class="text-xs text-slate-500">Pagu Rekening</p>
+                                            <p class="mt-1 text-sm font-semibold text-slate-900" data-lrfk-preview-pagu>Rp 0</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-slate-500">Realisasi Saat Ini</p>
+                                            <p class="mt-1 text-sm font-semibold text-slate-900" data-lrfk-preview-current>Rp 0</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-slate-500">Nominal Perjadin</p>
+                                            <p class="mt-1 text-sm font-semibold text-sky-700" data-lrfk-preview-nominal>Rp 0</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-slate-500">Setelah Dibayar</p>
+                                            <p class="mt-1 text-sm font-semibold text-emerald-700" data-lrfk-preview-after>Rp 0</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-slate-500">Realisasi / Sisa Pagu</p>
+                                            <p class="mt-1 text-sm font-semibold text-slate-900" data-lrfk-preview-percent>0,00% / Rp 0</p>
+                                        </div>
+                                    </div>
+                                    <p class="mt-3 text-xs text-slate-500">Nominal baru dihitung sebagai realisasi setelah status Perjadin dibayar.</p>
+                                </div>
+                            @endif
                         </div>
 
                         <div id="destination-city-sbu-wrapper" class="{{ $showRegionalRouteFields ? 'hidden' : '' }} rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -960,6 +1039,109 @@
                 .replace(/'/g, '&#039;');
             const normalizeText = (value) => (value || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
             const sameNormalized = (left, right) => normalizeText(left) === normalizeText(right);
+
+            const lrfkHierarchy = {{ Js::from($lrfkHierarchy) }};
+            const initialLrfkEntryId = Number({{ $selectedLrfkEntryId }} || 0);
+            const originalLrfkEntryId = Number({{ $isEdit ? (int) ($entry->lrfk_entry_id ?? 0) : 0 }} || 0);
+            const originalLrfkGrandTotal = Number({{ $isEdit ? (int) ($entry->grand_total ?? 0) : 0 }} || 0);
+            const originalLrfkWasPaid = @json($isEdit && filled($entry->paid_at));
+            const lrfkToggle = document.querySelector('[data-lrfk-link-toggle]');
+            const lrfkFields = document.querySelector('[data-lrfk-link-fields]');
+            const lrfkProgram = document.querySelector('[data-lrfk-program]');
+            const lrfkKegiatan = document.querySelector('[data-lrfk-kegiatan]');
+            const lrfkSubKegiatan = document.querySelector('[data-lrfk-sub-kegiatan]');
+            const lrfkRekening = document.querySelector('[data-lrfk-rekening]');
+            const lrfkPreview = document.querySelector('[data-lrfk-preview]');
+            const lrfkPreviewPagu = document.querySelector('[data-lrfk-preview-pagu]');
+            const lrfkPreviewCurrent = document.querySelector('[data-lrfk-preview-current]');
+            const lrfkPreviewNominal = document.querySelector('[data-lrfk-preview-nominal]');
+            const lrfkPreviewAfter = document.querySelector('[data-lrfk-preview-after]');
+            const lrfkPreviewPercent = document.querySelector('[data-lrfk-preview-percent]');
+            let calculatedGrandTotal = 0;
+
+            const lrfkOptionLabel = (item) => [item.kode, item.nama].filter(Boolean).join(' - ');
+            const replaceLrfkOptions = (select, items, placeholder, selectedId = 0) => {
+                if (!select) {
+                    return;
+                }
+
+                select.innerHTML = '';
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = '';
+                placeholderOption.textContent = placeholder;
+                select.appendChild(placeholderOption);
+
+                items.forEach((item) => {
+                    const option = document.createElement('option');
+                    option.value = String(item.id);
+                    option.textContent = lrfkOptionLabel(item);
+                    option.selected = Number(item.id) === Number(selectedId);
+                    select.appendChild(option);
+                });
+            };
+            const selectedLrfkProgram = () => lrfkHierarchy.find((item) => Number(item.id) === Number(lrfkProgram?.value));
+            const selectedLrfkKegiatan = () => selectedLrfkProgram()?.kegiatan?.find((item) => Number(item.id) === Number(lrfkKegiatan?.value));
+            const selectedLrfkSubKegiatan = () => selectedLrfkKegiatan()?.sub_kegiatan?.find((item) => Number(item.id) === Number(lrfkSubKegiatan?.value));
+            const selectedLrfkRekening = () => selectedLrfkSubKegiatan()?.rekening?.find((item) => Number(item.id) === Number(lrfkRekening?.value));
+            const findLrfkPath = (entryId) => {
+                for (const program of lrfkHierarchy) {
+                    for (const kegiatan of program.kegiatan || []) {
+                        for (const subKegiatan of kegiatan.sub_kegiatan || []) {
+                            const rekening = (subKegiatan.rekening || []).find((item) => Number(item.id) === Number(entryId));
+
+                            if (rekening) {
+                                return { program, kegiatan, subKegiatan, rekening };
+                            }
+                        }
+                    }
+                }
+
+                return null;
+            };
+            const updateLrfkPreview = () => {
+                const rekening = selectedLrfkRekening();
+                const enabled = Boolean(lrfkToggle?.checked && rekening);
+                lrfkPreview?.classList.toggle('hidden', !enabled);
+
+                if (!enabled) {
+                    return;
+                }
+
+                const pagu = Number(rekening.pagu || 0);
+                const current = Number(rekening.realisasi || 0);
+                const removesOriginal = originalLrfkWasPaid && Number(rekening.id) === originalLrfkEntryId;
+                const after = Math.max(0, current - (removesOriginal ? originalLrfkGrandTotal : 0)) + calculatedGrandTotal;
+                const percent = pagu > 0 ? (after / pagu) * 100 : 0;
+                const remaining = pagu - after;
+
+                if (lrfkPreviewPagu) lrfkPreviewPagu.textContent = moneyLabel(pagu);
+                if (lrfkPreviewCurrent) lrfkPreviewCurrent.textContent = moneyLabel(current);
+                if (lrfkPreviewNominal) lrfkPreviewNominal.textContent = moneyLabel(calculatedGrandTotal);
+                if (lrfkPreviewAfter) lrfkPreviewAfter.textContent = moneyLabel(after);
+                if (lrfkPreviewPercent) {
+                    lrfkPreviewPercent.textContent = `${percent.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}% / ${moneyLabel(remaining)}`;
+                    lrfkPreviewPercent.className = `mt-1 text-sm font-semibold ${remaining < 0 ? 'text-rose-700' : 'text-slate-900'}`;
+                }
+            };
+            const syncLrfkState = () => {
+                const enabled = Boolean(lrfkToggle?.checked);
+                lrfkFields?.classList.toggle('hidden', !enabled);
+
+                if (lrfkProgram) lrfkProgram.disabled = !enabled;
+                if (lrfkKegiatan) lrfkKegiatan.disabled = !enabled || !lrfkProgram?.value;
+                if (lrfkSubKegiatan) lrfkSubKegiatan.disabled = !enabled || !lrfkKegiatan?.value;
+                if (lrfkRekening) lrfkRekening.disabled = !enabled || !lrfkSubKegiatan?.value;
+
+                updateLrfkPreview();
+            };
+            const initializeLrfkSelectors = () => {
+                const path = findLrfkPath(initialLrfkEntryId);
+                replaceLrfkOptions(lrfkProgram, lrfkHierarchy, 'Pilih program', path?.program?.id);
+                replaceLrfkOptions(lrfkKegiatan, path?.program?.kegiatan || [], 'Pilih kegiatan', path?.kegiatan?.id);
+                replaceLrfkOptions(lrfkSubKegiatan, path?.kegiatan?.sub_kegiatan || [], 'Pilih sub kegiatan', path?.subKegiatan?.id);
+                replaceLrfkOptions(lrfkRekening, path?.subKegiatan?.rekening || [], 'Pilih kode rekening', path?.rekening?.id);
+                syncLrfkState();
+            };
 
             const multiplyPairs = [
                 ['daily', '[data-multiply-left="daily"]', '[data-multiply-right="daily"]', 'daily_allowance_enabled'],
@@ -2396,6 +2578,8 @@
                     output('grand_total').value = grandTotal > 0 ? `Rp ${formatNominal(grandTotal)}` : 'Rp 0';
                 }
 
+                calculatedGrandTotal = grandTotal;
+                updateLrfkPreview();
                 renderSbuComparison(actuals, grandTotal);
             };
 
@@ -2497,6 +2681,27 @@
             });
 
             fundingCategoryMode?.addEventListener('change', syncFundingCategoryMode);
+
+            lrfkToggle?.addEventListener('change', syncLrfkState);
+            lrfkProgram?.addEventListener('change', () => {
+                const program = selectedLrfkProgram();
+                replaceLrfkOptions(lrfkKegiatan, program?.kegiatan || [], 'Pilih kegiatan');
+                replaceLrfkOptions(lrfkSubKegiatan, [], 'Pilih sub kegiatan');
+                replaceLrfkOptions(lrfkRekening, [], 'Pilih kode rekening');
+                syncLrfkState();
+            });
+            lrfkKegiatan?.addEventListener('change', () => {
+                const kegiatan = selectedLrfkKegiatan();
+                replaceLrfkOptions(lrfkSubKegiatan, kegiatan?.sub_kegiatan || [], 'Pilih sub kegiatan');
+                replaceLrfkOptions(lrfkRekening, [], 'Pilih kode rekening');
+                syncLrfkState();
+            });
+            lrfkSubKegiatan?.addEventListener('change', () => {
+                const subKegiatan = selectedLrfkSubKegiatan();
+                replaceLrfkOptions(lrfkRekening, subKegiatan?.rekening || [], 'Pilih kode rekening');
+                syncLrfkState();
+            });
+            lrfkRekening?.addEventListener('change', updateLrfkPreview);
 
             destinationCitySelect?.addEventListener('change', () => {
                 syncDestinationCityValue();
@@ -2623,6 +2828,7 @@
             removeReportInput?.addEventListener('change', syncCurrentFileState);
 
             updateGroupPanels();
+            initializeLrfkSelectors();
             updateOperatorLabels();
             refreshLodgingSegmentIndexes();
             updateRouteFieldsVisibility();

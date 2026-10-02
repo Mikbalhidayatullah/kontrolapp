@@ -36,6 +36,7 @@ class PerjadinEntry extends Model
     protected $fillable = [
         'category',
         'funding_category',
+        'lrfk_entry_id',
         'skpd_name',
         'executor_name',
         'employee_status',
@@ -164,6 +165,11 @@ class PerjadinEntry extends Model
     public function payer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    public function lrfkEntry(): BelongsTo
+    {
+        return $this->belongsTo(LrfkEntry::class);
     }
 
     public function missingProofLabels(): array

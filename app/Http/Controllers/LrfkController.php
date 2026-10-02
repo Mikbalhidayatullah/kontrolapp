@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LrfkEntry;
+use App\Services\LrfkPerjadinService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,10 @@ class LrfkController extends Controller
         'sub_kegiatan' => 'Sub Kegiatan',
         'rekening' => 'Rekening',
     ];
+
+    public function __construct(private readonly LrfkPerjadinService $lrfkPerjadinService)
+    {
+    }
 
     public function index(Request $request): View
     {
@@ -47,6 +52,7 @@ class LrfkController extends Controller
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
+        $metrics = $this->lrfkPerjadinService->metrics();
 
         return view('lrfk.index', [
             'title' => 'LRFK',
@@ -54,11 +60,13 @@ class LrfkController extends Controller
             'levelOptions' => self::LEVEL_OPTIONS,
             'selectedKeyword' => $selectedKeyword,
             'selectedLevel' => $selectedLevel,
+            'metrics' => $metrics,
+            'linkedUsageByEntry' => $this->lrfkPerjadinService->linkedUsageByEntry(),
             'summary' => [
                 'count' => $entries->count(),
                 'pagu' => $this->hierarchicalPaguTotal($entries),
-                'contract' => (int) $entries->sum('contract_value'),
-                'realization' => (int) $entries->sum('financial_realization'),
+                'contract' => $this->hierarchicalMetricTotal($entries, $metrics, 'contract'),
+                'realization' => $this->hierarchicalMetricTotal($entries, $metrics, 'realization'),
             ],
         ]);
     }
@@ -152,6 +160,21 @@ class LrfkController extends Controller
 
             if ($levelEntries->isNotEmpty()) {
                 return (int) $levelEntries->sum('pagu_anggaran');
+            }
+        }
+
+        return 0;
+    }
+
+    private function hierarchicalMetricTotal($entries, array $metrics, string $metric): int
+    {
+        foreach (array_keys(self::LEVEL_OPTIONS) as $level) {
+            $levelEntries = $entries->where('level', $level);
+
+            if ($levelEntries->isNotEmpty()) {
+                return (int) $levelEntries->sum(
+                    fn (LrfkEntry $entry): int => (int) ($metrics[$entry->id][$metric] ?? $entry->{$metric === 'contract' ? 'contract_value' : 'financial_realization'})
+                );
             }
         }
 

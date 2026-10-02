@@ -177,6 +177,15 @@
                         <p class="text-xs uppercase tracking-[0.18em] text-emerald-600">Kategori Pendanaan</p>
                         <p class="mt-2 font-semibold text-slate-900">{{ $entry->funding_category ?: '-' }}</p>
                     </div>
+                    <div class="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 sm:col-span-2">
+                        <p class="text-xs uppercase tracking-[0.18em] text-sky-600">Rekening LRFK</p>
+                        @if ($entry->lrfkEntry)
+                            <p class="mt-2 font-semibold text-slate-900">{{ $entry->lrfkEntry->kode_rekening }}</p>
+                            <p class="mt-1 text-sm text-slate-600">{{ $entry->lrfkEntry->program_kegiatan }}</p>
+                        @else
+                            <p class="mt-2 font-semibold text-slate-900">Tidak dihubungkan</p>
+                        @endif
+                    </div>
                 </div>
             </article>
 

@@ -1,6 +1,51 @@
 <x-layout>
     <x-slot:title>{{ $title }}</x-slot:title>
 
+    <style>
+        @media (max-width: 639px) {
+            .perjadin-export-actions {
+                align-items: stretch;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                width: 100%;
+            }
+
+            .perjadin-export-details,
+            .perjadin-export-summary,
+            .perjadin-add-button,
+            .perjadin-export-dropdown {
+                box-sizing: border-box;
+                width: 100% !important;
+                max-width: 100%;
+            }
+
+            .perjadin-export-dropdown {
+                position: static !important;
+            }
+        }
+
+        @media (min-width: 640px) {
+            .perjadin-export-actions {
+                align-items: flex-start;
+                display: flex;
+                justify-content: flex-end;
+            }
+
+            .perjadin-export-details,
+            .perjadin-export-summary,
+            .perjadin-add-button {
+                width: auto !important;
+            }
+
+            .perjadin-export-dropdown {
+                position: absolute !important;
+                right: 0;
+                top: 100%;
+                width: 20rem !important;
+            }
+        }
+    </style>
+
     <div class="space-y-6">
         <section class="grid gap-4 lg:grid-cols-4">
             <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -60,9 +105,9 @@
                     </form>
 
                     <div class="flex justify-end">
-                        <div class="grid w-full grid-cols-1 gap-3 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
-                            <details class="group relative w-full sm:w-auto">
-                                <summary class="inline-flex w-full cursor-pointer list-none items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 sm:w-auto [&::-webkit-details-marker]:hidden">
+                        <div class="perjadin-export-actions grid w-full grid-cols-1 gap-3 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+                            <details class="perjadin-export-details group relative w-full sm:w-auto">
+                                <summary class="perjadin-export-summary inline-flex w-full cursor-pointer list-none items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 sm:w-auto [&::-webkit-details-marker]:hidden">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
                                         <path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round" />
                                         <path d="M5 19h14" stroke-linecap="round" stroke-linejoin="round" />
@@ -72,7 +117,7 @@
                                         <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                 </summary>
-                                <div class="static z-30 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl sm:absolute sm:right-0 sm:w-80">
+                                <div class="perjadin-export-dropdown static z-30 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl sm:absolute sm:right-0 sm:w-80">
                                     <a href="{{ route('perjadin.export.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
                                         Custom (Format Lama)
                                     </a>
@@ -101,7 +146,7 @@
                                     </div>
                                 </div>
                             </details>
-                            <a href="{{ route('add-perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="inline-flex w-full items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto">
+                            <a href="{{ route('add-perjadin', ['month' => $currentPeriod['month'], 'year' => $currentPeriod['year'], 'category' => $selectedCategory, 'keyword' => $selectedKeyword]) }}" class="perjadin-add-button inline-flex w-full items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto">
                                 Tambah Perjadin
                             </a>
                         </div>
