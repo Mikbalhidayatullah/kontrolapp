@@ -84,13 +84,16 @@ Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function 
     Route::get('/perjadin/{perjadinEntry}/detail/pdf', [PerjadinController::class, 'downloadDetailPdf'])->name('perjadin.detail.pdf');
     Route::get('/perjadin/{perjadinEntry}/edit', [PerjadinController::class, 'edit'])->name('perjadin.edit');
     Route::put('/perjadin/{perjadinEntry}', [PerjadinController::class, 'update'])->name('perjadin.update');
-    Route::delete('/perjadin/{perjadinEntry}', [PerjadinController::class, 'destroy'])->name('perjadin.destroy');
+    Route::delete('/perjadin/{perjadinEntry}', [PerjadinController::class, 'destroy'])
+        ->middleware('role:admin,bendahara')
+        ->name('perjadin.destroy');
     Route::get('/perjadin/{perjadinEntry}/lampiran/{attachment}', [PerjadinController::class, 'showAttachment'])->name('perjadin.attachments.show');
     Route::get('/sbu-transport-lokal', [LocalTransportSbuController::class, 'index'])->name('local-transport-sbus.index');
 });
 
-Route::middleware(['auth', 'role:admin,bendahara,verifikator'])->group(function () {
+Route::middleware(['auth', 'role:admin,bendahara'])->group(function () {
     Route::get('/lrfk', [LrfkController::class, 'index'])->name('lrfk.index');
+    Route::get('/lrfk/export/excel', [LrfkController::class, 'exportExcel'])->name('lrfk.export.xlsx');
     Route::get('/lrfk/tambah', [LrfkController::class, 'create'])->name('lrfk.create');
     Route::post('/lrfk', [LrfkController::class, 'store'])->name('lrfk.store');
     Route::get('/lrfk/{lrfkEntry}/edit', [LrfkController::class, 'edit'])->name('lrfk.edit');
@@ -107,7 +110,7 @@ Route::middleware(['auth', 'role:admin,bendahara'])->group(function () {
     Route::get('/sbu-transport-lokal/{type}/{id}/edit', [LocalTransportSbuController::class, 'editEntry'])->name('local-transport-sbus.entries.edit');
     Route::put('/sbu-transport-lokal/{type}/{id}', [LocalTransportSbuController::class, 'updateEntry'])->name('local-transport-sbus.entries.update');
     Route::delete('/sbu-transport-lokal/{type}/{id}', [LocalTransportSbuController::class, 'destroyEntry'])->name('local-transport-sbus.entries.destroy');
-  });
+});
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('users', UserController::class)->except('show');

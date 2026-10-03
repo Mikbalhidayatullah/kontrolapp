@@ -36,7 +36,7 @@
         ];
     }
 
-    if (in_array($role, ['admin', 'bendahara', 'verifikator'], true)) {
+    if (in_array($role, ['admin', 'bendahara'], true)) {
         $afterPerjadinNavItems[] = ['label' => 'LRFK', 'href' => route('lrfk.index'), 'active' => request()->routeIs('lrfk.*')];
     }
 

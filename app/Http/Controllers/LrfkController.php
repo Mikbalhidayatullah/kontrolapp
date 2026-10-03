@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\LrfkEntry;
+use App\Services\LrfkExcelExporter;
 use App\Services\LrfkPerjadinService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LrfkController extends Controller
 {
@@ -21,37 +24,12 @@ class LrfkController extends Controller
         'rekening' => 'Rekening',
     ];
 
-    public function __construct(private readonly LrfkPerjadinService $lrfkPerjadinService)
-    {
-    }
+    public function __construct(private readonly LrfkPerjadinService $lrfkPerjadinService) {}
 
     public function index(Request $request): View
     {
-        $selectedKeyword = trim($request->string('keyword')->toString());
-        $selectedLevel = $request->string('level')->toString();
-
-        if ($selectedLevel !== '' && ! array_key_exists($selectedLevel, self::LEVEL_OPTIONS)) {
-            $selectedLevel = '';
-        }
-
-        $entries = LrfkEntry::query()
-            ->when($selectedLevel !== '', fn ($query) => $query->where('level', $selectedLevel))
-            ->when($selectedKeyword !== '', function ($query) use ($selectedKeyword): void {
-                $query->where(function ($innerQuery) use ($selectedKeyword): void {
-                    $innerQuery
-                        ->where('kode', 'like', '%'.$selectedKeyword.'%')
-                        ->orWhere('kode_rekening', 'like', '%'.$selectedKeyword.'%')
-                        ->orWhere('program_kegiatan', 'like', '%'.$selectedKeyword.'%')
-                        ->orWhere('contract_number_date', 'like', '%'.$selectedKeyword.'%')
-                        ->orWhere('implementer', 'like', '%'.$selectedKeyword.'%')
-                        ->orWhere('output', 'like', '%'.$selectedKeyword.'%')
-                        ->orWhere('location', 'like', '%'.$selectedKeyword.'%')
-                        ->orWhere('notes', 'like', '%'.$selectedKeyword.'%');
-                });
-            })
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
+        [$selectedKeyword, $selectedLevel] = $this->selectedFilters($request);
+        $entries = $this->filteredEntries($selectedKeyword, $selectedLevel);
         $metrics = $this->lrfkPerjadinService->metrics();
 
         return view('lrfk.index', [
@@ -69,6 +47,27 @@ class LrfkController extends Controller
                 'realization' => $this->hierarchicalMetricTotal($entries, $metrics, 'realization'),
             ],
         ]);
+    }
+
+    public function exportExcel(LrfkExcelExporter $exporter): BinaryFileResponse
+    {
+        $entries = $this->filteredEntries('', '');
+        $path = $exporter->export(
+            $entries,
+            $this->lrfkPerjadinService->metrics(),
+            $this->lrfkPerjadinService->linkedUsageByEntry(),
+            self::LEVEL_OPTIONS,
+            [
+                'keyword' => '',
+                'level' => '',
+            ]
+        );
+
+        return response()
+            ->download($path, 'LRFK-'.now()->format('Ymd-His').'.xlsx', [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+            ->deleteFileAfterSend(true);
     }
 
     public function create(): View
@@ -151,6 +150,40 @@ class LrfkController extends Controller
                 ->orderBy('id')
                 ->get(['id', 'kode_rekening', 'program_kegiatan']),
         ]);
+    }
+
+    private function selectedFilters(Request $request): array
+    {
+        $selectedKeyword = trim($request->string('keyword')->toString());
+        $selectedLevel = $request->string('level')->toString();
+
+        if ($selectedLevel !== '' && ! array_key_exists($selectedLevel, self::LEVEL_OPTIONS)) {
+            $selectedLevel = '';
+        }
+
+        return [$selectedKeyword, $selectedLevel];
+    }
+
+    private function filteredEntries(string $selectedKeyword, string $selectedLevel): Collection
+    {
+        return LrfkEntry::query()
+            ->when($selectedLevel !== '', fn ($query) => $query->where('level', $selectedLevel))
+            ->when($selectedKeyword !== '', function ($query) use ($selectedKeyword): void {
+                $query->where(function ($innerQuery) use ($selectedKeyword): void {
+                    $innerQuery
+                        ->where('kode', 'like', '%'.$selectedKeyword.'%')
+                        ->orWhere('kode_rekening', 'like', '%'.$selectedKeyword.'%')
+                        ->orWhere('program_kegiatan', 'like', '%'.$selectedKeyword.'%')
+                        ->orWhere('contract_number_date', 'like', '%'.$selectedKeyword.'%')
+                        ->orWhere('implementer', 'like', '%'.$selectedKeyword.'%')
+                        ->orWhere('output', 'like', '%'.$selectedKeyword.'%')
+                        ->orWhere('location', 'like', '%'.$selectedKeyword.'%')
+                        ->orWhere('notes', 'like', '%'.$selectedKeyword.'%');
+                });
+            })
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
     }
 
     private function hierarchicalPaguTotal($entries): int
