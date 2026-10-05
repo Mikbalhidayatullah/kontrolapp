@@ -11,9 +11,17 @@ class LrfkEntry extends Model
 {
     use HasFactory;
 
+    public const DATASET_LAMA = 'lama';
+
+    public const DATASET_PERUBAHAN = 'perubahan';
+
+    public const DATASET_DATA_OLAHAN = 'data_olahan';
+
     protected $fillable = [
         'parent_id',
+        'dataset_version',
         'sort_order',
+        'source_row',
         'level',
         'kode',
         'kode_rekening',
@@ -28,8 +36,15 @@ class LrfkEntry extends Model
         'financial_realization',
         'financial_percent',
         'physical_percent',
+        'budget_balance',
+        'cash_plan_october',
+        'cash_plan_november',
+        'cash_plan_december',
+        'cash_plan_quarter',
         'location',
         'notes',
+        'variance',
+        'variance_note',
         'created_by',
         'updated_by',
     ];
@@ -38,11 +53,18 @@ class LrfkEntry extends Model
     {
         return [
             'sort_order' => 'integer',
+            'source_row' => 'integer',
             'pagu_anggaran' => 'integer',
             'contract_value' => 'integer',
             'financial_realization' => 'integer',
-            'financial_percent' => 'decimal:2',
-            'physical_percent' => 'decimal:2',
+            'financial_percent' => 'decimal:8',
+            'physical_percent' => 'decimal:8',
+            'budget_balance' => 'integer',
+            'cash_plan_october' => 'integer',
+            'cash_plan_november' => 'integer',
+            'cash_plan_december' => 'integer',
+            'cash_plan_quarter' => 'integer',
+            'variance' => 'integer',
         ];
     }
 
@@ -69,5 +91,12 @@ class LrfkEntry extends Model
     public function perjadinEntries(): HasMany
     {
         return $this->hasMany(PerjadinEntry::class);
+    }
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(LrfkEntryDetail::class)
+            ->orderBy('sort_order')
+            ->orderBy('id');
     }
 }

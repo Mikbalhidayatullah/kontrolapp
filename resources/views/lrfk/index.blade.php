@@ -60,13 +60,14 @@
         <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <p class="text-sm font-medium text-sky-600">LRFK</p>
+                    <p class="text-sm font-medium text-sky-600">{{ $selectedVersionLabel }}</p>
                     <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Laporan realisasi fisik dan keuangan</h2>
                     <p class="mt-2 text-sm text-slate-500">Kelola program, kegiatan, sub kegiatan, rekening, kontrak, dan realisasi.</p>
                 </div>
 
                 <div class="flex flex-col gap-3">
                     <form action="{{ route('lrfk.index') }}" method="GET" data-auto-submit-filter class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <input type="hidden" name="version" value="{{ $selectedVersion }}" />
                         <select name="level" data-auto-submit-control class="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100">
                             <option value="">Semua jenis</option>
                             @foreach ($levelOptions as $value => $label)
@@ -75,21 +76,21 @@
                         </select>
                         <input type="text" name="keyword" value="{{ $selectedKeyword }}" placeholder="Cari kode, rekening, kegiatan..." data-auto-submit-control data-auto-submit-delay="450" class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 sm:w-80" />
                         @if ($selectedLevel !== '' || $selectedKeyword !== '')
-                            <a href="{{ route('lrfk.index') }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700">
+                            <a href="{{ route('lrfk.index', ['version' => $selectedVersion]) }}" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700">
                                 Reset
                             </a>
                         @endif
                     </form>
 
                     <div class="flex flex-col justify-end gap-3 sm:flex-row">
-                        <a href="{{ route('lrfk.export.xlsx') }}" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                        <a href="{{ route('lrfk.export.xlsx', ['version' => $selectedVersion]) }}" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
                                 <path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round" />
                                 <path d="M5 19h14" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             Download Excel
                         </a>
-                        <a href="{{ route('lrfk.create') }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                        <a href="{{ route('lrfk.create', ['version' => $selectedVersion]) }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
                             Tambah LRFK
                         </a>
                     </div>
@@ -103,6 +104,9 @@
                     Belum ada data LRFK pada filter ini.
                 </div>
             @else
+                @if ($selectedVersion !== \App\Models\LrfkEntry::DATASET_LAMA)
+                    @include('lrfk.partials.source-table')
+                @else
                 <div class="overflow-hidden rounded-3xl border border-slate-200">
                     <div class="overflow-x-auto">
                         <table class="lrfk-table min-w-[1600px] divide-y divide-slate-200 text-sm">
@@ -194,12 +198,13 @@
                                         <td class="max-w-xs px-4 py-4 align-top">{{ $entry->notes ?: '-' }}</td>
                                         <td class="px-4 py-4 align-top">
                                             <div class="flex flex-wrap gap-2">
-                                                <a href="{{ route('lrfk.edit', $entry) }}" class="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">
+                                                <a href="{{ route('lrfk.edit', ['lrfkEntry' => $entry, 'version' => $selectedVersion]) }}" class="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">
                                                     Edit
                                                 </a>
                                                 <form action="{{ route('lrfk.destroy', $entry) }}" method="POST" onsubmit="return confirm('Hapus data LRFK ini?');">
                                                     @csrf
                                                     @method('DELETE')
+                                                    <input type="hidden" name="version" value="{{ $selectedVersion }}" />
                                                     <button type="submit" class="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">
                                                         Hapus
                                                     </button>
@@ -212,6 +217,7 @@
                         </table>
                     </div>
                 </div>
+                @endif
             @endif
         </section>
     </div>

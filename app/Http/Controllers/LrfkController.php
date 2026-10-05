@@ -15,6 +15,12 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LrfkController extends Controller
 {
+    private const VERSION_OPTIONS = [
+        LrfkEntry::DATASET_LAMA => 'LRFK Lama',
+        LrfkEntry::DATASET_PERUBAHAN => 'Data Rapat',
+        LrfkEntry::DATASET_DATA_OLAHAN => 'LRFK Perubahan',
+    ];
+
     private const LEVEL_OPTIONS = [
         'dinas' => 'Dinas',
         'belanja_daerah' => 'Belanja Daerah',
@@ -28,56 +34,81 @@ class LrfkController extends Controller
 
     public function index(Request $request): View
     {
+        $selectedVersion = $this->selectedVersion($request);
         [$selectedKeyword, $selectedLevel] = $this->selectedFilters($request);
-        $entries = $this->filteredEntries($selectedKeyword, $selectedLevel);
-        $metrics = $this->lrfkPerjadinService->metrics();
+        $entries = $this->filteredEntries($selectedVersion, $selectedKeyword, $selectedLevel);
+        $versionEntries = ($selectedKeyword === '' && $selectedLevel === '')
+            ? $entries
+            : $this->filteredEntries($selectedVersion, '', '');
+        $metrics = $this->lrfkPerjadinService->metrics($versionEntries);
+        $summaryEntries = $selectedVersion === LrfkEntry::DATASET_LAMA
+            ? $entries
+            : $versionEntries;
 
         return view('lrfk.index', [
-            'title' => 'LRFK',
+            'title' => self::VERSION_OPTIONS[$selectedVersion],
             'entries' => $entries,
             'levelOptions' => self::LEVEL_OPTIONS,
+            'selectedVersion' => $selectedVersion,
+            'selectedVersionLabel' => self::VERSION_OPTIONS[$selectedVersion],
             'selectedKeyword' => $selectedKeyword,
             'selectedLevel' => $selectedLevel,
             'metrics' => $metrics,
             'linkedUsageByEntry' => $this->lrfkPerjadinService->linkedUsageByEntry(),
             'summary' => [
-                'count' => $entries->count(),
-                'pagu' => $this->hierarchicalPaguTotal($entries),
-                'contract' => $this->hierarchicalMetricTotal($entries, $metrics, 'contract'),
-                'realization' => $this->hierarchicalMetricTotal($entries, $metrics, 'realization'),
+                'count' => $this->physicalRowCount($entries, $selectedVersion),
+                'pagu' => $this->hierarchicalPaguTotal($summaryEntries),
+                'contract' => $this->hierarchicalMetricTotal($summaryEntries, $metrics, 'contract'),
+                'realization' => $this->hierarchicalMetricTotal($summaryEntries, $metrics, 'realization'),
             ],
         ]);
     }
 
-    public function exportExcel(LrfkExcelExporter $exporter): BinaryFileResponse
+    private function selectedVersion(Request $request): string
     {
-        $entries = $this->filteredEntries('', '');
+        $version = $request->string('version')->toString();
+
+        return array_key_exists($version, self::VERSION_OPTIONS) ? $version : LrfkEntry::DATASET_LAMA;
+    }
+
+    public function exportExcel(Request $request, LrfkExcelExporter $exporter): BinaryFileResponse
+    {
+        $selectedVersion = $this->selectedVersion($request);
+        $entries = $this->filteredEntries($selectedVersion, '', '');
         $path = $exporter->export(
             $entries,
-            $this->lrfkPerjadinService->metrics(),
+            $this->lrfkPerjadinService->metrics($entries),
             $this->lrfkPerjadinService->linkedUsageByEntry(),
             self::LEVEL_OPTIONS,
             [
                 'keyword' => '',
                 'level' => '',
-            ]
+                'version_label' => self::VERSION_OPTIONS[$selectedVersion],
+            ],
+            $selectedVersion,
         );
 
         return response()
-            ->download($path, 'LRFK-'.now()->format('Ymd-His').'.xlsx', [
+            ->download($path, 'LRFK-'.ucfirst($selectedVersion).'-'.now()->format('Ymd-His').'.xlsx', [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ])
             ->deleteFileAfterSend(true);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return $this->formView('Tambah LRFK');
+        $selectedVersion = $this->selectedVersion($request);
+
+        return $this->formView('Tambah '.self::VERSION_OPTIONS[$selectedVersion], null, $selectedVersion);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validatedData($request);
+        $selectedVersion = $this->selectedVersion($request);
+        $data = [
+            ...$this->validatedData($request, $selectedVersion),
+            'dataset_version' => $selectedVersion,
+        ];
 
         DB::transaction(function () use ($data, $request): void {
             $sortOrder = $this->nextSortOrderFor($data);
@@ -89,17 +120,27 @@ class LrfkController extends Controller
             ]);
         });
 
-        return redirect()->route('lrfk.index')->with('status', 'Data LRFK berhasil ditambahkan.');
+        return redirect()
+            ->route('lrfk.index', ['version' => $selectedVersion])
+            ->with('status', 'Data '.self::VERSION_OPTIONS[$selectedVersion].' berhasil ditambahkan.');
     }
 
     public function edit(LrfkEntry $lrfkEntry): View
     {
-        return $this->formView('Edit LRFK', $lrfkEntry);
+        return $this->formView(
+            'Edit '.self::VERSION_OPTIONS[$lrfkEntry->dataset_version],
+            $lrfkEntry,
+            $lrfkEntry->dataset_version
+        );
     }
 
     public function update(Request $request, LrfkEntry $lrfkEntry): RedirectResponse
     {
-        $data = $this->validatedData($request);
+        $selectedVersion = $lrfkEntry->dataset_version;
+        $data = [
+            ...$this->validatedData($request, $selectedVersion),
+            'dataset_version' => $selectedVersion,
+        ];
 
         if ($lrfkEntry->children()->exists() && $data['level'] !== 'sub_kegiatan') {
             return back()
@@ -121,7 +162,9 @@ class LrfkController extends Controller
             ]);
         });
 
-        return redirect()->route('lrfk.index')->with('status', 'Data LRFK berhasil diperbarui.');
+        return redirect()
+            ->route('lrfk.index', ['version' => $selectedVersion])
+            ->with('status', 'Data '.self::VERSION_OPTIONS[$selectedVersion].' berhasil diperbarui.');
     }
 
     public function destroy(LrfkEntry $lrfkEntry): RedirectResponse
@@ -134,16 +177,21 @@ class LrfkController extends Controller
 
         $lrfkEntry->delete();
 
-        return redirect()->route('lrfk.index')->with('status', 'Data LRFK berhasil dihapus.');
+        return redirect()
+            ->route('lrfk.index', ['version' => $lrfkEntry->dataset_version])
+            ->with('status', 'Data '.self::VERSION_OPTIONS[$lrfkEntry->dataset_version].' berhasil dihapus.');
     }
 
-    private function formView(string $title, ?LrfkEntry $entry = null): View
+    private function formView(string $title, ?LrfkEntry $entry, string $selectedVersion): View
     {
         return view('lrfk.form', [
             'title' => $title,
             'entry' => $entry,
             'levelOptions' => self::LEVEL_OPTIONS,
+            'selectedVersion' => $selectedVersion,
+            'selectedVersionLabel' => self::VERSION_OPTIONS[$selectedVersion],
             'subKegiatanOptions' => LrfkEntry::query()
+                ->where('dataset_version', $selectedVersion)
                 ->where('level', 'sub_kegiatan')
                 ->when($entry !== null, fn ($query) => $query->whereKeyNot($entry->id))
                 ->orderBy('sort_order')
@@ -164,9 +212,11 @@ class LrfkController extends Controller
         return [$selectedKeyword, $selectedLevel];
     }
 
-    private function filteredEntries(string $selectedKeyword, string $selectedLevel): Collection
+    private function filteredEntries(string $selectedVersion, string $selectedKeyword, string $selectedLevel): Collection
     {
         return LrfkEntry::query()
+            ->with('details')
+            ->where('dataset_version', $selectedVersion)
             ->when($selectedLevel !== '', fn ($query) => $query->where('level', $selectedLevel))
             ->when($selectedKeyword !== '', function ($query) use ($selectedKeyword): void {
                 $query->where(function ($innerQuery) use ($selectedKeyword): void {
@@ -184,6 +234,15 @@ class LrfkController extends Controller
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
+    }
+
+    private function physicalRowCount(Collection $entries, string $selectedVersion): int
+    {
+        if ($selectedVersion === LrfkEntry::DATASET_LAMA) {
+            return $entries->count();
+        }
+
+        return $entries->count() + $entries->sum(fn (LrfkEntry $entry): int => $entry->details->count());
     }
 
     private function hierarchicalPaguTotal($entries): int
@@ -214,11 +273,20 @@ class LrfkController extends Controller
         return 0;
     }
 
-    private function validatedData(Request $request): array
+    private function validatedData(Request $request, string $selectedVersion): array
     {
         $validated = $request->validate([
             'level' => ['required', 'string', Rule::in(array_keys(self::LEVEL_OPTIONS))],
-            'parent_id' => ['nullable', 'required_if:level,rekening', 'integer', Rule::exists('lrfk_entries', 'id')->where('level', 'sub_kegiatan')],
+            'parent_id' => [
+                'nullable',
+                'required_if:level,rekening',
+                'integer',
+                Rule::exists('lrfk_entries', 'id')->where(
+                    fn ($query) => $query
+                        ->where('level', 'sub_kegiatan')
+                        ->where('dataset_version', $selectedVersion)
+                ),
+            ],
             'kode' => ['nullable', 'string', 'max:255'],
             'kode_rekening' => ['nullable', 'string', 'max:255'],
             'program_kegiatan' => ['required', 'string'],
@@ -244,21 +312,21 @@ class LrfkController extends Controller
         return [
             'level' => $validated['level'],
             'parent_id' => $validated['level'] === 'rekening' ? (int) $validated['parent_id'] : null,
-            'kode' => $validated['kode'] ?: null,
-            'kode_rekening' => $validated['kode_rekening'] ?: null,
+            'kode' => ($validated['kode'] ?? null) ?: null,
+            'kode_rekening' => ($validated['kode_rekening'] ?? null) ?: null,
             'program_kegiatan' => $validated['program_kegiatan'],
             'pagu_anggaran' => $pagu,
             'contract_value' => $this->moneyToInt($validated['contract_value'] ?? null),
-            'contract_number_date' => $validated['contract_number_date'] ?: null,
-            'implementer' => $validated['implementer'] ?: null,
-            'output' => $validated['output'] ?: null,
-            'volume' => $validated['volume'] ?: null,
-            'unit' => $validated['unit'] ?: null,
+            'contract_number_date' => ($validated['contract_number_date'] ?? null) ?: null,
+            'implementer' => ($validated['implementer'] ?? null) ?: null,
+            'output' => ($validated['output'] ?? null) ?: null,
+            'volume' => ($validated['volume'] ?? null) ?: null,
+            'unit' => ($validated['unit'] ?? null) ?: null,
             'financial_realization' => $realization,
             'financial_percent' => $percent,
             'physical_percent' => $percent,
-            'location' => $validated['location'] ?: null,
-            'notes' => $validated['notes'] ?: null,
+            'location' => ($validated['location'] ?? null) ?: null,
+            'notes' => ($validated['notes'] ?? null) ?: null,
         ];
     }
 
@@ -274,11 +342,14 @@ class LrfkController extends Controller
     private function nextSortOrderFor(array $data, ?int $ignoreId = null): int
     {
         if (($data['level'] ?? null) !== 'rekening' || empty($data['parent_id'])) {
-            return ((int) LrfkEntry::query()->max('sort_order')) + 1;
+            return ((int) LrfkEntry::query()
+                ->where('dataset_version', $data['dataset_version'])
+                ->max('sort_order')) + 1;
         }
 
         $parent = LrfkEntry::query()->find((int) $data['parent_id']);
         $lastChildSortOrder = LrfkEntry::query()
+            ->where('dataset_version', $data['dataset_version'])
             ->where('parent_id', $parent?->id)
             ->when($ignoreId !== null, fn ($query) => $query->whereKeyNot($ignoreId))
             ->max('sort_order');
@@ -287,6 +358,7 @@ class LrfkController extends Controller
         $sortOrder = $insertAfter + 1;
 
         LrfkEntry::query()
+            ->where('dataset_version', $data['dataset_version'])
             ->when($ignoreId !== null, fn ($query) => $query->whereKeyNot($ignoreId))
             ->where('sort_order', '>=', $sortOrder)
             ->increment('sort_order');

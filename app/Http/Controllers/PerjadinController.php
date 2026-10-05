@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyAllowanceSbu;
 use App\Models\FlightTicketSbu;
+use App\Models\LrfkEntry;
 use App\Models\LodgingSbu;
 use App\Models\LocalTransportSbu;
 use App\Models\NationalLodgingSbu;
@@ -643,6 +644,7 @@ class PerjadinController extends Controller
                 'integer',
                 Rule::exists('lrfk_entries', 'id')->where(function ($query): void {
                     $query
+                        ->where('dataset_version', LrfkEntry::DATASET_LAMA)
                         ->where('level', 'rekening')
                         ->whereNotNull('kode_rekening')
                         ->where('kode_rekening', '<>', '');

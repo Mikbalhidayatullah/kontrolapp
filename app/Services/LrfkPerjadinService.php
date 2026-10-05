@@ -15,6 +15,7 @@ class LrfkPerjadinService
     public function hierarchy(): array
     {
         $entries = LrfkEntry::query()
+            ->where('dataset_version', LrfkEntry::DATASET_LAMA)
             ->whereIn('level', ['program', 'kegiatan', 'sub_kegiatan', 'rekening'])
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -112,9 +113,29 @@ class LrfkPerjadinService
     public function metrics(?Collection $entries = null): array
     {
         $entries ??= LrfkEntry::query()
+            ->where('dataset_version', LrfkEntry::DATASET_LAMA)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
+
+        $versions = $entries
+            ->pluck('dataset_version')
+            ->filter()
+            ->unique();
+        $sourceVersion = $versions->count() === 1 && in_array($versions->first(), [
+            LrfkEntry::DATASET_PERUBAHAN,
+            LrfkEntry::DATASET_DATA_OLAHAN,
+        ], true)
+            ? $versions->first()
+            : null;
+
+        if ($sourceVersion !== null) {
+            return $entries
+                ->mapWithKeys(fn (LrfkEntry $entry): array => [
+                    $entry->id => $this->baseMetrics($entry),
+                ])
+                ->all();
+        }
 
         $linkedAmounts = PerjadinEntry::query()
             ->whereNotNull('lrfk_entry_id')

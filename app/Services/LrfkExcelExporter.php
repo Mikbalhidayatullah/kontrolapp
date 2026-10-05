@@ -9,7 +9,7 @@ use ZipArchive;
 
 class LrfkExcelExporter
 {
-    private const HEADERS = [
+    private const LAMA_HEADERS = [
         'Kode',
         'Kode Rekening',
         'Program / Kegiatan / Sub Kegiatan',
@@ -25,6 +25,48 @@ class LrfkExcelExporter
         'Fisik %',
         'Lokasi',
         'Ket.',
+    ];
+
+    private const PERUBAHAN_HEADERS = [
+        'Kode',
+        'Kode Rekening',
+        'Program / Kegiatan / Sub Kegiatan',
+        'Pagu Anggaran',
+        'Kontrak Nilai',
+        'Pelaksana',
+        'Keluaran',
+        'Volume',
+        'Satuan',
+        'Realisasi Keuangan',
+        'Keuangan %',
+        'Fisik %',
+        'Sisa Pagu Anggaran',
+        'Oktober',
+        'November',
+        'Desember',
+        'Triwulan IV',
+        'Lokasi',
+        'Ket.',
+        'Selisih',
+    ];
+
+    private const DATA_OLAHAN_HEADERS = [
+        'Kode',
+        'Kode Rekening',
+        'Program / Kegiatan / Sub Kegiatan',
+        'Pagu Anggaran',
+        'Kontrak Nilai',
+        'Nomor / Tanggal',
+        'Pelaksana',
+        'Keluaran',
+        'Volume',
+        'Satuan',
+        'Realisasi Keuangan',
+        'Keuangan %',
+        'Fisik %',
+        'Lokasi',
+        'Ket.',
+        'Selisih',
     ];
 
     private const LEVELS = [
@@ -50,7 +92,8 @@ class LrfkExcelExporter
         array $metrics,
         array $linkedUsageByEntry,
         array $levelOptions,
-        array $filters
+        array $filters,
+        string $selectedVersion = LrfkEntry::DATASET_LAMA,
     ): string {
         $directory = storage_path('app/exports');
         if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
@@ -73,7 +116,7 @@ class LrfkExcelExporter
         $zip->addFromString('xl/styles.xml', $this->stylesXml());
         $zip->addFromString(
             'xl/worksheets/sheet1.xml',
-            $this->worksheetXml($entries, $metrics, $linkedUsageByEntry, $levelOptions, $filters)
+            $this->worksheetXml($entries, $metrics, $linkedUsageByEntry, $levelOptions, $filters, $selectedVersion)
         );
         $zip->close();
 
@@ -85,11 +128,13 @@ class LrfkExcelExporter
         array $metrics,
         array $linkedUsageByEntry,
         array $levelOptions,
-        array $filters
+        array $filters,
+        string $selectedVersion,
     ): string {
         $rows = [];
         $rowNumber = 1;
-        $lastColumn = $this->columnName(count(self::HEADERS));
+        $headers = $this->headersForVersion($selectedVersion);
+        $lastColumn = $this->columnName(count($headers));
 
         $rows[] = $this->rowXml($rowNumber, [
             $this->stringCell(1, $rowNumber, 'LAPORAN REALISASI FISIK DAN KEUANGAN (LRFK)', 1),
@@ -107,7 +152,7 @@ class LrfkExcelExporter
         $rowNumber += 2;
 
         $headerCells = [];
-        foreach (self::HEADERS as $index => $header) {
+        foreach ($headers as $index => $header) {
             $headerCells[] = $this->stringCell($index + 1, $rowNumber, $header, 3);
         }
         $rows[] = $this->rowXml($rowNumber++, $headerCells, 42);
@@ -118,13 +163,33 @@ class LrfkExcelExporter
             ], 24);
         } else {
             foreach ($entries as $entry) {
-                $linkedUsages = $linkedUsageByEntry[$entry->id] ?? [];
+                if ($selectedVersion === LrfkEntry::DATASET_LAMA) {
+                    $linkedUsages = $linkedUsageByEntry[$entry->id] ?? [];
+                    $rows[] = $this->rowXml(
+                        $rowNumber,
+                        $this->entryCells($entry, $rowNumber, $metrics, $linkedUsages, $levelOptions),
+                        max(28, 28 + (count($linkedUsages) * 17))
+                    );
+                    $rowNumber++;
+
+                    continue;
+                }
+
                 $rows[] = $this->rowXml(
                     $rowNumber,
-                    $this->entryCells($entry, $rowNumber, $metrics, $linkedUsages, $levelOptions),
-                    max(28, 28 + (count($linkedUsages) * 17))
+                    $this->sourceEntryCells($entry, $rowNumber, $selectedVersion, $levelOptions),
+                    32,
                 );
                 $rowNumber++;
+
+                foreach ($entry->details as $detail) {
+                    $rows[] = $this->rowXml(
+                        $rowNumber,
+                        $this->sourceDetailCells($detail, $rowNumber, $selectedVersion),
+                        32,
+                    );
+                    $rowNumber++;
+                }
             }
         }
 
@@ -132,7 +197,7 @@ class LrfkExcelExporter
         $xml .= '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">';
         $xml .= '<sheetViews><sheetView workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>';
         $xml .= '<sheetFormatPr defaultRowHeight="18"/>';
-        $xml .= $this->columnsXml();
+        $xml .= $this->columnsXml($selectedVersion);
         $xml .= '<sheetData>'.implode('', $rows).'</sheetData>';
         $xml .= '<mergeCells count="3"><mergeCell ref="A1:'.$lastColumn.'1"/><mergeCell ref="A2:'.$lastColumn.'2"/><mergeCell ref="A3:'.$lastColumn.'3"/></mergeCells>';
 
@@ -141,6 +206,101 @@ class LrfkExcelExporter
         $xml .= '</worksheet>';
 
         return $xml;
+    }
+
+    private function sourceEntryCells(
+        LrfkEntry $entry,
+        int $rowNumber,
+        string $selectedVersion,
+        array $levelOptions,
+    ): array {
+        [$textStyle, $moneyStyle, $percentStyle] = $this->stylesForLevel($entry->level);
+        $programLabel = trim($entry->program_kegiatan);
+        if ($programLabel !== '') {
+            $programLabel .= "\n".($levelOptions[$entry->level] ?? $entry->level);
+        }
+
+        return $this->sourceCells(
+            $entry,
+            $rowNumber,
+            $selectedVersion,
+            $textStyle,
+            $moneyStyle,
+            $percentStyle,
+            [
+                $this->stringCell(1, $rowNumber, $entry->kode ?: '-', $textStyle),
+                $this->stringCell(2, $rowNumber, $entry->kode_rekening ?: '-', $textStyle),
+                $this->stringCell(3, $rowNumber, $programLabel ?: '-', $textStyle),
+                $this->numberCell(4, $rowNumber, (int) $entry->pagu_anggaran, $moneyStyle),
+            ],
+        );
+    }
+
+    private function sourceDetailCells(
+        object $detail,
+        int $rowNumber,
+        string $selectedVersion,
+    ): array {
+        [$textStyle, $moneyStyle, $percentStyle] = $this->stylesForLevel('rekening');
+
+        return $this->sourceCells(
+            $detail,
+            $rowNumber,
+            $selectedVersion,
+            $textStyle,
+            $moneyStyle,
+            $percentStyle,
+            [
+                $this->stringCell(1, $rowNumber, '', $textStyle),
+                $this->stringCell(2, $rowNumber, '', $textStyle),
+                $this->stringCell(3, $rowNumber, '', $textStyle),
+                $this->stringCell(4, $rowNumber, '', $textStyle),
+            ],
+        );
+    }
+
+    private function sourceCells(
+        object $row,
+        int $rowNumber,
+        string $selectedVersion,
+        int $textStyle,
+        int $moneyStyle,
+        int $percentStyle,
+        array $leadingCells,
+    ): array {
+        $cells = [
+            ...$leadingCells,
+            $this->numberCell(5, $rowNumber, (int) $row->contract_value, $moneyStyle),
+        ];
+        $column = 6;
+
+        if ($selectedVersion === LrfkEntry::DATASET_DATA_OLAHAN) {
+            $cells[] = $this->stringCell($column++, $rowNumber, $row->contract_number_date ?: '-', $textStyle);
+        }
+
+        $cells[] = $this->stringCell($column++, $rowNumber, $row->implementer ?: '-', $textStyle);
+        $cells[] = $this->stringCell($column++, $rowNumber, $row->output ?: '-', $textStyle);
+        $cells[] = $this->stringCell($column++, $rowNumber, $row->volume ?: '-', $textStyle);
+        $cells[] = $this->stringCell($column++, $rowNumber, $row->unit ?: '-', $textStyle);
+        $cells[] = $this->numberCell($column++, $rowNumber, (int) $row->financial_realization, $moneyStyle);
+        $cells[] = $this->numberCell($column++, $rowNumber, ((float) $row->financial_percent) / 100, $percentStyle);
+        $cells[] = $this->numberCell($column++, $rowNumber, ((float) $row->physical_percent) / 100, $percentStyle);
+
+        if ($selectedVersion === LrfkEntry::DATASET_PERUBAHAN) {
+            $cells[] = $this->numberCell($column++, $rowNumber, (int) $row->budget_balance, $moneyStyle);
+            $cells[] = $this->numberCell($column++, $rowNumber, (int) $row->cash_plan_october, $moneyStyle);
+            $cells[] = $this->numberCell($column++, $rowNumber, (int) $row->cash_plan_november, $moneyStyle);
+            $cells[] = $this->numberCell($column++, $rowNumber, (int) $row->cash_plan_december, $moneyStyle);
+            $cells[] = $this->numberCell($column++, $rowNumber, (int) $row->cash_plan_quarter, $moneyStyle);
+        }
+
+        $cells[] = $this->stringCell($column++, $rowNumber, $row->location ?: '-', $textStyle);
+        $cells[] = $this->stringCell($column++, $rowNumber, $row->notes ?: '-', $textStyle);
+        $cells[] = filled($row->variance_note)
+            ? $this->stringCell($column, $rowNumber, (string) $row->variance_note, $textStyle)
+            : $this->numberCell($column, $rowNumber, (int) $row->variance, $moneyStyle);
+
+        return $cells;
     }
 
     private function entryCells(
@@ -202,8 +362,10 @@ class LrfkExcelExporter
     {
         $level = (string) ($filters['level'] ?? '');
         $keyword = trim((string) ($filters['keyword'] ?? ''));
+        $versionLabel = trim((string) ($filters['version_label'] ?? 'LRFK'));
 
-        return 'Jenis: '.($levelOptions[$level] ?? 'Semua jenis')
+        return 'Versi: '.$versionLabel
+            .' | Jenis: '.($levelOptions[$level] ?? 'Semua jenis')
             .' | Pencarian: '.($keyword !== '' ? $keyword : 'Semua data');
     }
 
@@ -238,9 +400,22 @@ class LrfkExcelExporter
         return '<c r="'.$reference.'"'.($style ? ' s="'.$style.'"' : '').'><v>'.$number.'</v></c>';
     }
 
-    private function columnsXml(): string
+    private function headersForVersion(string $selectedVersion): array
     {
-        $widths = [14, 23, 44, 18, 18, 29, 30, 45, 13, 13, 18, 14, 14, 22, 28];
+        return match ($selectedVersion) {
+            LrfkEntry::DATASET_PERUBAHAN => self::PERUBAHAN_HEADERS,
+            LrfkEntry::DATASET_DATA_OLAHAN => self::DATA_OLAHAN_HEADERS,
+            default => self::LAMA_HEADERS,
+        };
+    }
+
+    private function columnsXml(string $selectedVersion): string
+    {
+        $widths = match ($selectedVersion) {
+            LrfkEntry::DATASET_PERUBAHAN => [14, 23, 44, 18, 18, 30, 45, 13, 13, 18, 14, 14, 18, 18, 18, 18, 18, 22, 28, 20],
+            LrfkEntry::DATASET_DATA_OLAHAN => [14, 23, 44, 18, 18, 29, 30, 45, 13, 13, 18, 14, 14, 22, 28, 20],
+            default => [14, 23, 44, 18, 18, 29, 30, 45, 13, 13, 18, 14, 14, 22, 28],
+        };
         $xml = '<cols>';
 
         foreach ($widths as $index => $width) {

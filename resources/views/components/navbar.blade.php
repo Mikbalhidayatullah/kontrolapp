@@ -4,6 +4,7 @@
     $navItems = [];
     $afterPerjadinNavItems = [];
     $perjadinSbuMenu = null;
+    $lrfkMenu = null;
 
     if (in_array($role, ['admin', 'bendahara'], true)) {
         $navItems[] = ['label' => 'Dashboard', 'href' => route('dashboard'), 'active' => request()->routeIs('dashboard')];
@@ -37,7 +38,30 @@
     }
 
     if (in_array($role, ['admin', 'bendahara'], true)) {
-        $afterPerjadinNavItems[] = ['label' => 'LRFK', 'href' => route('lrfk.index'), 'active' => request()->routeIs('lrfk.*')];
+        $routeLrfkEntry = request()->route('lrfkEntry');
+        $routeLrfkVersion = is_object($routeLrfkEntry) ? $routeLrfkEntry->dataset_version : null;
+        $selectedLrfkVersion = request()->query('version', $routeLrfkVersion ?: 'lama');
+        $lrfkMenu = [
+            'label' => 'LRFK',
+            'active' => request()->routeIs('lrfk.*'),
+            'items' => [
+                [
+                    'label' => 'LRFK Lama',
+                    'href' => route('lrfk.index', ['version' => 'lama']),
+                    'active' => request()->routeIs('lrfk.*') && $selectedLrfkVersion === 'lama',
+                ],
+                [
+                    'label' => 'Data Rapat',
+                    'href' => route('lrfk.index', ['version' => 'perubahan']),
+                    'active' => request()->routeIs('lrfk.*') && $selectedLrfkVersion === 'perubahan',
+                ],
+                [
+                    'label' => 'LRFK Perubahan',
+                    'href' => route('lrfk.index', ['version' => 'data_olahan']),
+                    'active' => request()->routeIs('lrfk.*') && $selectedLrfkVersion === 'data_olahan',
+                ],
+            ],
+        ];
     }
 
     if ($role === 'admin') {
@@ -79,6 +103,31 @@
                             </summary>
                             <div class="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-xl shadow-slate-950/20">
                                 @foreach ($perjadinSbuMenu['items'] as $child)
+                                    <a
+                                        href="{{ $child['href'] }}"
+                                        aria-current="{{ $child['active'] ? 'page' : false }}"
+                                        class="{{ $child['active'] ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950' }} block rounded-xl px-3 py-2 text-sm font-medium transition"
+                                    >
+                                        {{ $child['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </details>
+                    @endif
+
+                    @if ($lrfkMenu)
+                        <details class="group relative">
+                            <summary
+                                aria-current="{{ $lrfkMenu['active'] ? 'page' : false }}"
+                                class="{{ $lrfkMenu['active'] ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} inline-flex cursor-pointer list-none items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition [&::-webkit-details-marker]:hidden"
+                            >
+                                {{ $lrfkMenu['label'] }}
+                                <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 transition group-open:rotate-180" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                                </svg>
+                            </summary>
+                            <div class="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-xl shadow-slate-950/20">
+                                @foreach ($lrfkMenu['items'] as $child)
                                     <a
                                         href="{{ $child['href'] }}"
                                         aria-current="{{ $child['active'] ? 'page' : false }}"
@@ -156,6 +205,31 @@
                         </summary>
                         <div class="space-y-1 px-2 pb-2 pt-1">
                             @foreach ($perjadinSbuMenu['items'] as $child)
+                                <a
+                                    href="{{ $child['href'] }}"
+                                    aria-current="{{ $child['active'] ? 'page' : false }}"
+                                    class="{{ $child['active'] ? 'bg-white text-slate-950' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} block rounded-xl px-4 py-2.5 text-sm font-medium transition"
+                                >
+                                    {{ $child['label'] }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </details>
+                @endif
+
+                @if ($lrfkMenu)
+                    <details class="rounded-2xl bg-white/5">
+                        <summary
+                            aria-current="{{ $lrfkMenu['active'] ? 'page' : false }}"
+                            class="{{ $lrfkMenu['active'] ? 'bg-white text-slate-950' : 'text-slate-200 hover:bg-white/10' }} flex cursor-pointer list-none items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition [&::-webkit-details-marker]:hidden"
+                        >
+                            {{ $lrfkMenu['label'] }}
+                            <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                            </svg>
+                        </summary>
+                        <div class="space-y-1 px-2 pb-2 pt-1">
+                            @foreach ($lrfkMenu['items'] as $child)
                                 <a
                                     href="{{ $child['href'] }}"
                                     aria-current="{{ $child['active'] ? 'page' : false }}"
