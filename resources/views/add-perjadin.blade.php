@@ -86,14 +86,28 @@
             'lodging_rate' => 'nominal penginapan',
             'missing_proofs' => 'bukti belum lengkap',
         ];
-        $inlineError = function (string ...$names) use ($errors, $inlineFieldLabels) {
+        $fieldLabel = function (string $name) use ($inlineFieldLabels): string {
+            if (preg_match('/^lodging_segments\.(\d+)\.(nights|rate|hotel_name)$/', $name, $matches)) {
+                $hotelNumber = ((int) $matches[1]) + 2;
+                $partLabel = match ($matches[2]) {
+                    'nights' => 'jumlah malam',
+                    'rate' => 'nominal penginapan',
+                    default => 'nama hotel',
+                };
+
+                return $partLabel.' Hotel '.$hotelNumber;
+            }
+
+            return $inlineFieldLabels[$name] ?? str_replace(['_', '.'], ' ', $name);
+        };
+        $inlineError = function (string ...$names) use ($errors, $fieldLabel) {
             foreach ($names as $name) {
                 if (! $errors->has($name)) {
                     continue;
                 }
 
                 $message = $errors->first($name);
-                $label = $inlineFieldLabels[$name] ?? str_replace('_', ' ', $name);
+                $label = $fieldLabel($name);
 
                 if (str_contains(strtolower($message), 'required')) {
                     return 'Kolom '.ucfirst($label).' masih perlu diisi.';
@@ -104,7 +118,41 @@
 
             return null;
         };
+        $validationSummary = collect($errors->messages())
+            ->keys()
+            ->map(fn (string $name) => $inlineError($name))
+            ->filter()
+            ->unique()
+            ->values();
     @endphp
+
+    @if ($validationSummary->isNotEmpty())
+        <div data-validation-summary-modal role="dialog" aria-modal="true" aria-labelledby="validation-summary-title" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <button type="button" data-validation-summary-close aria-label="Tutup pemberitahuan" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"></button>
+            <div class="relative flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-rose-200 bg-white shadow-2xl">
+                <div class="border-b border-rose-100 bg-rose-50 px-5 py-5 sm:px-6">
+                    <p class="text-sm font-semibold text-rose-700">Periksa kembali isian</p>
+                    <h2 id="validation-summary-title" class="mt-1 text-xl font-semibold text-slate-950">Data Perjadin belum lengkap</h2>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">Lengkapi bagian berikut sebelum menyimpan data.</p>
+                </div>
+                <div class="overflow-y-auto px-5 py-4 sm:px-6">
+                    <ul class="space-y-2">
+                        @foreach ($validationSummary as $message)
+                            <li class="flex gap-3 rounded-2xl border border-rose-100 bg-rose-50/60 px-4 py-3 text-sm leading-6 text-slate-700">
+                                <span class="mt-2 h-2 w-2 shrink-0 rounded-full bg-rose-500" aria-hidden="true"></span>
+                                <span>{{ $message }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+                <div class="border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
+                    <button type="button" data-validation-summary-close class="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">
+                        Tutup dan periksa form
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <div class="space-y-6">
         <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -1027,6 +1075,31 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const validationModal = document.querySelector('[data-validation-summary-modal]');
+            const handleValidationModalKeydown = (event) => {
+                if (event.key === 'Escape') {
+                    closeValidationModal();
+                }
+            };
+            const closeValidationModal = () => {
+                if (!validationModal) {
+                    return;
+                }
+
+                validationModal.remove();
+                document.body.style.overflow = '';
+                document.removeEventListener('keydown', handleValidationModalKeydown);
+                document.querySelector('#perjadin-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            if (validationModal) {
+                document.body.style.overflow = 'hidden';
+                validationModal.querySelectorAll('[data-validation-summary-close]').forEach((button) => {
+                    button.addEventListener('click', closeValidationModal);
+                });
+                document.addEventListener('keydown', handleValidationModalKeydown);
+            }
+
             const digitsOnly = (value) => (value || '').toString().replace(/\D/g, '');
             const toNumber = (value) => Number(digitsOnly(value) || 0);
             const formatNominal = (value) => new Intl.NumberFormat('id-ID').format(Number(value || 0));
