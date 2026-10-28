@@ -57,12 +57,56 @@
             </article>
         </section>
 
+        @if ($selectedVersion === \App\Models\LrfkEntry::DATASET_PERJADIN && $unlinkedPaidPerjadin->isNotEmpty())
+            <section class="overflow-hidden rounded-[28px] border border-amber-200 bg-amber-50 shadow-sm">
+                <div class="flex flex-col gap-3 border-b border-amber-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-amber-900">Perjadin belum terhubung ke rekening LRFK Perubahan</p>
+                        <p class="mt-1 text-sm leading-6 text-amber-800">
+                            Data ini sudah dibayar, tetapi belum memakai Program, Kegiatan, Sub Kegiatan, dan Kode Rekening dari LRFK Perubahan. Pilih rekening melalui halaman edit agar nominal masuk ke LRFK Perjadin.
+                        </p>
+                    </div>
+                    <div class="shrink-0 text-left sm:text-right">
+                        <p class="text-sm font-semibold text-amber-900">{{ $unlinkedPaidPerjadin->count() }} data</p>
+                        <p class="mt-1 text-lg font-semibold text-slate-900">Rp {{ number_format($unlinkedPaidPerjadin->sum('grand_total'), 0, ',', '.') }}</p>
+                    </div>
+                </div>
+
+                <div class="max-h-96 divide-y divide-amber-200 overflow-y-auto bg-white">
+                    @foreach ($unlinkedPaidPerjadin as $unlinkedEntry)
+                        <div class="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="font-semibold text-slate-900">{{ $unlinkedEntry->executor_name }}</p>
+                                <p class="mt-1 text-sm text-slate-600">
+                                    {{ $unlinkedEntry->assignment_number }}
+                                    @if ($unlinkedEntry->assignment_date)
+                                        · {{ $unlinkedEntry->assignment_date->format('d/m/Y') }}
+                                    @endif
+                                    @if ($unlinkedEntry->destination_city)
+                                        · {{ $unlinkedEntry->destination_city }}
+                                    @endif
+                                </p>
+                                <p class="mt-1 text-sm font-semibold text-slate-900">Rp {{ number_format($unlinkedEntry->grand_total, 0, ',', '.') }}</p>
+                            </div>
+                            <a href="{{ route('perjadin.edit', $unlinkedEntry) }}" class="inline-flex shrink-0 items-center justify-center rounded-2xl border border-amber-300 bg-amber-100 px-4 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-200">
+                                Pilih Rekening
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <p class="text-sm font-medium text-sky-600">{{ $selectedVersionLabel }}</p>
                     <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Laporan realisasi fisik dan keuangan</h2>
-                    <p class="mt-2 text-sm text-slate-500">Kelola program, kegiatan, sub kegiatan, rekening, kontrak, dan realisasi.</p>
+                    <p class="mt-2 text-sm text-slate-500">
+                        {{ $selectedVersion === \App\Models\LrfkEntry::DATASET_PERJADIN
+                            ? 'Ringkasan pagu dan realisasi khusus perjalanan dinas yang sudah dibayar.'
+                            : 'Kelola program, kegiatan, sub kegiatan, rekening, kontrak, dan realisasi.' }}
+                    </p>
                 </div>
 
                 <div class="flex flex-col gap-3">
@@ -90,9 +134,11 @@
                             </svg>
                             Download Excel
                         </a>
-                        <a href="{{ route('lrfk.create', ['version' => $selectedVersion]) }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-                            Tambah LRFK
-                        </a>
+                        @if ($selectedVersion !== \App\Models\LrfkEntry::DATASET_PERJADIN)
+                            <a href="{{ route('lrfk.create', ['version' => $selectedVersion]) }}" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                                Tambah LRFK
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -104,7 +150,9 @@
                     Belum ada data LRFK pada filter ini.
                 </div>
             @else
-                @if ($selectedVersion !== \App\Models\LrfkEntry::DATASET_LAMA)
+                @if ($selectedVersion === \App\Models\LrfkEntry::DATASET_PERJADIN)
+                    @include('lrfk.partials.perjadin-table')
+                @elseif ($selectedVersion !== \App\Models\LrfkEntry::DATASET_LAMA)
                     @include('lrfk.partials.source-table')
                 @else
                 <div class="overflow-hidden rounded-3xl border border-slate-200">

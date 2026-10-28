@@ -11,21 +11,6 @@ class LrfkSourceRenderingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_perubahan_uses_data_rapat_columns_without_nomor_tanggal(): void
-    {
-        $response = $this->actingAs($this->admin())
-            ->get(route('lrfk.index', ['version' => 'perubahan']))
-            ->assertOk();
-
-        $response->assertSeeText('Sisa Pagu Anggaran');
-        $response->assertSeeText('Oktober');
-        $response->assertSeeText('November');
-        $response->assertSeeText('Desember');
-        $response->assertSeeText('Triwulan IV');
-        $response->assertSeeText('Selisih');
-        $response->assertDontSeeText('Nomor / Tanggal');
-    }
-
     public function test_data_olahan_uses_its_source_columns_without_cash_plan(): void
     {
         $response = $this->actingAs($this->admin())
@@ -40,42 +25,12 @@ class LrfkSourceRenderingTest extends TestCase
         $response->assertDontSeeText('Triwulan IV');
     }
 
-    public function test_detail_row_follows_its_account_with_four_empty_source_cells(): void
+    public function test_source_values_and_notes_render_in_place(): void
     {
-        $html = $this->actingAs($this->admin())
-            ->get(route('lrfk.index', [
-                'version' => 'perubahan',
-                'keyword' => 'Belanja Modal Pagar',
-            ]))
-            ->assertOk()
-            ->getContent();
-
-        $accountPosition = strpos($html, 'data-lrfk-source-row="203"');
-        $detailPosition = strpos($html, 'data-lrfk-detail="204"');
-
-        $this->assertNotFalse($accountPosition);
-        $this->assertNotFalse($detailPosition);
-        $this->assertGreaterThan($accountPosition, $detailPosition);
-        $this->assertMatchesRegularExpression(
-            '/data-lrfk-detail="204"[^>]*>\s*(?:<td[^>]*>\s*<\/td>\s*){4}/s',
-            $html,
-        );
-    }
-
-    public function test_source_values_negative_amounts_percentages_and_notes_render_in_place(): void
-    {
-        $perubahan = $this->actingAs($this->admin())
-            ->get(route('lrfk.index', ['version' => 'perubahan']))
-            ->assertOk();
         $olahan = $this->actingAs($this->admin())
             ->get(route('lrfk.index', ['version' => 'data_olahan']))
             ->assertOk();
 
-        $perubahan->assertSeeText('CV. RINSATAMA CIPTA MANDIRI');
-        $perubahan->assertSeeText('-56.710.788');
-        $perubahan->assertSeeText('100,00%');
-        $perubahan->assertDontSeeText('100,00000000%');
-        $perubahan->assertSeeText('GU 8');
         $olahan->assertSeeText('GU IIII');
         $olahan->assertSeeText('Vivi Irianti');
     }

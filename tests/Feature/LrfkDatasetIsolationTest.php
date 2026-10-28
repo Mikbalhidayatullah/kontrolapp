@@ -32,48 +32,38 @@ class LrfkDatasetIsolationTest extends TestCase
     public function test_index_only_shows_entries_from_the_selected_version(): void
     {
         $this->entry('lama', 'PROGRAM KHUSUS LAMA');
-        $this->entry('perubahan', 'PROGRAM KHUSUS PERUBAHAN');
         $this->entry('data_olahan', 'PROGRAM KHUSUS DATA OLAHAN');
 
         $this->actingAs($this->admin())
             ->get(route('lrfk.index', ['version' => 'lama']))
             ->assertOk()
             ->assertSee('PROGRAM KHUSUS LAMA')
-            ->assertDontSee('PROGRAM KHUSUS PERUBAHAN')
-            ->assertDontSee('PROGRAM KHUSUS DATA OLAHAN');
-
-        $this->actingAs($this->admin())
-            ->get(route('lrfk.index', ['version' => 'perubahan']))
-            ->assertOk()
-            ->assertSee('PROGRAM KHUSUS PERUBAHAN')
-            ->assertDontSee('PROGRAM KHUSUS LAMA')
             ->assertDontSee('PROGRAM KHUSUS DATA OLAHAN');
 
         $this->actingAs($this->admin())
             ->get(route('lrfk.index', ['version' => 'data_olahan']))
             ->assertOk()
             ->assertSee('PROGRAM KHUSUS DATA OLAHAN')
-            ->assertDontSee('PROGRAM KHUSUS LAMA')
-            ->assertDontSee('PROGRAM KHUSUS PERUBAHAN');
+            ->assertDontSee('PROGRAM KHUSUS LAMA');
     }
 
-    public function test_change_form_only_offers_change_sub_activities(): void
+    public function test_processed_form_only_offers_processed_sub_activities(): void
     {
         $this->entry('lama', 'SUB KEGIATAN LAMA', 'sub_kegiatan', '1.01.01.1.01.0001');
-        $this->entry('perubahan', 'SUB KEGIATAN PERUBAHAN', 'sub_kegiatan', '1.01.01.1.01.0002');
+        $this->entry('data_olahan', 'SUB KEGIATAN PERUBAHAN', 'sub_kegiatan', '1.01.01.1.01.0002');
 
         $this->actingAs($this->admin())
-            ->get(route('lrfk.create', ['version' => 'perubahan']))
+            ->get(route('lrfk.create', ['version' => 'data_olahan']))
             ->assertOk()
             ->assertSee('SUB KEGIATAN PERUBAHAN')
             ->assertDontSee('SUB KEGIATAN LAMA')
-            ->assertSee('name="version" value="perubahan"', false);
+            ->assertSee('name="version" value="data_olahan"', false);
     }
 
     public function test_new_entry_is_saved_in_the_selected_version(): void
     {
         $this->actingAs($this->admin())->post(route('lrfk.store'), [
-            'version' => 'perubahan',
+            'version' => 'data_olahan',
             'level' => 'program',
             'kode' => 'Program',
             'kode_rekening' => '9.99.99',
@@ -88,16 +78,16 @@ class LrfkDatasetIsolationTest extends TestCase
             'financial_realization' => '',
             'location' => '',
             'notes' => '',
-        ])->assertRedirect(route('lrfk.index', ['version' => 'perubahan']));
+        ])->assertRedirect(route('lrfk.index', ['version' => 'data_olahan']));
 
         $this->assertDatabaseHas('lrfk_entries', [
-            'dataset_version' => 'perubahan',
+            'dataset_version' => 'data_olahan',
             'program_kegiatan' => 'PROGRAM BARU PERUBAHAN',
             'pagu_anggaran' => 1_000_000,
         ]);
     }
 
-    public function test_change_account_cannot_use_an_old_sub_activity_parent(): void
+    public function test_processed_account_cannot_use_an_old_sub_activity_parent(): void
     {
         $oldParent = $this->entry(
             'lama',
@@ -107,7 +97,7 @@ class LrfkDatasetIsolationTest extends TestCase
         );
 
         $this->actingAs($this->admin())->post(route('lrfk.store'), [
-            'version' => 'perubahan',
+            'version' => 'data_olahan',
             'level' => 'rekening',
             'parent_id' => $oldParent->id,
             'kode_rekening' => '5.1.02.04.001.00001',
@@ -116,30 +106,29 @@ class LrfkDatasetIsolationTest extends TestCase
         ])->assertSessionHasErrors('parent_id');
 
         $this->assertDatabaseMissing('lrfk_entries', [
-            'dataset_version' => 'perubahan',
+            'dataset_version' => 'data_olahan',
             'program_kegiatan' => 'REKENING SALAH VERSI',
         ]);
     }
 
-    public function test_perjadin_hierarchy_keeps_using_old_lrfk(): void
+    public function test_perjadin_hierarchy_uses_the_change_lrfk(): void
     {
         $this->entry('lama', 'PROGRAM PILIHAN PERJADIN LAMA');
-        $this->entry('perubahan', 'PROGRAM YANG BELUM DIPAKAI PERJADIN');
-        $this->entry('data_olahan', 'PROGRAM OLAHAN YANG TIDAK DIPAKAI PERJADIN');
+        $this->entry('data_olahan', 'PROGRAM PILIHAN PERJADIN PERUBAHAN');
 
         $hierarchy = app(LrfkPerjadinService::class)->hierarchy();
 
         $this->assertCount(1, $hierarchy);
-        $this->assertSame('PROGRAM PILIHAN PERJADIN LAMA', $hierarchy[0]['nama']);
+        $this->assertSame('PROGRAM PILIHAN PERJADIN PERUBAHAN', $hierarchy[0]['nama']);
     }
 
     public function test_excel_export_only_contains_the_selected_version(): void
     {
         $this->entry('lama', 'PROGRAM EKSPOR LAMA');
-        $this->entry('perubahan', 'PROGRAM EKSPOR PERUBAHAN');
+        $this->entry('data_olahan', 'PROGRAM EKSPOR PERUBAHAN');
 
         $response = $this->actingAs($this->admin())
-            ->get(route('lrfk.export.xlsx', ['version' => 'perubahan']));
+            ->get(route('lrfk.export.xlsx', ['version' => 'data_olahan']));
 
         $response->assertOk()->assertDownload();
 
@@ -149,7 +138,7 @@ class LrfkDatasetIsolationTest extends TestCase
         $worksheet = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
         $zip->close();
 
-        $this->assertStringContainsString('Data Rapat', $worksheet);
+        $this->assertStringContainsString('LRFK Perubahan', $worksheet);
         $this->assertStringContainsString('PROGRAM EKSPOR PERUBAHAN', $worksheet);
         $this->assertStringNotContainsString('PROGRAM EKSPOR LAMA', $worksheet);
 

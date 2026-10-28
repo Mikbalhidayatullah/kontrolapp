@@ -10,12 +10,12 @@ use Illuminate\Support\Collection;
 class LrfkPerjadinService
 {
     /**
-     * Build the selectable LRFK path from the authoritative display order.
+     * Build the selectable path from the active LRFK Perubahan structure.
      */
     public function hierarchy(): array
     {
         $entries = LrfkEntry::query()
-            ->where('dataset_version', LrfkEntry::DATASET_LAMA)
+            ->where('dataset_version', LrfkEntry::DATASET_DATA_OLAHAN)
             ->whereIn('level', ['program', 'kegiatan', 'sub_kegiatan', 'rekening'])
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -195,7 +195,109 @@ class LrfkPerjadinService
         return $metrics;
     }
 
+    public function perjadinMetrics(Collection $entries): array
+    {
+        $linkedAmounts = $this->linkedAmounts();
+        $metrics = [];
+        $paths = [
+            'dinas' => null,
+            'belanja_daerah' => null,
+            'program' => null,
+            'kegiatan' => null,
+            'sub_kegiatan' => null,
+        ];
+
+        foreach ($entries as $entry) {
+            if (array_key_exists($entry->level, $paths)) {
+                $paths[$entry->level] = $entry->id;
+                $this->resetLowerPaths($paths, $entry->level);
+                $metrics[$entry->id] = ['contract' => 0, 'realization' => 0, 'linked' => 0];
+
+                continue;
+            }
+
+            if ($entry->level !== 'rekening') {
+                continue;
+            }
+
+            $linkedAmount = (int) ($linkedAmounts[$entry->id] ?? 0);
+            $metrics[$entry->id] = [
+                'contract' => $linkedAmount,
+                'realization' => $linkedAmount,
+                'linked' => $linkedAmount,
+            ];
+
+            foreach (array_filter($paths) as $pathId) {
+                $metrics[$pathId] ??= ['contract' => 0, 'realization' => 0, 'linked' => 0];
+                $metrics[$pathId]['contract'] += $linkedAmount;
+                $metrics[$pathId]['realization'] += $linkedAmount;
+                $metrics[$pathId]['linked'] += $linkedAmount;
+            }
+        }
+
+        return $metrics;
+    }
+
+    public function perjadinBudgetByEntry(Collection $entries): array
+    {
+        if ($entries->every(fn (LrfkEntry $entry): bool => $entry->dataset_version === LrfkEntry::DATASET_DATA_OLAHAN)) {
+            return $entries
+                ->mapWithKeys(fn (LrfkEntry $entry): array => [$entry->id => (int) $entry->pagu_anggaran])
+                ->all();
+        }
+
+        $entries->loadMissing('parent');
+        $changedBudgets = LrfkEntry::query()
+            ->with('parent')
+            ->where('dataset_version', LrfkEntry::DATASET_DATA_OLAHAN)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->groupBy(fn (LrfkEntry $entry): string => $this->budgetIdentity($entry))
+            ->map(fn (Collection $matches): int => (int) $matches->max('pagu_anggaran'));
+
+        return $entries
+            ->mapWithKeys(fn (LrfkEntry $entry): array => [
+                $entry->id => (int) ($changedBudgets[$this->budgetIdentity($entry)] ?? 0),
+            ])
+            ->all();
+    }
+
     public function linkedUsageByEntry(): array
+    {
+        return $this->usageByEntry('skpd_name');
+    }
+
+    public function perjadinUsageByEntry(): array
+    {
+        return $this->usageByEntry('executor_name');
+    }
+
+    public function unlinkedPaidPerjadin(): Collection
+    {
+        return PerjadinEntry::query()
+            ->whereNotNull('paid_at')
+            ->where(function ($query): void {
+                $query
+                    ->whereNull('lrfk_entry_id')
+                    ->orWhereDoesntHave('lrfkEntry')
+                    ->orWhereHas('lrfkEntry', fn ($lrfkQuery) => $lrfkQuery
+                        ->where('dataset_version', '<>', LrfkEntry::DATASET_DATA_OLAHAN));
+            })
+            ->orderBy('assignment_date')
+            ->orderBy('assignment_number')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'executor_name',
+                'assignment_number',
+                'assignment_date',
+                'destination_city',
+                'grand_total',
+            ]);
+    }
+
+    private function usageByEntry(string $implementerColumn): array
     {
         $entries = PerjadinEntry::query()
             ->whereNotNull('lrfk_entry_id')
@@ -209,6 +311,8 @@ class LrfkPerjadinService
                 'assignment_number',
                 'assignment_date',
                 'skpd_name',
+                'executor_name',
+                'destination_city',
                 'grand_total',
             ]);
 
@@ -226,19 +330,20 @@ class LrfkPerjadinService
 
         return $entries
             ->groupBy('lrfk_entry_id')
-            ->map(function (Collection $accountEntries) use ($purposes): array {
+            ->map(function (Collection $accountEntries) use ($purposes, $implementerColumn): array {
                 return $accountEntries
                     ->groupBy(fn (PerjadinEntry $entry): string => $this->assignmentKey(
                         $entry->assignment_number,
                         optional($entry->assignment_date)->format('Y-m-d')
                     ))
-                    ->map(function (Collection $assignmentEntries, string $key) use ($purposes): array {
+                    ->map(function (Collection $assignmentEntries, string $key) use ($purposes, $implementerColumn): array {
                         $first = $assignmentEntries->first();
 
                         return [
                             'assignment_number_date' => trim($first->assignment_number.' / '.optional($first->assignment_date)->format('d/m/Y'), ' /'),
-                            'implementer' => $assignmentEntries->pluck('skpd_name')->filter()->unique()->implode(', '),
+                            'implementer' => $assignmentEntries->pluck($implementerColumn)->filter()->unique()->implode(', '),
                             'purpose' => trim((string) ($purposes[$key]->purpose ?? '')),
+                            'location' => $assignmentEntries->pluck('destination_city')->filter()->unique()->implode(', '),
                             'amount' => (int) $assignmentEntries->sum('grand_total'),
                         ];
                     })
@@ -246,6 +351,38 @@ class LrfkPerjadinService
                     ->all();
             })
             ->all();
+    }
+
+    private function linkedAmounts(): Collection
+    {
+        return PerjadinEntry::query()
+            ->whereNotNull('lrfk_entry_id')
+            ->whereNotNull('paid_at')
+            ->selectRaw('lrfk_entry_id, SUM(grand_total) as amount')
+            ->groupBy('lrfk_entry_id')
+            ->pluck('amount', 'lrfk_entry_id')
+            ->map(fn ($amount): int => (int) $amount);
+    }
+
+    private function budgetIdentity(LrfkEntry $entry): string
+    {
+        if (in_array($entry->level, ['dinas', 'belanja_daerah'], true)) {
+            return $entry->level;
+        }
+
+        $parentCode = $entry->level === 'rekening'
+            ? trim((string) $entry->parent?->kode_rekening)
+            : '';
+        $accountNameFallback = $entry->level === 'rekening' && blank($entry->kode_rekening)
+            ? trim((string) $entry->program_kegiatan)
+            : '';
+
+        return implode("\x1F", [
+            $entry->level,
+            trim((string) $entry->kode_rekening),
+            $parentCode,
+            $accountNameFallback,
+        ]);
     }
 
     private function optionData(LrfkEntry $entry): array

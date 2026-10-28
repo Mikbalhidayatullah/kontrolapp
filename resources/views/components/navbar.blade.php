@@ -51,14 +51,14 @@
                     'active' => request()->routeIs('lrfk.*') && $selectedLrfkVersion === 'lama',
                 ],
                 [
-                    'label' => 'Data Rapat',
-                    'href' => route('lrfk.index', ['version' => 'perubahan']),
-                    'active' => request()->routeIs('lrfk.*') && $selectedLrfkVersion === 'perubahan',
-                ],
-                [
                     'label' => 'LRFK Perubahan',
                     'href' => route('lrfk.index', ['version' => 'data_olahan']),
                     'active' => request()->routeIs('lrfk.*') && $selectedLrfkVersion === 'data_olahan',
+                ],
+                [
+                    'label' => 'LRFK Perjadin',
+                    'href' => route('lrfk.index', ['version' => 'perjadin']),
+                    'active' => request()->routeIs('lrfk.*') && $selectedLrfkVersion === 'perjadin',
                 ],
             ],
         ];

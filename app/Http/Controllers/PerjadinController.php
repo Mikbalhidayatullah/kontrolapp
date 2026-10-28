@@ -644,7 +644,7 @@ class PerjadinController extends Controller
                 'integer',
                 Rule::exists('lrfk_entries', 'id')->where(function ($query): void {
                     $query
-                        ->where('dataset_version', LrfkEntry::DATASET_LAMA)
+                        ->where('dataset_version', LrfkEntry::DATASET_DATA_OLAHAN)
                         ->where('level', 'rekening')
                         ->whereNotNull('kode_rekening')
                         ->where('kode_rekening', '<>', '');

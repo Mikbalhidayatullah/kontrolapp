@@ -17,8 +17,8 @@ class LrfkController extends Controller
 {
     private const VERSION_OPTIONS = [
         LrfkEntry::DATASET_LAMA => 'LRFK Lama',
-        LrfkEntry::DATASET_PERUBAHAN => 'Data Rapat',
         LrfkEntry::DATASET_DATA_OLAHAN => 'LRFK Perubahan',
+        LrfkEntry::DATASET_PERJADIN => 'LRFK Perjadin',
     ];
 
     private const LEVEL_OPTIONS = [
@@ -40,10 +40,19 @@ class LrfkController extends Controller
         $versionEntries = ($selectedKeyword === '' && $selectedLevel === '')
             ? $entries
             : $this->filteredEntries($selectedVersion, '', '');
-        $metrics = $this->lrfkPerjadinService->metrics($versionEntries);
+        $isPerjadinReport = $selectedVersion === LrfkEntry::DATASET_PERJADIN;
+        $metrics = $isPerjadinReport
+            ? $this->lrfkPerjadinService->perjadinMetrics($versionEntries)
+            : $this->lrfkPerjadinService->metrics($versionEntries);
+        $paguByEntry = $isPerjadinReport
+            ? $this->lrfkPerjadinService->perjadinBudgetByEntry($versionEntries)
+            : [];
         $summaryEntries = $selectedVersion === LrfkEntry::DATASET_LAMA
             ? $entries
             : $versionEntries;
+        $unlinkedPaidPerjadin = $isPerjadinReport
+            ? $this->lrfkPerjadinService->unlinkedPaidPerjadin()
+            : collect();
 
         return view('lrfk.index', [
             'title' => self::VERSION_OPTIONS[$selectedVersion],
@@ -54,10 +63,14 @@ class LrfkController extends Controller
             'selectedKeyword' => $selectedKeyword,
             'selectedLevel' => $selectedLevel,
             'metrics' => $metrics,
-            'linkedUsageByEntry' => $this->lrfkPerjadinService->linkedUsageByEntry(),
+            'paguByEntry' => $paguByEntry,
+            'linkedUsageByEntry' => $isPerjadinReport
+                ? $this->lrfkPerjadinService->perjadinUsageByEntry()
+                : $this->lrfkPerjadinService->linkedUsageByEntry(),
+            'unlinkedPaidPerjadin' => $unlinkedPaidPerjadin,
             'summary' => [
                 'count' => $this->physicalRowCount($entries, $selectedVersion),
-                'pagu' => $this->hierarchicalPaguTotal($summaryEntries),
+                'pagu' => $this->hierarchicalPaguTotal($summaryEntries, $paguByEntry),
                 'contract' => $this->hierarchicalMetricTotal($summaryEntries, $metrics, 'contract'),
                 'realization' => $this->hierarchicalMetricTotal($summaryEntries, $metrics, 'realization'),
             ],
@@ -67,6 +80,7 @@ class LrfkController extends Controller
     private function selectedVersion(Request $request): string
     {
         $version = $request->string('version')->toString();
+        abort_if($version === LrfkEntry::DATASET_PERUBAHAN, 404);
 
         return array_key_exists($version, self::VERSION_OPTIONS) ? $version : LrfkEntry::DATASET_LAMA;
     }
@@ -75,10 +89,18 @@ class LrfkController extends Controller
     {
         $selectedVersion = $this->selectedVersion($request);
         $entries = $this->filteredEntries($selectedVersion, '', '');
+        $isPerjadinReport = $selectedVersion === LrfkEntry::DATASET_PERJADIN;
+        $paguByEntry = $isPerjadinReport
+            ? $this->lrfkPerjadinService->perjadinBudgetByEntry($entries)
+            : [];
         $path = $exporter->export(
             $entries,
-            $this->lrfkPerjadinService->metrics($entries),
-            $this->lrfkPerjadinService->linkedUsageByEntry(),
+            $isPerjadinReport
+                ? $this->lrfkPerjadinService->perjadinMetrics($entries)
+                : $this->lrfkPerjadinService->metrics($entries),
+            $isPerjadinReport
+                ? $this->lrfkPerjadinService->perjadinUsageByEntry()
+                : $this->lrfkPerjadinService->linkedUsageByEntry(),
             self::LEVEL_OPTIONS,
             [
                 'keyword' => '',
@@ -86,6 +108,7 @@ class LrfkController extends Controller
                 'version_label' => self::VERSION_OPTIONS[$selectedVersion],
             ],
             $selectedVersion,
+            $paguByEntry,
         );
 
         return response()
@@ -98,6 +121,7 @@ class LrfkController extends Controller
     public function create(Request $request): View
     {
         $selectedVersion = $this->selectedVersion($request);
+        abort_if($selectedVersion === LrfkEntry::DATASET_PERJADIN, 404);
 
         return $this->formView('Tambah '.self::VERSION_OPTIONS[$selectedVersion], null, $selectedVersion);
     }
@@ -105,6 +129,7 @@ class LrfkController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $selectedVersion = $this->selectedVersion($request);
+        abort_if($selectedVersion === LrfkEntry::DATASET_PERJADIN, 404);
         $data = [
             ...$this->validatedData($request, $selectedVersion),
             'dataset_version' => $selectedVersion,
@@ -127,6 +152,8 @@ class LrfkController extends Controller
 
     public function edit(LrfkEntry $lrfkEntry): View
     {
+        $this->abortIfRetiredDataset($lrfkEntry);
+
         return $this->formView(
             'Edit '.self::VERSION_OPTIONS[$lrfkEntry->dataset_version],
             $lrfkEntry,
@@ -136,6 +163,8 @@ class LrfkController extends Controller
 
     public function update(Request $request, LrfkEntry $lrfkEntry): RedirectResponse
     {
+        $this->abortIfRetiredDataset($lrfkEntry);
+
         $selectedVersion = $lrfkEntry->dataset_version;
         $data = [
             ...$this->validatedData($request, $selectedVersion),
@@ -169,6 +198,8 @@ class LrfkController extends Controller
 
     public function destroy(LrfkEntry $lrfkEntry): RedirectResponse
     {
+        $this->abortIfRetiredDataset($lrfkEntry);
+
         if ($lrfkEntry->children()->exists()) {
             return back()->withErrors([
                 'lrfk' => 'Sub kegiatan ini masih memiliki rekening. Pindahkan atau hapus rekeningnya terlebih dahulu.',
@@ -180,6 +211,11 @@ class LrfkController extends Controller
         return redirect()
             ->route('lrfk.index', ['version' => $lrfkEntry->dataset_version])
             ->with('status', 'Data '.self::VERSION_OPTIONS[$lrfkEntry->dataset_version].' berhasil dihapus.');
+    }
+
+    private function abortIfRetiredDataset(LrfkEntry $entry): void
+    {
+        abort_if($entry->dataset_version === LrfkEntry::DATASET_PERUBAHAN, 404);
     }
 
     private function formView(string $title, ?LrfkEntry $entry, string $selectedVersion): View
@@ -214,12 +250,16 @@ class LrfkController extends Controller
 
     private function filteredEntries(string $selectedVersion, string $selectedKeyword, string $selectedLevel): Collection
     {
+        $sourceVersion = $selectedVersion === LrfkEntry::DATASET_PERJADIN
+            ? LrfkEntry::DATASET_DATA_OLAHAN
+            : $selectedVersion;
+
         return LrfkEntry::query()
-            ->with('details')
-            ->where('dataset_version', $selectedVersion)
+            ->with(['details', 'parent'])
+            ->where('dataset_version', $sourceVersion)
             ->when($selectedLevel !== '', fn ($query) => $query->where('level', $selectedLevel))
-            ->when($selectedKeyword !== '', function ($query) use ($selectedKeyword): void {
-                $query->where(function ($innerQuery) use ($selectedKeyword): void {
+            ->when($selectedKeyword !== '', function ($query) use ($selectedKeyword, $selectedVersion): void {
+                $query->where(function ($innerQuery) use ($selectedKeyword, $selectedVersion): void {
                     $innerQuery
                         ->where('kode', 'like', '%'.$selectedKeyword.'%')
                         ->orWhere('kode_rekening', 'like', '%'.$selectedKeyword.'%')
@@ -229,6 +269,19 @@ class LrfkController extends Controller
                         ->orWhere('output', 'like', '%'.$selectedKeyword.'%')
                         ->orWhere('location', 'like', '%'.$selectedKeyword.'%')
                         ->orWhere('notes', 'like', '%'.$selectedKeyword.'%');
+
+                    if ($selectedVersion === LrfkEntry::DATASET_PERJADIN) {
+                        $innerQuery->orWhereHas('perjadinEntries', function ($perjadinQuery) use ($selectedKeyword): void {
+                            $perjadinQuery
+                                ->whereNotNull('paid_at')
+                                ->where(function ($searchQuery) use ($selectedKeyword): void {
+                                    $searchQuery
+                                        ->where('assignment_number', 'like', '%'.$selectedKeyword.'%')
+                                        ->orWhere('executor_name', 'like', '%'.$selectedKeyword.'%')
+                                        ->orWhere('destination_city', 'like', '%'.$selectedKeyword.'%');
+                                });
+                        });
+                    }
                 });
             })
             ->orderBy('sort_order')
@@ -238,20 +291,22 @@ class LrfkController extends Controller
 
     private function physicalRowCount(Collection $entries, string $selectedVersion): int
     {
-        if ($selectedVersion === LrfkEntry::DATASET_LAMA) {
+        if (in_array($selectedVersion, [LrfkEntry::DATASET_LAMA, LrfkEntry::DATASET_PERJADIN], true)) {
             return $entries->count();
         }
 
         return $entries->count() + $entries->sum(fn (LrfkEntry $entry): int => $entry->details->count());
     }
 
-    private function hierarchicalPaguTotal($entries): int
+    private function hierarchicalPaguTotal($entries, array $paguByEntry = []): int
     {
         foreach (array_keys(self::LEVEL_OPTIONS) as $level) {
             $levelEntries = $entries->where('level', $level);
 
             if ($levelEntries->isNotEmpty()) {
-                return (int) $levelEntries->sum('pagu_anggaran');
+                return (int) $levelEntries->sum(
+                    fn (LrfkEntry $entry): int => (int) ($paguByEntry[$entry->id] ?? $entry->pagu_anggaran)
+                );
             }
         }
 

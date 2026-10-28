@@ -5,84 +5,64 @@ namespace Tests\Feature;
 use Database\Seeders\LrfkEntrySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class LrfkChangeDatasetMigrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_migration_imports_the_complete_change_dataset(): void
+    public function test_retired_meeting_dataset_is_absent_after_migrations(): void
     {
-        $this->assertTrue(Schema::hasColumn('lrfk_entries', 'dataset_version'));
-
-        $query = DB::table('lrfk_entries')->where('dataset_version', 'perubahan');
-
-        $this->assertSame(349, $query->count());
-        $this->assertSame(264, (clone $query)->where('level', 'rekening')->count());
-        $this->assertSame(62, (clone $query)->where('level', 'sub_kegiatan')->count());
         $this->assertSame(
-            783_068_733_634,
-            (int) (clone $query)->where('level', 'dinas')->value('pagu_anggaran')
+            0,
+            DB::table('lrfk_entries')->where('dataset_version', 'perubahan')->count()
         );
-        $this->assertSame(366_701_836_399, (int) (clone $query)->where('level', 'dinas')->value('contract_value'));
-        $this->assertSame(357_117_006_436, (int) (clone $query)->where('level', 'dinas')->value('financial_realization'));
     }
 
-    public function test_old_dataset_seeder_still_runs_when_change_dataset_exists(): void
+    public function test_cleanup_migration_deletes_only_the_retired_dataset(): void
+    {
+        $retiredId = DB::table('lrfk_entries')->insertGetId([
+            'dataset_version' => 'perubahan',
+            'sort_order' => 999,
+            'level' => 'rekening',
+            'kode_rekening' => '5.1.02.04.001.99999',
+            'program_kegiatan' => 'DATA RAPAT YANG DIHAPUS',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $activeId = DB::table('lrfk_entries')->insertGetId([
+            'dataset_version' => 'data_olahan',
+            'sort_order' => 999,
+            'level' => 'rekening',
+            'kode_rekening' => '5.1.02.04.001.99998',
+            'program_kegiatan' => 'LRFK PERUBAHAN TETAP ADA',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('lrfk_entry_details')->insert([
+            'lrfk_entry_id' => $retiredId,
+            'sort_order' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $migration = require database_path('migrations/2026_10_28_090000_remove_retired_lrfk_meeting_dataset.php');
+        $migration->up();
+
+        $this->assertDatabaseMissing('lrfk_entries', ['id' => $retiredId]);
+        $this->assertDatabaseHas('lrfk_entries', ['id' => $activeId]);
+        $this->assertDatabaseMissing('lrfk_entry_details', ['lrfk_entry_id' => $retiredId]);
+    }
+
+    public function test_old_dataset_seeder_still_runs_without_restoring_the_retired_dataset(): void
     {
         $this->seed(LrfkEntrySeeder::class);
 
-        $this->assertSame(
-            350,
-            DB::table('lrfk_entries')->where('dataset_version', 'lama')->count()
-        );
-        $this->assertSame(
-            349,
-            DB::table('lrfk_entries')->where('dataset_version', 'perubahan')->count()
-        );
-        $this->assertSame(
-            0,
-            DB::table('lrfk_entries')
-                ->where('dataset_version', 'lama')
-                ->where('level', 'rekening')
-                ->whereNull('parent_id')
-                ->count()
-        );
+        $this->assertSame(350, DB::table('lrfk_entries')->where('dataset_version', 'lama')->count());
+        $this->assertSame(0, DB::table('lrfk_entries')->where('dataset_version', 'perubahan')->count());
     }
 
-    public function test_change_dataset_keeps_duplicate_account_rows_from_the_source_sheet(): void
-    {
-        $this->assertSame(
-            2,
-            DB::table('lrfk_entries')
-                ->where('dataset_version', 'perubahan')
-                ->where('level', 'rekening')
-                ->where('kode_rekening', '5.2.03.01.002.00013')
-                ->where('program_kegiatan', 'Belanja Modal Bangunan Gedung Tempat Tinggal Lainnya')
-                ->count()
-        );
-
-        $this->assertSame(
-            2,
-            DB::table('lrfk_entries')
-                ->where('dataset_version', 'perubahan')
-                ->where('level', 'rekening')
-                ->where('kode_rekening', '5.2.03.04.001.00004')
-                ->where('program_kegiatan', 'Belanja Modal Pagar')
-                ->where('parent_id', function ($query): void {
-                    $query->select('id')
-                        ->from('lrfk_entries')
-                        ->where('dataset_version', 'perubahan')
-                        ->where('level', 'sub_kegiatan')
-                        ->where('kode_rekening', '1.01.02.1.02.0010')
-                        ->limit(1);
-                })
-                ->count()
-        );
-    }
-
-    public function test_migration_imports_the_complete_processed_dataset(): void
+    public function test_migration_keeps_the_complete_processed_dataset(): void
     {
         $query = DB::table('lrfk_entries')->where('dataset_version', 'data_olahan');
 
@@ -111,7 +91,6 @@ class LrfkChangeDatasetMigrationTest extends TestCase
                 ->where('kode_rekening', '1.01.01.1.09.0009')
                 ->limit(1);
         })->count());
-
         $this->assertSame(5, (clone $query)->where('kode_rekening', '5.1.02.02.008.00019')->where('parent_id', function ($subquery): void {
             $subquery->select('id')
                 ->from('lrfk_entries')
@@ -121,45 +100,5 @@ class LrfkChangeDatasetMigrationTest extends TestCase
                 ->limit(1);
         })->count());
         $this->assertSame(2, (clone $query)->where('kode_rekening', '5.2.03.01.001.00030')->count());
-    }
-
-    public function test_full_sync_overwrites_source_fields_while_preserving_the_existing_id(): void
-    {
-        $preservedEntry = DB::table('lrfk_entries')
-            ->where('dataset_version', 'perubahan')
-            ->where('level', 'rekening')
-            ->where('pagu_anggaran', '>', 0)
-            ->first();
-
-        DB::table('lrfk_entries')
-            ->where('id', $preservedEntry->id)
-            ->update([
-                'contract_value' => 987_654_321,
-                'output' => 'Realisasi yang harus dipertahankan',
-            ]);
-
-        $migration = require database_path('migrations/2026_10_04_120000_import_full_lrfk_source_data.php');
-        $migration->up();
-
-        $source = collect(json_decode(
-            file_get_contents(database_path('seeders/data/lrfk_full_perubahan.json')),
-            true,
-            flags: JSON_THROW_ON_ERROR,
-        ))->first(fn (array $row): bool => $row['kind'] === 'entry'
-            && $row['level'] === 'rekening'
-            && $row['kode_rekening'] === $preservedEntry->kode_rekening
-            && $row['program_kegiatan'] === $preservedEntry->program_kegiatan
-            && $row['pagu_anggaran'] === (int) $preservedEntry->pagu_anggaran);
-
-        $this->assertDatabaseHas('lrfk_entries', [
-            'id' => $preservedEntry->id,
-            'dataset_version' => 'perubahan',
-            'contract_value' => $source['contract_value'],
-            'output' => $source['output'],
-        ]);
-        $this->assertSame(
-            349,
-            DB::table('lrfk_entries')->where('dataset_version', 'perubahan')->count()
-        );
     }
 }

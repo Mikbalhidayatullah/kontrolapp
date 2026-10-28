@@ -94,6 +94,7 @@ class LrfkExcelExporter
         array $levelOptions,
         array $filters,
         string $selectedVersion = LrfkEntry::DATASET_LAMA,
+        array $paguByEntry = [],
     ): string {
         $directory = storage_path('app/exports');
         if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
@@ -116,7 +117,7 @@ class LrfkExcelExporter
         $zip->addFromString('xl/styles.xml', $this->stylesXml());
         $zip->addFromString(
             'xl/worksheets/sheet1.xml',
-            $this->worksheetXml($entries, $metrics, $linkedUsageByEntry, $levelOptions, $filters, $selectedVersion)
+            $this->worksheetXml($entries, $metrics, $linkedUsageByEntry, $levelOptions, $filters, $selectedVersion, $paguByEntry)
         );
         $zip->close();
 
@@ -130,6 +131,7 @@ class LrfkExcelExporter
         array $levelOptions,
         array $filters,
         string $selectedVersion,
+        array $paguByEntry,
     ): string {
         $rows = [];
         $rowNumber = 1;
@@ -163,6 +165,25 @@ class LrfkExcelExporter
             ], 24);
         } else {
             foreach ($entries as $entry) {
+                if ($selectedVersion === LrfkEntry::DATASET_PERJADIN) {
+                    $linkedUsages = $linkedUsageByEntry[$entry->id] ?? [];
+                    $rows[] = $this->rowXml(
+                        $rowNumber,
+                        $this->perjadinEntryCells(
+                            $entry,
+                            $rowNumber,
+                            $metrics,
+                            $linkedUsages,
+                            $levelOptions,
+                            (int) ($paguByEntry[$entry->id] ?? 0),
+                        ),
+                        max(28, 28 + (count($linkedUsages) * 17)),
+                    );
+                    $rowNumber++;
+
+                    continue;
+                }
+
                 if ($selectedVersion === LrfkEntry::DATASET_LAMA) {
                     $linkedUsages = $linkedUsageByEntry[$entry->id] ?? [];
                     $rows[] = $this->rowXml(
@@ -344,6 +365,53 @@ class LrfkExcelExporter
         ];
     }
 
+    private function perjadinEntryCells(
+        LrfkEntry $entry,
+        int $rowNumber,
+        array $metrics,
+        array $linkedUsages,
+        array $levelOptions,
+        int $pagu,
+    ): array {
+        $rowMetrics = $metrics[$entry->id] ?? ['contract' => 0, 'realization' => 0, 'linked' => 0];
+        $contract = (int) $rowMetrics['contract'];
+        $realization = (int) $rowMetrics['realization'];
+        $hasPerjadin = (int) $rowMetrics['linked'] > 0;
+        $percentage = $pagu > 0 ? $realization / $pagu : 0;
+        [$textStyle, $moneyStyle, $percentStyle] = $this->stylesForLevel($entry->level);
+        $programLabel = trim($entry->program_kegiatan);
+        if ($programLabel !== '') {
+            $programLabel .= "\n".($levelOptions[$entry->level] ?? $entry->level);
+        }
+
+        return [
+            $this->stringCell(1, $rowNumber, $entry->kode ?: '-', $textStyle),
+            $this->stringCell(2, $rowNumber, $entry->kode_rekening ?: '-', $textStyle),
+            $this->stringCell(3, $rowNumber, $programLabel ?: '-', $textStyle),
+            $this->numberCell(4, $rowNumber, $pagu, $moneyStyle),
+            $hasPerjadin
+                ? $this->numberCell(5, $rowNumber, $contract, $moneyStyle)
+                : $this->stringCell(5, $rowNumber, '', $textStyle),
+            $this->stringCell(6, $rowNumber, $this->usageText($linkedUsages, 'assignment_number_date'), $textStyle),
+            $this->stringCell(7, $rowNumber, $this->usageText($linkedUsages, 'implementer'), $textStyle),
+            $this->stringCell(8, $rowNumber, $this->usageText($linkedUsages, 'purpose'), $textStyle),
+            $this->stringCell(9, $rowNumber, '', $textStyle),
+            $this->stringCell(10, $rowNumber, '', $textStyle),
+            $hasPerjadin
+                ? $this->numberCell(11, $rowNumber, $realization, $moneyStyle)
+                : $this->stringCell(11, $rowNumber, '', $textStyle),
+            $hasPerjadin
+                ? $this->numberCell(12, $rowNumber, $percentage, $percentStyle)
+                : $this->stringCell(12, $rowNumber, '', $textStyle),
+            $hasPerjadin
+                ? $this->numberCell(13, $rowNumber, $percentage, $percentStyle)
+                : $this->stringCell(13, $rowNumber, '', $textStyle),
+            $this->stringCell(14, $rowNumber, $this->usageText($linkedUsages, 'location'), $textStyle),
+            $this->stringCell(15, $rowNumber, '', $textStyle),
+            $this->stringCell(16, $rowNumber, '', $textStyle),
+        ];
+    }
+
     private function combinedText(?string $baseValue, array $linkedUsages, string $key): string
     {
         $values = [];
@@ -356,6 +424,15 @@ class LrfkExcelExporter
         }
 
         return $values === [] ? '-' : implode("\n", $values);
+    }
+
+    private function usageText(array $linkedUsages, string $key): string
+    {
+        return collect($linkedUsages)
+            ->pluck($key)
+            ->map(fn ($value): string => trim((string) $value))
+            ->filter()
+            ->implode("\n");
     }
 
     private function filterLabel(array $filters, array $levelOptions): string
@@ -404,7 +481,7 @@ class LrfkExcelExporter
     {
         return match ($selectedVersion) {
             LrfkEntry::DATASET_PERUBAHAN => self::PERUBAHAN_HEADERS,
-            LrfkEntry::DATASET_DATA_OLAHAN => self::DATA_OLAHAN_HEADERS,
+            LrfkEntry::DATASET_DATA_OLAHAN, LrfkEntry::DATASET_PERJADIN => self::DATA_OLAHAN_HEADERS,
             default => self::LAMA_HEADERS,
         };
     }
@@ -413,7 +490,7 @@ class LrfkExcelExporter
     {
         $widths = match ($selectedVersion) {
             LrfkEntry::DATASET_PERUBAHAN => [14, 23, 44, 18, 18, 30, 45, 13, 13, 18, 14, 14, 18, 18, 18, 18, 18, 22, 28, 20],
-            LrfkEntry::DATASET_DATA_OLAHAN => [14, 23, 44, 18, 18, 29, 30, 45, 13, 13, 18, 14, 14, 22, 28, 20],
+            LrfkEntry::DATASET_DATA_OLAHAN, LrfkEntry::DATASET_PERJADIN => [14, 23, 44, 18, 18, 29, 30, 45, 13, 13, 18, 14, 14, 22, 28, 20],
             default => [14, 23, 44, 18, 18, 29, 30, 45, 13, 13, 18, 14, 14, 22, 28],
         };
         $xml = '<cols>';

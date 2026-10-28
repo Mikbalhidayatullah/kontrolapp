@@ -17,6 +17,8 @@ class LrfkEntry extends Model
 
     public const DATASET_DATA_OLAHAN = 'data_olahan';
 
+    public const DATASET_PERJADIN = 'perjadin';
+
     protected $fillable = [
         'parent_id',
         'dataset_version',
