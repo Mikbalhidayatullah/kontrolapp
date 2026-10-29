@@ -84,6 +84,36 @@ class LrfkPerjadinReportTest extends TestCase
         $this->assertMatchesRegularExpression('/<c r="[A-Z]+\d+" s="\d+"><v>250000<\/v><\/c>/', $worksheet);
     }
 
+    public function test_report_excel_writes_each_perjadin_to_a_separate_row(): void
+    {
+        [$admin, , , , , , $changedLinkedAccount] = $this->reportFixture();
+        $this->perjadin(
+            $admin,
+            $changedLinkedAccount,
+            'ST-PAID-001',
+            'Pelaksana Dibayar Kedua',
+            125_000,
+            now(),
+        );
+
+        $response = $this->actingAs($admin)
+            ->get(route('lrfk.export.xlsx', ['version' => 'perjadin']))
+            ->assertOk()
+            ->assertDownload();
+
+        $path = $response->baseResponse->getFile()->getPathname();
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $worksheet = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+        @unlink($path);
+
+        $this->assertSame(2, substr_count($worksheet, 'ST-PAID-001 / 10/10/2026'));
+        $this->assertStringContainsString('Pelaksana Dibayar</t>', $worksheet);
+        $this->assertStringContainsString('Pelaksana Dibayar Kedua</t>', $worksheet);
+        $this->assertStringNotContainsString('Pelaksana Dibayar, Pelaksana Dibayar Kedua', $worksheet);
+    }
+
     public function test_report_shows_paid_perjadin_that_still_needs_an_lrfk_account(): void
     {
         [$admin] = $this->reportFixture();
@@ -135,6 +165,29 @@ class LrfkPerjadinReportTest extends TestCase
             ->assertSeeText('ST-LINK-LAMA-001')
             ->assertSeeText('Pelaksana Tautan Lama')
             ->assertSee(route('perjadin.edit', $oldLinked), false);
+    }
+
+    public function test_report_renders_each_paid_perjadin_as_a_separate_detail_row(): void
+    {
+        [$admin, , , , , , $changedLinkedAccount] = $this->reportFixture();
+        $this->perjadin(
+            $admin,
+            $changedLinkedAccount,
+            'ST-PAID-001',
+            'Pelaksana Dibayar Kedua',
+            125_000,
+            now(),
+        );
+
+        $html = $this->actingAs($admin)
+            ->get(route('lrfk.index', ['version' => 'perjadin']))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertSame(2, substr_count($html, 'data-lrfk-perjadin-detail='));
+        $this->assertStringContainsString('Pelaksana Dibayar', $html);
+        $this->assertStringContainsString('Pelaksana Dibayar Kedua', $html);
+        $this->assertStringNotContainsString('Pelaksana Dibayar, Pelaksana Dibayar Kedua', $html);
     }
 
     private function reportFixture(): array
@@ -193,7 +246,7 @@ class LrfkPerjadinReportTest extends TestCase
         $this->perjadin($admin, $changedLinkedAccount, 'ST-PAID-001', 'Pelaksana Dibayar', 250_000, now());
         $this->perjadin($admin, $changedLinkedAccount, 'ST-UNPAID-001', 'Pelaksana Belum Dibayar', 750_000, null);
 
-        return [$admin, $program, $kegiatan, $subKegiatan, $linkedAccount, $unusedAccount];
+        return [$admin, $program, $kegiatan, $subKegiatan, $linkedAccount, $unusedAccount, $changedLinkedAccount];
     }
 
     private function entry(

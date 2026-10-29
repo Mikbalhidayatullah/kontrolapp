@@ -173,13 +173,25 @@ class LrfkExcelExporter
                             $entry,
                             $rowNumber,
                             $metrics,
-                            $linkedUsages,
                             $levelOptions,
                             (int) ($paguByEntry[$entry->id] ?? 0),
                         ),
-                        max(28, 28 + (count($linkedUsages) * 17)),
+                        32,
                     );
                     $rowNumber++;
+
+                    foreach ($linkedUsages as $usage) {
+                        $rows[] = $this->rowXml(
+                            $rowNumber,
+                            $this->perjadinDetailCells(
+                                $usage,
+                                $rowNumber,
+                                (int) ($paguByEntry[$entry->id] ?? 0),
+                            ),
+                            32,
+                        );
+                        $rowNumber++;
+                    }
 
                     continue;
                 }
@@ -369,7 +381,6 @@ class LrfkExcelExporter
         LrfkEntry $entry,
         int $rowNumber,
         array $metrics,
-        array $linkedUsages,
         array $levelOptions,
         int $pagu,
     ): array {
@@ -392,9 +403,9 @@ class LrfkExcelExporter
             $hasPerjadin
                 ? $this->numberCell(5, $rowNumber, $contract, $moneyStyle)
                 : $this->stringCell(5, $rowNumber, '', $textStyle),
-            $this->stringCell(6, $rowNumber, $this->usageText($linkedUsages, 'assignment_number_date'), $textStyle),
-            $this->stringCell(7, $rowNumber, $this->usageText($linkedUsages, 'implementer'), $textStyle),
-            $this->stringCell(8, $rowNumber, $this->usageText($linkedUsages, 'purpose'), $textStyle),
+            $this->stringCell(6, $rowNumber, '', $textStyle),
+            $this->stringCell(7, $rowNumber, '', $textStyle),
+            $this->stringCell(8, $rowNumber, '', $textStyle),
             $this->stringCell(9, $rowNumber, '', $textStyle),
             $this->stringCell(10, $rowNumber, '', $textStyle),
             $hasPerjadin
@@ -406,7 +417,33 @@ class LrfkExcelExporter
             $hasPerjadin
                 ? $this->numberCell(13, $rowNumber, $percentage, $percentStyle)
                 : $this->stringCell(13, $rowNumber, '', $textStyle),
-            $this->stringCell(14, $rowNumber, $this->usageText($linkedUsages, 'location'), $textStyle),
+            $this->stringCell(14, $rowNumber, '', $textStyle),
+            $this->stringCell(15, $rowNumber, '', $textStyle),
+            $this->stringCell(16, $rowNumber, '', $textStyle),
+        ];
+    }
+
+    private function perjadinDetailCells(array $usage, int $rowNumber, int $pagu): array
+    {
+        [$textStyle, $moneyStyle, $percentStyle] = $this->stylesForLevel('rekening');
+        $amount = (int) ($usage['amount'] ?? 0);
+        $percentage = $pagu > 0 ? $amount / $pagu : 0;
+
+        return [
+            $this->stringCell(1, $rowNumber, '', $textStyle),
+            $this->stringCell(2, $rowNumber, '', $textStyle),
+            $this->stringCell(3, $rowNumber, '', $textStyle),
+            $this->stringCell(4, $rowNumber, '', $textStyle),
+            $this->numberCell(5, $rowNumber, $amount, $moneyStyle),
+            $this->stringCell(6, $rowNumber, (string) ($usage['assignment_number_date'] ?? ''), $textStyle),
+            $this->stringCell(7, $rowNumber, (string) ($usage['implementer'] ?? ''), $textStyle),
+            $this->stringCell(8, $rowNumber, (string) ($usage['purpose'] ?? ''), $textStyle),
+            $this->stringCell(9, $rowNumber, '', $textStyle),
+            $this->stringCell(10, $rowNumber, '', $textStyle),
+            $this->numberCell(11, $rowNumber, $amount, $moneyStyle),
+            $this->numberCell(12, $rowNumber, $percentage, $percentStyle),
+            $this->numberCell(13, $rowNumber, $percentage, $percentStyle),
+            $this->stringCell(14, $rowNumber, (string) ($usage['location'] ?? ''), $textStyle),
             $this->stringCell(15, $rowNumber, '', $textStyle),
             $this->stringCell(16, $rowNumber, '', $textStyle),
         ];
@@ -424,15 +461,6 @@ class LrfkExcelExporter
         }
 
         return $values === [] ? '-' : implode("\n", $values);
-    }
-
-    private function usageText(array $linkedUsages, string $key): string
-    {
-        return collect($linkedUsages)
-            ->pluck($key)
-            ->map(fn ($value): string => trim((string) $value))
-            ->filter()
-            ->implode("\n");
     }
 
     private function filterLabel(array $filters, array $levelOptions): string

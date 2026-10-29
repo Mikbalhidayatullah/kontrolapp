@@ -48,34 +48,45 @@
                         </td>
                         <td class="px-4 py-4 text-right align-top font-semibold">Rp {{ $money($pagu) }}</td>
                         <td class="px-4 py-4 text-right align-top">{{ $hasPerjadin ? 'Rp '.$money($contract) : '' }}</td>
-                        <td class="max-w-sm px-4 py-4 align-top">
-                            @foreach ($linkedUsages as $usage)
-                                <p class="{{ ! $loop->first ? 'mt-2 border-t border-current/10 pt-2' : '' }}">{{ $usage['assignment_number_date'] }}</p>
-                            @endforeach
-                        </td>
-                        <td class="max-w-sm px-4 py-4 align-top">
-                            @foreach ($linkedUsages as $usage)
-                                <p class="{{ ! $loop->first ? 'mt-2 border-t border-current/10 pt-2' : '' }}">{{ $usage['implementer'] }}</p>
-                            @endforeach
-                        </td>
-                        <td class="max-w-md px-4 py-4 align-top">
-                            @foreach ($linkedUsages as $usage)
-                                <p class="{{ ! $loop->first ? 'mt-2 border-t border-current/10 pt-2' : '' }} whitespace-pre-line">{{ $usage['purpose'] }}</p>
-                            @endforeach
-                        </td>
+                        <td class="max-w-sm px-4 py-4 align-top"></td>
+                        <td class="max-w-sm px-4 py-4 align-top"></td>
+                        <td class="max-w-md px-4 py-4 align-top"></td>
                         <td class="px-4 py-4 align-top"></td>
                         <td class="px-4 py-4 align-top"></td>
                         <td class="px-4 py-4 text-right align-top font-semibold">{{ $hasPerjadin ? 'Rp '.$money($realization) : '' }}</td>
                         <td class="px-4 py-4 text-right align-top">{{ $hasPerjadin ? $percent($percentage) : '' }}</td>
                         <td class="px-4 py-4 text-right align-top">{{ $hasPerjadin ? $percent($percentage) : '' }}</td>
-                        <td class="max-w-sm px-4 py-4 align-top">
-                            @foreach ($linkedUsages as $usage)
-                                <p class="{{ ! $loop->first ? 'mt-2 border-t border-current/10 pt-2' : '' }}">{{ $usage['location'] }}</p>
-                            @endforeach
-                        </td>
+                        <td class="max-w-sm px-4 py-4 align-top"></td>
                         <td class="px-4 py-4 align-top"></td>
                         <td class="px-4 py-4 align-top"></td>
                     </tr>
+
+                    @foreach ($linkedUsages as $usage)
+                        @php
+                            $detailAmount = (int) ($usage['amount'] ?? 0);
+                            $detailPercentage = $pagu > 0
+                                ? round(($detailAmount / $pagu) * 100, 2)
+                                : 0;
+                        @endphp
+                        <tr data-lrfk-perjadin-detail="{{ $usage['perjadin_id'] }}" class="bg-white text-slate-700">
+                            <td class="px-4 py-4 align-top"></td>
+                            <td class="px-4 py-4 align-top"></td>
+                            <td class="px-4 py-4 align-top"></td>
+                            <td class="px-4 py-4 align-top"></td>
+                            <td class="px-4 py-4 text-right align-top">Rp {{ $money($detailAmount) }}</td>
+                            <td class="max-w-sm px-4 py-4 align-top">{{ $usage['assignment_number_date'] ?: '-' }}</td>
+                            <td class="max-w-sm px-4 py-4 align-top">{{ $usage['implementer'] ?: '-' }}</td>
+                            <td class="max-w-md whitespace-pre-line px-4 py-4 align-top">{{ $usage['purpose'] ?: '-' }}</td>
+                            <td class="px-4 py-4 align-top"></td>
+                            <td class="px-4 py-4 align-top"></td>
+                            <td class="px-4 py-4 text-right align-top font-semibold">Rp {{ $money($detailAmount) }}</td>
+                            <td class="px-4 py-4 text-right align-top">{{ $percent($detailPercentage) }}</td>
+                            <td class="px-4 py-4 text-right align-top">{{ $percent($detailPercentage) }}</td>
+                            <td class="max-w-sm px-4 py-4 align-top">{{ $usage['location'] ?: '-' }}</td>
+                            <td class="px-4 py-4 align-top"></td>
+                            <td class="px-4 py-4 align-top"></td>
+                        </tr>
+                    @endforeach
                 @endforeach
             </tbody>
         </table>

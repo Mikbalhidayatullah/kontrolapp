@@ -270,7 +270,7 @@ class LrfkPerjadinService
 
     public function perjadinUsageByEntry(): array
     {
-        return $this->usageByEntry('executor_name');
+        return $this->usageByEntry('executor_name', false);
     }
 
     public function unlinkedPaidPerjadin(): Collection
@@ -297,7 +297,7 @@ class LrfkPerjadinService
             ]);
     }
 
-    private function usageByEntry(string $implementerColumn): array
+    private function usageByEntry(string $implementerColumn, bool $groupByAssignment = true): array
     {
         $entries = PerjadinEntry::query()
             ->whereNotNull('lrfk_entry_id')
@@ -328,6 +328,32 @@ class LrfkPerjadinService
                 optional($group->assignment_date)->format('Y-m-d')
             ));
 
+        if (! $groupByAssignment) {
+            return $entries
+                ->groupBy('lrfk_entry_id')
+                ->map(function (Collection $accountEntries) use ($purposes, $implementerColumn): array {
+                    return $accountEntries
+                        ->map(function (PerjadinEntry $entry) use ($purposes, $implementerColumn): array {
+                            $key = $this->assignmentKey(
+                                $entry->assignment_number,
+                                optional($entry->assignment_date)->format('Y-m-d')
+                            );
+
+                            return [
+                                'perjadin_id' => $entry->id,
+                                'assignment_number_date' => trim($entry->assignment_number.' / '.optional($entry->assignment_date)->format('d/m/Y'), ' /'),
+                                'implementer' => trim((string) $entry->{$implementerColumn}),
+                                'purpose' => trim((string) ($purposes[$key]->purpose ?? '')),
+                                'location' => trim((string) $entry->destination_city),
+                                'amount' => (int) $entry->grand_total,
+                            ];
+                        })
+                        ->values()
+                        ->all();
+                })
+                ->all();
+        }
+
         return $entries
             ->groupBy('lrfk_entry_id')
             ->map(function (Collection $accountEntries) use ($purposes, $implementerColumn): array {
@@ -340,6 +366,7 @@ class LrfkPerjadinService
                         $first = $assignmentEntries->first();
 
                         return [
+                            'perjadin_id' => $first->id,
                             'assignment_number_date' => trim($first->assignment_number.' / '.optional($first->assignment_date)->format('d/m/Y'), ' /'),
                             'implementer' => $assignmentEntries->pluck($implementerColumn)->filter()->unique()->implode(', '),
                             'purpose' => trim((string) ($purposes[$key]->purpose ?? '')),
