@@ -45,6 +45,7 @@ class LrfkPerjadinReportTest extends TestCase
             ->assertSeeText('ST-PAID-001 / 10/10/2026')
             ->assertSeeText('Pelaksana Dibayar')
             ->assertSeeText('Monitoring sekolah')
+            ->assertSeeText('GU 1')
             ->assertDontSeeText('ST-UNPAID-001')
             ->assertDontSeeText('DATA LRFK NON PERJADIN')
             ->assertDontSeeText('PROGRAM DATA RAPAT')
@@ -76,6 +77,7 @@ class LrfkPerjadinReportTest extends TestCase
         $this->assertStringContainsString('ST-PAID-001 / 10/10/2026', $worksheet);
         $this->assertStringContainsString('Pelaksana Dibayar', $worksheet);
         $this->assertStringContainsString('Monitoring sekolah', $worksheet);
+        $this->assertStringContainsString('GU 1', $worksheet);
         $this->assertStringNotContainsString('ST-UNPAID-001', $worksheet);
         $this->assertStringNotContainsString('DATA LRFK NON PERJADIN', $worksheet);
         $this->assertStringNotContainsString('999000', $worksheet);
@@ -94,6 +96,7 @@ class LrfkPerjadinReportTest extends TestCase
             'Pelaksana Dibayar Kedua',
             125_000,
             now(),
+            'LS',
         );
 
         $response = $this->actingAs($admin)
@@ -111,6 +114,8 @@ class LrfkPerjadinReportTest extends TestCase
         $this->assertSame(2, substr_count($worksheet, 'ST-PAID-001 / 10/10/2026'));
         $this->assertStringContainsString('Pelaksana Dibayar</t>', $worksheet);
         $this->assertStringContainsString('Pelaksana Dibayar Kedua</t>', $worksheet);
+        $this->assertStringContainsString('GU 1', $worksheet);
+        $this->assertStringContainsString('LS', $worksheet);
         $this->assertStringNotContainsString('Pelaksana Dibayar, Pelaksana Dibayar Kedua', $worksheet);
     }
 
@@ -177,6 +182,7 @@ class LrfkPerjadinReportTest extends TestCase
             'Pelaksana Dibayar Kedua',
             125_000,
             now(),
+            'LS',
         );
 
         $html = $this->actingAs($admin)
@@ -187,6 +193,8 @@ class LrfkPerjadinReportTest extends TestCase
         $this->assertSame(2, substr_count($html, 'data-lrfk-perjadin-detail='));
         $this->assertStringContainsString('Pelaksana Dibayar', $html);
         $this->assertStringContainsString('Pelaksana Dibayar Kedua', $html);
+        $this->assertStringContainsString('GU 1', $html);
+        $this->assertStringContainsString('LS', $html);
         $this->assertStringNotContainsString('Pelaksana Dibayar, Pelaksana Dibayar Kedua', $html);
     }
 
@@ -277,9 +285,11 @@ class LrfkPerjadinReportTest extends TestCase
         string $executor,
         int $amount,
         mixed $paidAt,
+        string $fundingCategory = 'GU 1',
     ): PerjadinEntry {
         return PerjadinEntry::unguarded(fn (): PerjadinEntry => PerjadinEntry::query()->create([
             'category' => 'Perjadin Dalam Daerah',
+            'funding_category' => $fundingCategory,
             'lrfk_entry_id' => $account->id,
             'skpd_name' => 'Dinas Pendidikan dan Kebudayaan',
             'executor_name' => $executor,

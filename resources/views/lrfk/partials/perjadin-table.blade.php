@@ -83,7 +83,7 @@
                             <td class="px-4 py-4 text-right align-top">{{ $percent($detailPercentage) }}</td>
                             <td class="px-4 py-4 text-right align-top">{{ $percent($detailPercentage) }}</td>
                             <td class="max-w-sm px-4 py-4 align-top">{{ $usage['location'] ?: '-' }}</td>
-                            <td class="px-4 py-4 align-top"></td>
+                            <td class="px-4 py-4 align-top">{{ $usage['funding_category'] ?: '-' }}</td>
                             <td class="px-4 py-4 align-top"></td>
                         </tr>
                     @endforeach

@@ -312,6 +312,7 @@ class LrfkPerjadinService
                 'assignment_date',
                 'skpd_name',
                 'executor_name',
+                'funding_category',
                 'destination_city',
                 'grand_total',
             ]);
@@ -345,6 +346,7 @@ class LrfkPerjadinService
                                 'implementer' => trim((string) $entry->{$implementerColumn}),
                                 'purpose' => trim((string) ($purposes[$key]->purpose ?? '')),
                                 'location' => trim((string) $entry->destination_city),
+                                'funding_category' => trim((string) $entry->funding_category),
                                 'amount' => (int) $entry->grand_total,
                             ];
                         })
@@ -371,6 +373,7 @@ class LrfkPerjadinService
                             'implementer' => $assignmentEntries->pluck($implementerColumn)->filter()->unique()->implode(', '),
                             'purpose' => trim((string) ($purposes[$key]->purpose ?? '')),
                             'location' => $assignmentEntries->pluck('destination_city')->filter()->unique()->implode(', '),
+                            'funding_category' => $assignmentEntries->pluck('funding_category')->filter()->unique()->implode(', '),
                             'amount' => (int) $assignmentEntries->sum('grand_total'),
                         ];
                     })

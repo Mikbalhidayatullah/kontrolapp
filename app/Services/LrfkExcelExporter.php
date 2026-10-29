@@ -444,7 +444,7 @@ class LrfkExcelExporter
             $this->numberCell(12, $rowNumber, $percentage, $percentStyle),
             $this->numberCell(13, $rowNumber, $percentage, $percentStyle),
             $this->stringCell(14, $rowNumber, (string) ($usage['location'] ?? ''), $textStyle),
-            $this->stringCell(15, $rowNumber, '', $textStyle),
+            $this->stringCell(15, $rowNumber, (string) ($usage['funding_category'] ?? ''), $textStyle),
             $this->stringCell(16, $rowNumber, '', $textStyle),
         ];
     }
