@@ -167,6 +167,7 @@ class PerjadinController extends Controller
             'yearOptions' => $this->yearOptions(),
             'groupedEntries' => $groupedEntries,
             'categorySummary' => $categorySummary,
+            'receiptFundingCategories' => $this->fundingCategoryOptions(),
             'summary' => [
                 'totalCount' => $entries->count(),
                 'totalGrandTotal' => (int) $entries->sum('grand_total'),
@@ -186,6 +187,7 @@ class PerjadinController extends Controller
         $column = match ($filterType) {
             'executor' => 'executor_name',
             'assignment' => 'assignment_number',
+            'funding' => 'funding_category',
             default => null,
         };
 
@@ -253,22 +255,39 @@ class PerjadinController extends Controller
         $filterType = $request->string('receipt_filter_type')->toString();
         $filterValue = trim($request->string('receipt_filter_value')->toString());
 
-        if (! in_array($filterType, ['executor', 'assignment'], true)) {
+        $fundingCategories = [];
+        if ($filterType === 'funding') {
+            if (! $request->has('receipt_funding_categories') && $filterValue !== '') {
+                $request->merge(['receipt_funding_categories' => [$filterValue]]);
+            }
+            $validated = $request->validate([
+                'receipt_funding_categories' => ['required', 'array', 'min:1'],
+                'receipt_funding_categories.*' => ['required', 'string', Rule::in($this->fundingCategoryOptions())],
+            ], [
+                'receipt_funding_categories.required' => 'Pilih minimal satu kategori pendanaan.',
+            ]);
+            $fundingCategories = array_values(array_unique($validated['receipt_funding_categories']));
+        }
+
+        if (! in_array($filterType, ['executor', 'assignment', 'funding'], true)) {
             $filterType = '';
         }
 
         $entries = PerjadinEntry::query()
             ->when($filterType === 'executor' && $filterValue !== '', fn ($query) => $query->where('executor_name', 'like', '%'.$filterValue.'%'))
             ->when($filterType === 'assignment' && $filterValue !== '', fn ($query) => $query->where('assignment_number', 'like', '%'.$filterValue.'%'))
+            ->when($filterType === 'funding', fn ($query) => $query->whereIn('funding_category', $fundingCategories))
             ->orderBy('start_date')
             ->orderBy('assignment_date')
             ->orderBy('id')
             ->get();
 
         $path = $exporter->export($entries);
-        $filenameSuffix = $filterType !== '' && $filterValue !== ''
+        $filenameSuffix = $filterType === 'funding'
+            ? '-pendanaan-'.Str::slug(implode('-', $fundingCategories))
+            : ($filterType !== '' && $filterValue !== ''
             ? '-'.Str::slug($filterValue)
-            : '-semua-data';
+            : '-semua-data');
         $filename = 'kuitansi-perjadin'.$filenameSuffix.'-'.now()->format('Ymd-His').'.xlsx';
 
         return response()

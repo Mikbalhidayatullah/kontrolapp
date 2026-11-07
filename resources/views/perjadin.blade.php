@@ -133,12 +133,26 @@
                                                 <option value="">Semua kuitansi</option>
                                                 <option value="executor">Pilih berdasarkan nama</option>
                                                 <option value="assignment">Pilih berdasarkan surat tugas</option>
+                                                <option value="funding">Pilih berdasarkan pendanaan</option>
                                             </select>
-                                            <div class="relative">
+                                            <fieldset data-receipt-funding-options disabled class="hidden min-w-0 rounded-lg border border-slate-200 p-2">
+                                                <legend class="px-1 text-sm font-medium text-slate-700">Kategori pendanaan</legend>
+                                                <div class="max-h-48 overflow-y-auto">
+                                                @forelse ($receiptFundingCategories as $fundingCategory)
+                                                    <label class="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-3 text-sm text-slate-700 hover:bg-emerald-50">
+                                                        <input type="checkbox" name="receipt_funding_categories[]" value="{{ $fundingCategory }}" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                                                        <span>{{ $fundingCategory }}</span>
+                                                    </label>
+                                                @empty
+                                                    <p class="px-2 py-3 text-sm text-slate-500">Belum ada kategori pendanaan.</p>
+                                                @endforelse
+                                                </div>
+                                            </fieldset>
+                                            <div class="relative" data-receipt-search-fields>
                                                 <input type="text" name="receipt_filter_value" data-receipt-filter-value autocomplete="off" disabled placeholder="Semua data" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:text-slate-400" />
                                                 <div data-receipt-filter-suggestions class="absolute left-0 right-0 z-40 mt-1 hidden max-h-52 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-xl"></div>
                                             </div>
-                                            <p data-receipt-filter-help class="text-xs leading-5 text-slate-400">Pilih jenis filter, lalu ketik nama atau nomor surat tugas.</p>
+                                            <p data-receipt-filter-help class="text-xs leading-5 text-slate-400">Pilih jenis filter, lalu cari nama, surat tugas, atau pendanaan.</p>
                                             <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
                                                 Download Kuitansi
                                             </button>
@@ -374,8 +388,11 @@
             const filterValue = document.querySelector('[data-receipt-filter-value]');
             const suggestionsBox = document.querySelector('[data-receipt-filter-suggestions]');
             const filterHelp = document.querySelector('[data-receipt-filter-help]');
+            const fundingSelect = document.querySelector('[data-receipt-funding-options]');
+            const fundingCheckboxes = fundingSelect ? [...fundingSelect.querySelectorAll('input[type="checkbox"]')] : [];
+            const searchFields = document.querySelector('[data-receipt-search-fields]');
 
-            if (!filterType || !filterValue || !suggestionsBox) {
+            if (!filterType || !filterValue || !suggestionsBox || !fundingSelect || !searchFields) {
                 return;
             }
 
@@ -394,7 +411,17 @@
 
             const setInputState = () => {
                 const selectedType = filterType.value;
-                const isDisabled = selectedType === '';
+                const isFunding = selectedType === 'funding';
+                const isDisabled = selectedType === '' || isFunding;
+
+                window.clearTimeout(searchTimeout);
+                if (abortController) {
+                    abortController.abort();
+                }
+                fundingSelect.disabled = !isFunding;
+                fundingSelect.classList.toggle('hidden', !isFunding);
+                fundingCheckboxes.forEach((checkbox) => checkbox.setCustomValidity(''));
+                searchFields.classList.toggle('hidden', isFunding);
 
                 filterValue.value = '';
                 filterValue.disabled = isDisabled;
@@ -403,7 +430,9 @@
                 filterValue.classList.toggle('bg-slate-50', isDisabled);
                 filterValue.classList.toggle('bg-white', !isDisabled);
                 if (filterHelp) {
-                    filterHelp.textContent = selectedType
+                    filterHelp.textContent = isFunding
+                        ? ''
+                        : selectedType
                         ? 'Ketik sebagian data, lalu pilih dari saran yang muncul.'
                         : '';
                 }
@@ -462,7 +491,11 @@
                     signal: abortController.signal,
                 })
                     .then((response) => response.ok ? response.json() : [])
-                    .then((items) => renderSuggestions(Array.isArray(items) ? items : []))
+                    .then((items) => {
+                        if (filterType.value === selectedType && !filterValue.disabled) {
+                            renderSuggestions(Array.isArray(items) ? items : []);
+                        }
+                    })
                     .catch((error) => {
                         if (error.name !== 'AbortError') {
                             hideSuggestions();
@@ -471,6 +504,14 @@
             };
 
             filterType.addEventListener('change', setInputState);
+            const validateFunding = () => {
+                const missing = filterType.value === 'funding' && !fundingCheckboxes.some((checkbox) => checkbox.checked);
+                fundingCheckboxes.forEach((checkbox, index) => {
+                    checkbox.setCustomValidity(missing && index === 0 ? 'Pilih minimal satu kategori pendanaan.' : '');
+                });
+            };
+            fundingCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', validateFunding));
+            filterType.form.querySelector('button[type="submit"]').addEventListener('click', validateFunding);
             filterValue.addEventListener('input', () => {
                 window.clearTimeout(searchTimeout);
                 searchTimeout = window.setTimeout(loadSuggestions, 250);
