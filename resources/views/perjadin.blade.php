@@ -137,9 +137,13 @@
                                             </select>
                                             <fieldset data-receipt-funding-options disabled class="hidden min-w-0 rounded-lg border border-slate-200 p-2">
                                                 <legend class="px-1 text-sm font-medium text-slate-700">Kategori pendanaan</legend>
-                                                <div class="max-h-48 overflow-y-auto">
+                                                <div class="flex flex-wrap gap-2 border-b border-slate-100 pb-2">
+                                                    <button type="button" data-receipt-funding-all class="rounded-lg px-2 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">Pilih Semua</button>
+                                                    <button type="button" data-receipt-funding-clear class="rounded-lg px-2 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">Batalkan Semua</button>
+                                                </div>
+                                                <div data-receipt-funding-list class="overflow-y-auto overscroll-contain" style="max-height: 144px; overflow-y: auto;">
                                                 @forelse ($receiptFundingCategories as $fundingCategory)
-                                                    <label class="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-3 text-sm text-slate-700 hover:bg-emerald-50">
+                                                    <label class="flex cursor-pointer items-center gap-3 rounded-lg px-2 text-sm text-slate-700 hover:bg-emerald-50" style="height: 48px; box-sizing: border-box;">
                                                         <input type="checkbox" name="receipt_funding_categories[]" value="{{ $fundingCategory }}" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
                                                         <span>{{ $fundingCategory }}</span>
                                                     </label>
@@ -511,6 +515,12 @@
                 });
             };
             fundingCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', validateFunding));
+            const setAllFunding = (checked) => {
+                fundingCheckboxes.forEach((checkbox) => { checkbox.checked = checked; });
+                validateFunding();
+            };
+            fundingSelect.querySelector('[data-receipt-funding-all]').addEventListener('click', () => setAllFunding(true));
+            fundingSelect.querySelector('[data-receipt-funding-clear]').addEventListener('click', () => setAllFunding(false));
             filterType.form.querySelector('button[type="submit"]').addEventListener('click', validateFunding);
             filterValue.addEventListener('input', () => {
                 window.clearTimeout(searchTimeout);

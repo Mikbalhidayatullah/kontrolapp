@@ -24,6 +24,11 @@ class PerjadinReceiptFundingFilterTest extends TestCase
             ->assertOk()
             ->assertViewHas('receiptFundingCategories', fn ($categories) => collect($categories)->all() === ['GU 1', 'LS'])
             ->assertSee('data-receipt-funding-options', false)
+            ->assertSee('data-receipt-funding-all', false)
+            ->assertSee('data-receipt-funding-clear', false)
+            ->assertSee('max-height: 144px;', false)
+            ->assertSeeText('Pilih Semua')
+            ->assertSeeText('Batalkan Semua')
             ->assertSee('name="receipt_funding_categories[]" value="GU 1"', false)
             ->assertSee('name="receipt_funding_categories[]" value="LS"', false);
     }
