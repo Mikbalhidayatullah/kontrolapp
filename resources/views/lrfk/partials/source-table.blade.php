@@ -10,6 +10,12 @@
 <div class="overflow-hidden rounded-3xl border border-slate-200">
     <div class="lrfk-table-scroll" tabindex="0" role="region" aria-label="Tabel LRFK Perubahan">
         <table class="lrfk-table min-w-[2200px] divide-y divide-slate-200 text-sm">
+            <colgroup>
+                <col class="lrfk-code-column" />
+                <col class="lrfk-account-column" />
+                <col class="lrfk-description-column" />
+                <col span="{{ $isPerubahan ? 18 : 14 }}" class="lrfk-data-column" />
+            </colgroup>
             <thead class="bg-slate-950 text-left text-slate-200">
                 <tr>
                     <th class="px-4 py-3 font-medium">Kode</th>

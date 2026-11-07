@@ -8,10 +8,56 @@
 }
 
 .lrfk-table-scroll {
+    --lrfk-code-width: clamp(48px, 7vw, 100px);
+    --lrfk-account-width: clamp(90px, 14vw, 190px);
+    --lrfk-description-width: clamp(120px, 26vw, 320px);
     position: relative;
     max-height: min(70vh, 760px);
     max-height: min(70dvh, 760px);
     overflow: auto;
+    isolation: isolate;
+    contain: layout paint;
+}
+
+.lrfk-table-scroll .lrfk-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.lrfk-code-column { width: var(--lrfk-code-width); }
+.lrfk-account-column { width: var(--lrfk-account-width); }
+.lrfk-description-column { width: var(--lrfk-description-width); }
+.lrfk-data-column { width: 150px; }
+
+.lrfk-table-scroll tr > :nth-child(-n+3) {
+    position: sticky;
+    z-index: 2;
+    background-color: inherit;
+    overflow-wrap: anywhere;
+}
+.lrfk-table-scroll tr > :nth-child(1) { left: 0; }
+.lrfk-table-scroll tr > :nth-child(2) { left: var(--lrfk-code-width); }
+.lrfk-table-scroll tr > :nth-child(3) {
+    left: calc(var(--lrfk-code-width) + var(--lrfk-account-width));
+    border-right: 1px solid #cbd5e1;
+}
+
+.lrfk-table-scroll[data-frozen-optimized] tbody tr:not([data-frozen-visible]) > :nth-child(-n+3) {
+    position: static;
+    z-index: auto;
+}
+.lrfk-table-scroll td { overflow-wrap: anywhere; }
+.lrfk-table-scroll tbody tr { background-color: #fff; }
+.lrfk-table-scroll thead th,
+.lrfk-table-scroll thead tr > th:nth-child(-n+3) { background-color: #020617; }
+
+@media (max-width: 639px) {
+    .lrfk-table-scroll tr > :nth-child(-n+3) {
+        padding-left: 6px;
+        padding-right: 6px;
+        font-size: 12px;
+    }
 }
 
 .lrfk-table-scroll:focus-visible {
@@ -34,6 +80,10 @@
     }
 
     .lrfk-table-scroll thead {
+        position: static;
+    }
+
+    .lrfk-table-scroll tr > :nth-child(-n+3) {
         position: static;
     }
 }

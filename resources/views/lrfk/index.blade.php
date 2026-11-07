@@ -33,7 +33,7 @@
         }
     </style>
 
-    <div class="space-y-6">
+    <div data-lrfk-report class="space-y-6">
         <section class="grid gap-4 lg:grid-cols-4">
             <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm font-medium text-slate-500">Total Data</p>
@@ -158,6 +158,12 @@
                 <div class="overflow-hidden rounded-3xl border border-slate-200">
                     <div class="lrfk-table-scroll" tabindex="0" role="region" aria-label="Tabel LRFK Lama">
                         <table class="lrfk-table min-w-[1600px] divide-y divide-slate-200 text-sm">
+                            <colgroup>
+                                <col class="lrfk-code-column" />
+                                <col class="lrfk-account-column" />
+                                <col class="lrfk-description-column" />
+                                <col span="13" class="lrfk-data-column" />
+                            </colgroup>
                             <thead class="bg-slate-950 text-left text-slate-200">
                                 <tr>
                                     <th class="px-4 py-3 font-medium">Kode</th>
