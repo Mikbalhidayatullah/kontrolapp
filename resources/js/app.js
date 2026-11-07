@@ -1,6 +1,13 @@
 import './bootstrap';
+import { initializeDropdowns } from './dropdowns';
+import { initializeNavbar } from './navbar';
+import { initializeMobileNavbar } from './mobile-navbar';
+
+initializeDropdowns(document);
 
 document.addEventListener('DOMContentLoaded', () => {
+    initializeNavbar(document);
+    initializeMobileNavbar(document);
     const scrollToTopButton = document.getElementById('scroll-to-top');
 
     if (!scrollToTopButton) {

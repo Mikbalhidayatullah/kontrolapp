@@ -106,7 +106,7 @@
 
                     <div class="flex justify-end">
                         <div class="perjadin-export-actions grid w-full grid-cols-1 gap-3 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
-                            <details class="perjadin-export-details group relative w-full sm:w-auto">
+                            <details data-dropdown class="perjadin-export-details group relative w-full sm:w-auto">
                                 <summary class="perjadin-export-summary inline-flex w-full cursor-pointer list-none items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 sm:w-auto [&::-webkit-details-marker]:hidden">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-4 w-4" aria-hidden="true">
                                         <path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round" />

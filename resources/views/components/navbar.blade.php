@@ -69,15 +69,15 @@
     }
 @endphp
 
-<nav class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 text-white backdrop-blur">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex min-h-18 items-center justify-between gap-4 py-3">
+<nav data-app-navbar class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 text-white backdrop-blur">
+    <div class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <div data-nav-header class="flex min-h-18 items-center justify-between gap-4 py-3">
             <div class="flex min-w-0 items-center gap-4">
-                <a href="/dasborapp" class="flex items-center gap-3">
-                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 via-cyan-300 to-emerald-300 text-sm font-black text-slate-950 shadow-lg shadow-cyan-500/20">
+                <a href="/dasborapp" class="flex min-w-0 items-center gap-3">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 via-cyan-300 to-emerald-300 text-sm font-black text-slate-950 shadow-lg shadow-cyan-500/20">
                         KA
                     </div>
-                    <div class="min-w-0">
+                    <div class="navbar-brand-copy min-w-0">
                         <p class="truncate text-sm font-semibold tracking-[0.24em] text-sky-200 uppercase">Kontrol App</p>
                         <p class="truncate text-xs text-slate-400">Kontrol dana harian dan saving</p>
                     </div>
@@ -85,13 +85,14 @@
             </div>
 
             @auth
-                <div class="hidden items-center gap-2 lg:flex">
+                <div data-nav-rail class="navbar-rail hidden">
+                    <span data-nav-indicator aria-hidden="true"></span>
                     @foreach ($navItems as $item)
                         <x-nav-link href="{{ $item['href'] }}" :active="$item['active']">{{ $item['label'] }}</x-nav-link>
                     @endforeach
 
                     @if ($perjadinSbuMenu)
-                        <details class="group relative">
+                        <details data-dropdown class="group relative">
                             <summary
                                 aria-current="{{ $perjadinSbuMenu['active'] ? 'page' : false }}"
                                 class="{{ $perjadinSbuMenu['active'] ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} inline-flex cursor-pointer list-none items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition [&::-webkit-details-marker]:hidden"
@@ -116,7 +117,7 @@
                     @endif
 
                     @if ($lrfkMenu)
-                        <details class="group relative">
+                        <details data-dropdown class="group relative">
                             <summary
                                 aria-current="{{ $lrfkMenu['active'] ? 'page' : false }}"
                                 class="{{ $lrfkMenu['active'] ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} inline-flex cursor-pointer list-none items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition [&::-webkit-details-marker]:hidden"
@@ -145,7 +146,7 @@
                     @endforeach
                 </div>
 
-                <div class="hidden items-center gap-3 md:flex">
+                <div class="navbar-account hidden items-center gap-3">
                     <div class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-right">
                         <p class="text-[11px] uppercase tracking-[0.22em] text-slate-400">Role</p>
                         <p class="text-sm font-semibold text-emerald-300">{{ $user->roleLabel() }}</p>
@@ -165,8 +166,8 @@
                 </div>
             @endauth
 
-            <div class="lg:hidden">
-                <button type="button" command="--toggle" commandfor="mobile-menu" class="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200 hover:bg-white/10 focus:outline-none">
+            <div class="navbar-mobile-toggle">
+                <button type="button" data-mobile-nav-toggle aria-controls="mobile-menu" aria-expanded="false" aria-label="Buka menu navigasi" class="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200 hover:bg-white/10 focus:outline-none">
                     <span class="sr-only">Buka menu navigasi</span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" class="size-6 in-aria-expanded:hidden">
                         <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -179,7 +180,7 @@
         </div>
     </div>
 
-    <el-disclosure id="mobile-menu" hidden class="block border-t border-white/10 lg:hidden">
+    <div id="mobile-menu" data-mobile-nav-panel hidden inert class="navbar-mobile-menu border-t border-white/10">
         <div class="space-y-2 px-4 py-4">
             @auth
                 @foreach ($navItems as $item)
@@ -193,7 +194,7 @@
                 @endforeach
 
                 @if ($perjadinSbuMenu)
-                    <details class="rounded-2xl bg-white/5">
+                    <details data-dropdown class="rounded-2xl bg-white/5">
                         <summary
                             aria-current="{{ $perjadinSbuMenu['active'] ? 'page' : false }}"
                             class="{{ $perjadinSbuMenu['active'] ? 'bg-white text-slate-950' : 'text-slate-200 hover:bg-white/10' }} flex cursor-pointer list-none items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition [&::-webkit-details-marker]:hidden"
@@ -218,7 +219,7 @@
                 @endif
 
                 @if ($lrfkMenu)
-                    <details class="rounded-2xl bg-white/5">
+                    <details data-dropdown class="rounded-2xl bg-white/5">
                         <summary
                             aria-current="{{ $lrfkMenu['active'] ? 'page' : false }}"
                             class="{{ $lrfkMenu['active'] ? 'bg-white text-slate-950' : 'text-slate-200 hover:bg-white/10' }} flex cursor-pointer list-none items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition [&::-webkit-details-marker]:hidden"
@@ -264,7 +265,7 @@
                 </a>
             @endauth
         </div>
-    </el-disclosure>
+    </div>
 </nav>
 
 

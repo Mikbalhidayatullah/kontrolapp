@@ -6,3 +6,209 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+.lrfk-table-scroll {
+    position: relative;
+    max-height: min(70vh, 760px);
+    max-height: min(70dvh, 760px);
+    overflow: auto;
+}
+
+.lrfk-table-scroll:focus-visible {
+    outline: 2px solid #0284c7;
+    outline-offset: -2px;
+}
+
+.lrfk-table-scroll thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #020617;
+    box-shadow: 0 1px 0 #334155;
+}
+
+@media print {
+    .lrfk-table-scroll {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .lrfk-table-scroll thead {
+        position: static;
+    }
+}
+
+.navbar-rail {
+    position: relative;
+    isolation: isolate;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    flex: 1;
+    max-width: 920px;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgb(255 255 255 / 9%);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 3%);
+}
+
+.navbar-rail > a,
+.navbar-rail > details > summary {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 44px;
+    gap: 5px;
+    padding: 0 8px;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0;
+    white-space: nowrap;
+    transition: color 160ms ease;
+}
+
+.navbar-rail > a[aria-current="page"],
+.navbar-rail > details > summary[aria-current="page"] {
+    background: #f0f9ff;
+    color: #0f172a;
+}
+
+.navbar-rail[data-indicator-ready] > a,
+.navbar-rail[data-indicator-ready] > details > summary {
+    background: transparent;
+    color: #cbd5e1;
+}
+
+.navbar-rail[data-indicator-ready] [data-nav-highlight] {
+    color: #0f172a;
+}
+
+.navbar-rail > a:focus-visible,
+.navbar-rail > details > summary:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+}
+
+[data-nav-indicator] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    border-radius: 6px;
+    background: #f0f9ff;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 15%);
+    opacity: 0;
+}
+
+[data-indicator-ready] > [data-nav-indicator] { opacity: 1; }
+[data-indicator-animated] > [data-nav-indicator] {
+    transition: transform 200ms cubic-bezier(.2,.8,.2,1), width 200ms ease, height 200ms ease;
+}
+
+.navbar-account { flex-shrink: 0; }
+.navbar-account > div { border-radius: 8px; padding: 5px 10px; }
+.navbar-account button { height: 44px; border-radius: 8px; }
+.navbar-mobile-toggle { flex-shrink: 0; }
+.navbar-mobile-toggle button { min-width: 44px; min-height: 44px; }
+.navbar-mobile-toggle button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+.navbar-mobile-menu {
+    max-height: calc(100vh - var(--navbar-header-height, 80px));
+    max-height: calc(100dvh - var(--navbar-header-height, 80px));
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.navbar-mobile-menu[hidden] { display: none; }
+.navbar-mobile-menu a, .navbar-mobile-menu summary { min-height: 44px; overflow-wrap: anywhere; }
+
+@media (min-width: 1280px) {
+    .navbar-rail { display: grid; }
+    .navbar-account { display: flex; }
+    .navbar-mobile-toggle, .navbar-mobile-menu { display: none; }
+}
+
+@media (min-width: 1280px) and (max-width: 1535px) {
+    .navbar-brand-copy { display: none; }
+}
+
+@keyframes dropdown-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-3px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+details[data-dropdown][open] > :not(summary) {
+    animation: dropdown-enter 140ms ease-out;
+}
+
+/* Keep native controls as a fallback where customizable pickers are unavailable. */
+@supports (appearance: base-select) and selector(select::picker(select)) {
+    select:not([multiple]):not([size]),
+    select:not([multiple]):not([size])::picker(select) {
+        appearance: base-select;
+    }
+
+    select:not([multiple]):not([size])::picker(select) {
+        max-height: min(320px, 60vh);
+        overflow-y: auto;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #fff;
+        color: #0f172a;
+        box-shadow: 0 8px 24px rgb(15 23 42 / 12%);
+        opacity: 0;
+        transform: translateY(-3px);
+        transition: opacity 140ms ease-out, transform 140ms ease-out,
+            display 140ms allow-discrete, overlay 140ms allow-discrete;
+    }
+
+    select:not([multiple]):not([size]):open::picker(select) {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    select:not([multiple]):not([size]) option {
+        padding: 8px 12px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    @starting-style {
+        select:not([multiple]):not([size]):open::picker(select) {
+            opacity: 0;
+            transform: translateY(-3px);
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-indicator-animated] > [data-nav-indicator],
+    .navbar-rail > a,
+    .navbar-rail > details > summary {
+        transition: none;
+    }
+    details[data-dropdown][open] > :not(summary) {
+        animation: none;
+    }
+
+    details[data-dropdown] > summary svg {
+        transition: none;
+    }
+
+    select:not([multiple]):not([size])::picker(select) {
+        transition: none;
+    }
+}

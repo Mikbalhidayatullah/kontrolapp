@@ -8,7 +8,7 @@
 @endphp
 
 <div class="overflow-hidden rounded-3xl border border-slate-200">
-    <div class="overflow-x-auto">
+    <div class="lrfk-table-scroll" tabindex="0" role="region" aria-label="Tabel LRFK Perubahan">
         <table class="lrfk-table min-w-[2200px] divide-y divide-slate-200 text-sm">
             <thead class="bg-slate-950 text-left text-slate-200">
                 <tr>
