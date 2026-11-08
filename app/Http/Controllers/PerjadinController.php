@@ -230,10 +230,21 @@ class PerjadinController extends Controller
             ->deleteFileAfterSend(true);
     }
 
-    public function exportBpkExcel(PerjadinBpkExcelExporter $exporter)
+    public function exportBpkExcel(Request $request, PerjadinBpkExcelExporter $exporter)
     {
+        $filterType = $request->string('bpk_filter_type')->toString();
+        $fundingCategories = [];
+        if ($filterType === 'funding') {
+            $validated = $request->validate([
+                'bpk_funding_categories' => ['required', 'array', 'min:1'],
+                'bpk_funding_categories.*' => ['required', 'string', Rule::in($this->fundingCategoryOptions())],
+            ], ['bpk_funding_categories.required' => 'Pilih minimal satu kategori pendanaan.']);
+            $fundingCategories = array_values(array_unique($validated['bpk_funding_categories']));
+        }
+
         $entries = PerjadinEntry::query()
             ->with(['creator:id,name', 'updater:id,name'])
+            ->when($filterType === 'funding', fn ($query) => $query->whereIn('funding_category', $fundingCategories))
             ->orderBy('category')
             ->orderBy('start_date')
             ->orderBy('assignment_date')

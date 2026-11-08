@@ -122,9 +122,33 @@
                                         Custom (Format Lama)
                                     </a>
                                     @if (auth()->user()->hasAnyRole(['admin', 'bendahara']))
-                                        <a href="{{ route('perjadin.export.bpk.xlsx') }}" class="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">
-                                            Versi BPK
-                                        </a>
+                                        <details data-dropdown class="border-t border-slate-100">
+                                            <summary class="cursor-pointer px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700">Versi BPK</summary>
+                                            <form data-bpk-funding-form action="{{ route('perjadin.export.bpk.xlsx') }}" method="GET" class="space-y-3 px-4 pb-3">
+                                                <select name="bpk_filter_type" data-bpk-filter-type aria-label="Filter Excel BPK" class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                                                    <option value="">Semua data BPK</option>
+                                                    <option value="funding">Pilih berdasarkan pendanaan</option>
+                                                </select>
+                                                <fieldset data-bpk-funding-options disabled class="hidden min-w-0 rounded-lg border border-slate-200 p-2">
+                                                    <legend class="px-1 text-sm font-medium text-slate-700">Kategori pendanaan</legend>
+                                                    <div class="flex flex-wrap gap-2 border-b border-slate-100 pb-2">
+                                                        <button type="button" data-bpk-funding-all class="rounded-lg px-2 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">Pilih Semua</button>
+                                                        <button type="button" data-bpk-funding-clear class="rounded-lg px-2 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">Batalkan Semua</button>
+                                                    </div>
+                                                    <div class="overflow-y-auto overscroll-contain" style="max-height: 144px; overflow-y: auto;">
+                                                        @forelse ($receiptFundingCategories as $fundingCategory)
+                                                            <label class="flex cursor-pointer items-center gap-3 rounded-lg px-2 text-sm text-slate-700 hover:bg-emerald-50" style="height: 48px; box-sizing: border-box;">
+                                                                <input type="checkbox" name="bpk_funding_categories[]" value="{{ $fundingCategory }}" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                                                                <span>{{ $fundingCategory }}</span>
+                                                            </label>
+                                                        @empty
+                                                            <p class="px-2 py-3 text-sm text-slate-500">Belum ada kategori pendanaan.</p>
+                                                        @endforelse
+                                                    </div>
+                                                </fieldset>
+                                                <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">Download BPK</button>
+                                            </form>
+                                        </details>
                                     @endif
                                     <div class="border-t border-slate-100 px-4 py-3">
                                         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Kuitansi</p>

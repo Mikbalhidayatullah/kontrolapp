@@ -3,8 +3,10 @@ import { initializeDropdowns } from './dropdowns';
 import { initializeNavbar } from './navbar';
 import { initializeMobileNavbar } from './mobile-navbar';
 import { initializeLrfkScroll } from './lrfk-scroll';
+import { initializeBpkFunding } from './bpk-funding';
 
 initializeDropdowns(document);
+initializeBpkFunding(document);
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeNavbar(document);
